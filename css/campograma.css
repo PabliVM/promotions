@@ -1435,11 +1435,18 @@ body.dark .app-footer-maestro{
   padding-bottom: 100% !important;
 }
 
-/* Ocultar zonas disponibles/estado en vista semana */
-.cards-grid.view-semana .zona-disponibles,
-.cards-grid.view-semana .cols-estado,
-.cards-grid.view-semana .zona-banquillo {
-  display: none !important;
+/* Zonas visibles en vista semana pero más compactas */
+.cards-grid.view-semana .zona-disponibles {
+  padding: 5px 8px;
+  min-height: 32px;
+}
+.cards-grid.view-semana .cols-estado .col {
+  padding: 4px 6px;
+  min-height: 32px;
+}
+.cards-grid.view-semana .col .chip {
+  font-size: 9px;
+  padding: 2px 5px;
 }
 
 /* Cards compactas */
