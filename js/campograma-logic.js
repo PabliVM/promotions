@@ -2289,12 +2289,10 @@ function renderCards(){
 
 function renderCardsSemana(grid){
   const hoy = new Date();
-  DIAS.forEach(d => {
-    const col = document.createElement('div');
-    col.className = 'semana-col';
+  const lista = eqF==='TODOS' ? EQUIPOS : [eqF];
 
-    // Header del día
-    const hdr = document.createElement('div');
+  // Una columna por día
+  DIAS.forEach(d => {
     const fechaStr = FECHAS[d] || '';
     const esHoy = (()=>{
       const [dd,mm] = (fechaStr||'').split('/');
@@ -2302,24 +2300,32 @@ function renderCardsSemana(grid){
         parseInt(dd)===hoy.getDate() &&
         parseInt(mm)===(hoy.getMonth()+1);
     })();
-    hdr.className = 'semana-col-hdr' + (esHoy ? ' dia-hoy' : '');
-    // Formato DD/MM/AA
     const [dd2,mm2] = (fechaStr||'').split('/');
     const aaStr = String(hoy.getFullYear()).slice(2);
     const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
-    hdr.textContent = fechaFmt;
-    col.appendChild(hdr);
 
-    // Cards de cada equipo para ese día
-    const diaOrig = dia; // guardar día activo
-    dia = d;             // cambiar globalmente para que buildCard use este día
-    const lista = eqF==='TODOS' ? EQUIPOS : [eqF];
+    const col = document.createElement('div');
+    col.className = 'semana-col';
+
+    const diaOrig = dia;
+    dia = d;
+
     lista.forEach(eq => {
-      const card = buildCard(eq);
-      col.appendChild(card);
-    });
-    dia = diaOrig;       // restaurar día activo
+      const wrap = document.createElement('div');
+      wrap.className = 'semana-card-wrap';
 
+      // Header fecha encima de cada card
+      const hdr = document.createElement('div');
+      hdr.className = 'semana-col-hdr' + (esHoy ? ' dia-hoy' : '');
+      hdr.textContent = fechaFmt;
+      wrap.appendChild(hdr);
+
+      const card = buildCard(eq);
+      wrap.appendChild(card);
+      col.appendChild(wrap);
+    });
+
+    dia = diaOrig;
     grid.appendChild(col);
   });
 }
