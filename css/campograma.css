@@ -1394,9 +1394,7 @@ body.dark .app-footer-maestro{
    VISTA SEMANA — scroll horizontal, columnas por día
    ══════════════════════════════════════════════════ */
 .cards-grid.view-semana {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: block;
   overflow-x: auto;
   overflow-y: auto;
   padding: 8px;
@@ -1404,18 +1402,57 @@ body.dark .app-footer-maestro{
   -webkit-overflow-scrolling: touch;
 }
 
-/* Fila por equipo — scroll horizontal */
-.semana-eq-row {
-  display: flex;
-  flex-direction: row;
-  gap: 6px;
-  flex-shrink: 0;
+/* Tabla semana */
+.semana-table {
+  border-collapse: separate;
+  border-spacing: 6px;
+  min-width: max-content;
 }
 
-.semana-eq-row .semana-card-wrap {
-  flex-shrink: 0;
-  width: 680px;
+/* Cabecera días */
+.semana-th-dia {
+  background: #2563eb;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px 8px 0 0;
+  text-align: center;
+  min-width: 640px;
+  width: 640px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
+.semana-th-dia.dia-hoy { background: #C8A800; color: #000; }
+.semana-th-nombre {
+  display: block;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.semana-th-fecha {
+  display: block;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: .8;
+}
+.semana-th-eq {
+  min-width: 0;
+  width: 0;
+  padding: 0;
+}
+
+/* Etiqueta equipo (columna izquierda) */
+.semana-td-eq-label { display: none; }
+
+/* Celdas de cards */
+.semana-td-card {
+  vertical-align: top;
+  padding: 0;
+}
+.semana-tr-eq { vertical-align: top; }
 
 .semana-col { display: none; }
 
