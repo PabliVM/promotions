@@ -1027,6 +1027,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
 .chip.chip-2l{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.2;white-space:normal;padding:2px 3px;height:2.6em;}
 .chip-n1{font-size:.8em;font-weight:500;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;}
 .chip-n2{font-size:1em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;}
+.chip-solo{font-size:1em;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;}
 /* CHIP */
 .chip{display:inline-flex;align-items:center;justify-content:center;border-radius:5px;font-family:var(--font);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;padding:3px 7px;cursor:grab;user-select:none;touch-action:none;white-space:nowrap;-webkit-user-select:none;transition:box-shadow .1s,opacity .1s,transform .1s;}
 .chip:active{transform:scale(.95);}
@@ -1402,15 +1403,16 @@ body.dark .app-footer-maestro{
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--rm-blue);
+  background: #2563eb;
   color: #fff;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   text-align: center;
-  padding: 4px 0;
+  padding: 6px 0;
   border-radius: 6px 6px 0 0;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  border-bottom: 2px solid rgba(255,255,255,.2);
 }
 
 .semana-col-hdr.dia-hoy {
