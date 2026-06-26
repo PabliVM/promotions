@@ -116,27 +116,31 @@ body:has(.cards-grid.view-semana) #app-wrap {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 16px;
+  padding: 5px 14px;
   border-radius: 20px;
-  border: 1.5px solid currentColor;
+  border: 1.5px solid #dfe1e6;
   background: #fff;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .4px;
-  text-transform: uppercase;
+  color: #5a6170;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all .15s;
   white-space: nowrap;
+  transition: all .2s ease;
+  text-transform: none;
+  letter-spacing: 0;
 }
-.hdr-action-btn:hover { opacity: .75; }
+.hdr-action-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
 .hdr-action-btn svg { flex-shrink: 0; stroke: currentColor; }
 
-/* Colores individuales por botón */
-.hdr-action-btn.btn-plantillas { color: #7c3aed; }
-.hdr-action-btn.btn-stats      { color: #0891b2; }
-.hdr-action-btn.btn-control    { color: #16a34a; }
-.hdr-action-btn.btn-copiar     { color: #d97706; }
+/* Colores activos por botón */
+.hdr-action-btn.btn-plantillas:hover { border-color: #7c3aed; color: #7c3aed; }
+.hdr-action-btn.btn-stats:hover      { border-color: #0891b2; color: #0891b2; }
+.hdr-action-btn.btn-control:hover    { border-color: #16a34a; color: #16a34a; }
+.hdr-action-btn.btn-copiar:hover     { border-color: #d97706; color: #d97706; }
 #hdr-identity{display:flex;align-items:center;gap:12px;}
 #hdr-escudo{
   width:42px;height:42px;flex-shrink:0;
