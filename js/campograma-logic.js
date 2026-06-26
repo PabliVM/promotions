@@ -2607,7 +2607,7 @@ function buildCard(eq){
 function chipHTML(nombre, isCampo){
   if(!isCampo) return nombre; // zona: texto simple
   const partes = nombre.trim().split(/\s+/);
-  if(partes.length < 2) return `<span class="chip-n1">${nombre}</span>`;
+  if(partes.length < 2) return `<span class="chip-n1 chip-solo">${nombre}</span>`;
   const n1 = partes[0];
   const n2 = partes.slice(1).join(' ');
   return `<span class="chip-n1">${n1}</span><span class="chip-n2">${n2}</span>`;
