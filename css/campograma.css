@@ -1452,9 +1452,11 @@ body.dark .app-footer-maestro{
   flex-shrink: 0;
 }
 .semana-tr-eq { vertical-align: top; }
-.semana-tr-eq + .semana-tr-eq .semana-td-card {
-  padding-top: 16px;
+.semana-tr-eq + .semana-tr-eq {
   border-top: 3px solid #2563eb;
+}
+.semana-tr-eq + .semana-tr-eq .semana-td-card {
+  padding-top: 12px;
 }
 
 .semana-col { display: none; }
