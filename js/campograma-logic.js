@@ -5,8 +5,6 @@
 // ══════════════════════════════════════════════════
 // DATOS
 // ══════════════════════════════════════════════════
-const RAW = {"LUNES": {"CASTILLA": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "RMC": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL B": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL C": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "CADETE A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": [], "banquillo": []}}, "MARTES": {"CASTILLA": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "RMC": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL B": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL C": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "CADETE A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": [], "banquillo": []}}, "MIÉRCOLES": {"CASTILLA": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "RMC": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL B": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL C": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "CADETE A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": [], "banquillo": []}}, "JUEVES": {"CASTILLA": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "RMC": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL B": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL C": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "CADETE A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": [], "banquillo": []}}, "VIERNES": {"CASTILLA": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "RMC": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL B": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL C": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "CADETE A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": [], "banquillo": []}}, "SÁBADO": {"CASTILLA": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "RMC": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL B": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL C": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "CADETE A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": [], "banquillo": []}}, "DOMINGO": {"CASTILLA": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "RMC": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL B": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "JUVENIL C": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": []}, "CADETE A": {"campo": [], "disponibles": [], "promovidos_1er": [], "lesionados": [], "otros": [], "banquillo": []}}};
-const DIAS    = ["LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO","DOMINGO"];
 // Calcular fechas de la semana actual (lunes = día 0)
 function calcFechasSemana(lunesBase){
   const base = lunesBase ? new Date(lunesBase) : (()=>{
@@ -23,29 +21,6 @@ function calcFechasSemana(lunesBase){
   return fechas;
 }
 let FECHAS = calcFechasSemana();
-const EQUIPOS = ["CASTILLA","RMC","JUVENIL A","JUVENIL B","JUVENIL C","CADETE A"];
-const ZONAS   = ["campo","banquillo","disponibles","promovidos_1er","lesionados","otros","extra"];
-// Posiciones por defecto — snap grid formación 1-4-3-3
-// [top%, left%]  portero abajo (área), delanteros arriba
-// ── GRID FLEXIBLE: 7 filas × 5 columnas = 35 slots uniformes ──
-// Sin formación fija — el entrenador coloca libremente
-// [top%, left%]
-const SNAP_SLOTS = [];
-const FILAS  = [90, 76, 62, 49, 36, 22,  8];   // 7 filas de abajo a arriba
-const COLS   = [8, 22, 36, 50, 64, 78, 92];      // 7 columnas
-FILAS.forEach(t => COLS.forEach(l => SNAP_SLOTS.push([t, l])));
-// Columnas intermedias para más densidad
-const FILAS_EXT = [83, 69, 55, 42, 29, 15];
-const COLS_EXT  = [15, 36, 50, 64, 85];
-FILAS_EXT.forEach(t => COLS_EXT.forEach(l => SNAP_SLOTS.push([t, l])));
-// ── 4 posiciones en rombo dentro del área (portero) ──
-// top en % del alto del campo, posición [0]=cima rombo [1]=izq [2]=der [3]=base
-const ROMBO_PORTERO = [[84,50],[90,33],[90,67],[96,50]];
-ROMBO_PORTERO.forEach(s=>SNAP_SLOTS.push(s));
-// POS_DEF: mismo grid para fallback por índice
-const POS_DEF = SNAP_SLOTS;
-// Líneas para referencia visual (sin uso de formación)
-const LINEAS_FORMACION = FILAS.map(t => [t, COLS]);
 const origen = {};
 // ══════════════════════════════════════════════════
 // ESTADO
@@ -723,7 +698,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ══════════════════════════════════════════════════
 // FOTO MÚLTIPLE — varios equipos en una imagen
 // ══════════════════════════════════════════════════
-const EQ_DOT_COLORS = {
   'CASTILLA':'#003087','RMC':'#7030A0',
   'JUVENIL A':'#FFC000','JUVENIL B':'#275317',
   'JUVENIL C':'#D80E9E','CADETE A':'#0070C0'
@@ -1490,7 +1464,6 @@ function plantEliminar(nombre){
 // ══════════════════════════════════════════════════
 // PERSISTENCIA — localStorage
 // ══════════════════════════════════════════════════
-const LS_KEY = 'rm_cantera_v2';
 // ── Helpers de timestamp ──
 function fmtTS(d){
   const dd=String(d.getDate()).padStart(2,'0');
@@ -1565,20 +1538,11 @@ function guardarDia(){ guardarManual(); }
 // GESTIÓN DE TEMPORADAS
 // ══════════════════════════════════════════════════
 // Jerarquía de equipos para el ascenso automático
-const JERARQUIA = ['CADETE A','JUVENIL C','JUVENIL B','JUVENIL A','RMC','CASTILLA'];
-const EQUIPO_SUPERIOR = {
-  'CADETE A':  'JUVENIL C',
-  'JUVENIL C': 'JUVENIL B',
-  'JUVENIL B': 'JUVENIL A',
-  'JUVENIL A': 'RMC',
-  'RMC':       'CASTILLA',
   'CASTILLA':  null  // ya están arriba del todo
 };
 // Temporadas guardadas: { id, nombre, ts, payload }
 let temporadas = [];
 let temporadaActual = null;   // id de la temporada activa
-const LS_SEASONS = 'rm_cantera_seasons';
-const LS_CUR     = 'rm_cantera_current';
 function cargarTemporadas(){
   try{
     const raw = localStorage.getItem(LS_SEASONS);
