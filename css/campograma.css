@@ -265,8 +265,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
 /* ══ SEMANA NAV ══ */
 #semana-nav{
   display:flex;align-items:stretch;
-  background:#060f1e;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  background:#1e3a8a;
+  border-bottom:2px solid rgba(255,255,255,.15);
 }
 #btn-semana-cal{
   display:flex;align-items:center;gap:6px;
@@ -306,23 +306,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
   border-bottom:2px solid transparent;
   transition:all .15s;gap:1px;
 }
-.dia-tab.active{border-bottom-color:#C8A800;}
+.dia-tab.active{border-bottom-color:#fff;}
 .dia-tab-nombre{
   font-family:'Barlow Condensed',sans-serif;
   font-size:9px;font-weight:700;
-  color:rgba(255,255,255,.35);
+  color:rgba(255,255,255,.5);
   letter-spacing:.8px;text-transform:uppercase;
 }
-.dia-tab.active .dia-tab-nombre{color:#C8A800;}
+.dia-tab.active .dia-tab-nombre{color:#fff;}
 .dia-tab-fecha{
   font-size:17px;font-weight:700;
-  color:rgba(255,255,255,.55);
+  color:rgba(255,255,255,.6);
   font-family:'Barlow Condensed',sans-serif;line-height:1;
 }
 .dia-tab.active .dia-tab-fecha{color:#fff;}
 .dia-tab-dot{
   width:4px;height:4px;border-radius:50%;
-  background:#C8A800;opacity:0;transition:opacity .15s;
+  background:#fff;opacity:0;transition:opacity .15s;
 }
 .dia-tab.tiene-datos .dia-tab-dot{opacity:1;}
 .dia-tab.es-partido .dia-tab-nombre::after{content:'⚽';font-size:7px;margin-left:1px;}
@@ -1438,15 +1438,22 @@ body.dark .app-footer-maestro{
   font-size: 10px;
 }
 .cards-grid.view-semana .card-hdr {
-  background: #2563eb;
-  border-bottom: 1px solid rgba(255,255,255,.15);
+  background: #ffffff;
+  border-bottom: 2px solid #2563eb;
 }
 .cards-grid.view-semana .card-hdr-name {
-  color: #fff;
+  color: #2563eb;
+  font-weight: 800;
 }
 .cards-grid.view-semana .card-hdr-count {
-  color: rgba(255,255,255,.8);
-  background: rgba(255,255,255,.15);
+  color: #2563eb;
+  background: rgba(37,99,235,.1);
+  border: 1px solid rgba(37,99,235,.2);
+}
+.cards-grid.view-semana .modo-btn,
+.cards-grid.view-semana .snap-btn,
+.cards-grid.view-semana .reset-btn {
+  display: none;
 }
 
 .cards-grid.view-semana .cf {
