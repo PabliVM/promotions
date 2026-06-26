@@ -698,10 +698,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ══════════════════════════════════════════════════
 // FOTO MÚLTIPLE — varios equipos en una imagen
 // ══════════════════════════════════════════════════
-  'CASTILLA':'#003087','RMC':'#7030A0',
-  'JUVENIL A':'#FFC000','JUVENIL B':'#275317',
-  'JUVENIL C':'#D80E9E','CADETE A':'#0070C0'
-};
 let _fotoEqsSel = new Set();
 function abrirFotoMultiModal(){
   // Preseleccionar equipos visibles en la vista actual
@@ -1538,8 +1534,6 @@ function guardarDia(){ guardarManual(); }
 // GESTIÓN DE TEMPORADAS
 // ══════════════════════════════════════════════════
 // Jerarquía de equipos para el ascenso automático
-  'CASTILLA':  null  // ya están arriba del todo
-};
 // Temporadas guardadas: { id, nombre, ts, payload }
 let temporadas = [];
 let temporadaActual = null;   // id de la temporada activa
