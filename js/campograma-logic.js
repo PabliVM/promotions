@@ -2300,10 +2300,6 @@ function renderCardsSemana(grid){
   // Cabecera con los días
   const thead = document.createElement('thead');
   const trHead = document.createElement('tr');
-  const thEmpty = document.createElement('th');
-  thEmpty.className = 'semana-th-eq';
-  trHead.appendChild(thEmpty);
-
   DIAS.forEach(d => {
     const fechaStr = FECHAS[d] || '';
     const [dd2,mm2] = (fechaStr||'').split('/');
@@ -2326,12 +2322,6 @@ function renderCardsSemana(grid){
   lista.forEach(eq => {
     const tr = document.createElement('tr');
     tr.className = 'semana-tr-eq';
-
-    // Celda con el nombre del equipo (columna fija izquierda)
-    const tdEq = document.createElement('td');
-    tdEq.className = 'semana-td-eq-label';
-    tdEq.textContent = EQ_LABEL[eq] || eq;
-    tr.appendChild(tdEq);
 
     // Una celda por día
     DIAS.forEach(d => {
