@@ -197,16 +197,40 @@
      ENCABEZADO PREMIUM
 ════════════════════════════════ -->
 <header id="app-header">
-  <!-- Identidad -->
+  <!-- Izquierda: logo + nombre -->
   <div id="hdr-identity">
-    <div id="hdr-escudo"><img src="https://raw.githubusercontent.com/PabliVM/Promociones/main/rm__.png" alt="Real Madrid" crossorigin="anonymous" style="width:100%;height:100%;object-fit:contain;"/>
+    <div id="hdr-escudo">
+      <img src="https://raw.githubusercontent.com/PabliVM/Promociones/main/rm__.png" alt="Real Madrid" crossorigin="anonymous" style="width:100%;height:100%;object-fit:contain;"/>
     </div>
     <div id="hdr-titles">
       <span id="hdr-club">Campograma</span>
       <span id="hdr-sub">Real Madrid · Cantera</span>
     </div>
   </div>
-  <div id="hdr-right"><button class="btn-dark-maestro" onclick="toggleDarkMaestro()" id="darkBtnMaestro" title="Modo oscuro">☾</button>
+
+  <!-- Centro: botones de acción -->
+  <div id="hdr-actions">
+    <button class="hdr-action-btn" onclick="openPlant()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Plantillas
+    </button>
+    <button class="hdr-action-btn" onclick="openReg()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      Stats
+    </button>
+    <button class="hdr-action-btn" onclick="abrirControl()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Control
+    </button>
+    <button class="hdr-action-btn" onclick="abrirCopiarModal()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copiar
+    </button>
+  </div>
+
+  <!-- Derecha: dark mode + temporada + guardar -->
+  <div id="hdr-right">
+    <button class="btn-dark-maestro" onclick="toggleDarkMaestro()" id="darkBtnMaestro" title="Modo oscuro">☾</button>
     <button id="season-badge" onclick="abrirSeasonModal()">
       <span id="season-label">2025-26</span>
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -382,7 +406,7 @@
     </table>
   </div>
 </div>
-<nav id="bottom-nav">
+<nav id="bottom-nav" style="display:none">
   <button class="bnav-btn" onclick="abrirCopiarModal()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
     <span>Copiar</span>
