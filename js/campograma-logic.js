@@ -2303,7 +2303,11 @@ function renderCardsSemana(grid){
         parseInt(mm)===(hoy.getMonth()+1);
     })();
     hdr.className = 'semana-col-hdr' + (esHoy ? ' dia-hoy' : '');
-    hdr.textContent = d + (fechaStr ? '  ' + fechaStr : '');
+    // Formato DD/MM/AA
+    const [dd2,mm2] = (fechaStr||'').split('/');
+    const aaStr = String(hoy.getFullYear()).slice(2);
+    const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
+    hdr.textContent = fechaFmt;
     col.appendChild(hdr);
 
     // Cards de cada equipo para ese día
