@@ -1027,7 +1027,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
 .chip.chip-2l{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.2;white-space:normal;padding:2px 3px;height:2.6em;}
 .chip-n1{font-size:.8em;font-weight:500;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;}
 .chip-n2{font-size:1em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;}
-.chip-solo{font-size:1em;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;}
+.chip-solo{font-size:1em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;}
 /* CHIP */
 .chip{display:inline-flex;align-items:center;justify-content:center;border-radius:5px;font-family:var(--font);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;padding:3px 7px;cursor:grab;user-select:none;touch-action:none;white-space:nowrap;-webkit-user-select:none;transition:box-shadow .1s,opacity .1s,transform .1s;}
 .chip:active{transform:scale(.95);}
@@ -1436,6 +1436,17 @@ body.dark .app-footer-maestro{
 .cards-grid.view-semana .card-eq {
   width: 100%;
   font-size: 10px;
+}
+.cards-grid.view-semana .card-hdr {
+  background: #2563eb;
+  border-bottom: 1px solid rgba(255,255,255,.15);
+}
+.cards-grid.view-semana .card-hdr-name {
+  color: #fff;
+}
+.cards-grid.view-semana .card-hdr-count {
+  color: rgba(255,255,255,.8);
+  background: rgba(255,255,255,.15);
 }
 
 .cards-grid.view-semana .cf {
