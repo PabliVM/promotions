@@ -1080,8 +1080,9 @@ body:has(.cards-grid.view-semana) #app-wrap {
 .c-prestado-JUVENIL_C{background:#D80E9E;color:#fff;border:1px solid #D80E9E;}
 .c-prestado-CADETE_A{background:#0070C0;color:#fff;border:1px solid #0070C0;}
 /* ZONA DISPONIBLES */
-.zona-disponibles{padding:7px 10px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.07);min-height:44px;}
+.zona-disponibles{padding:7px 10px;background:#fff;border-top:1px solid #e8eef8;min-height:44px;}
 .zona-disponibles.dz-active{background:rgba(74,222,128,.05);outline:2px dashed var(--verde-bd);outline-offset:-2px;}
+body.dark .zona-disponibles{background:#1c2333;border-top:1px solid #30363d;}
 /* ZONA BANQUILLO */
 .zona-banquillo{padding:7px 10px;background:#1a1200;border-top:2px solid #f59e0b;min-height:44px;}
 .zona-banquillo.dz-active{background:#292200;outline:2px dashed #f59e0b;outline-offset:-2px;}
@@ -1127,6 +1128,10 @@ body:has(.cards-grid.view-semana) #app-wrap {
 .col-les {background:#fff5f5;}  .col-les.dz-active {background:#fee2e2;}
 .col-otros{background:#f9fafb;} .col-otros.dz-active{background:#f3f4f6;}
 .col-extra{background:#f5f3ff;} .col-extra.dz-active{background:#ede9fe;}
+body.dark .col-prom{background:#1c1a14;}
+body.dark .col-les{background:#1c1414;}
+body.dark .col-otros{background:#161b22;}
+body.dark .col-extra{background:#1a1625;}
 .zona-lbl-wrap{display:flex;align-items:center;gap:3px;margin-bottom:4px;}
 .zona-lbl-edit{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;
   text-transform:uppercase;letter-spacing:.8px;border:none;background:transparent;
@@ -1143,11 +1148,11 @@ body:has(.cards-grid.view-semana) #app-wrap {
 .col-del-btn{flex-shrink:0;width:12px;height:12px;border:none;background:none;
   cursor:pointer;font-size:10px;line-height:1;color:rgba(0,0,0,.2);padding:0;}
 .col-del-btn:hover{color:#ef4444;}
-.zona-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;color:rgba(255,255,255,.4);}
+.zona-lbl{font-family:'Segoe UI',-apple-system,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;color:#9ca3af;}
 .zona-disponibles .zona-lbl{color:#64748b;}
 .zona-banquillo   .zona-lbl{color:#f59e0b;}
-.col-prom .zona-lbl{color:var(--naranja);}
-.col-les  .zona-lbl{color:var(--rojo);}
+.col-prom .zona-lbl{color:#d97706;}
+.col-les  .zona-lbl{color:#dc2626;}
 .col-otros .zona-lbl{color:#6b7280;}
 .chips-wrap{display:flex;flex-wrap:wrap;gap:3px;}
 .col .chips-wrap{flex-direction:column;flex-wrap:nowrap;}
@@ -1504,6 +1509,12 @@ body.dark .app-footer-maestro{
   background: rgba(37,99,235,.1);
   border: 1px solid rgba(37,99,235,.2);
 }
+body.dark .cards-grid.view-semana .card-hdr {
+  background: #161b22;
+  border-bottom-color: #3b82f6;
+}
+body.dark .cards-grid.view-semana .card-hdr-name { color: #3b82f6; }
+body.dark .cards-grid.view-semana .card-hdr-fecha { color: #8b949e; }
 .cards-grid.view-semana .modo-btn,
 .cards-grid.view-semana .snap-btn,
 .cards-grid.view-semana .reset-btn {
