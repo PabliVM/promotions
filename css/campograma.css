@@ -933,9 +933,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
 }
 .view-btn svg{stroke:currentColor;}
 .view-btn.active{
-  background:rgba(200,168,0,.15);
-  border-color:rgba(200,168,0,.4);
-  color:#C8A800;
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.2);
+  color:rgba(255,255,255,.7);
 }
 .view-btn:active{background:rgba(200,168,0,.2);}
 /* GRID */
@@ -1437,8 +1437,12 @@ body.dark .app-footer-maestro{
 }
 
 .cards-grid.view-semana .cf {
-  font-size: 8px;
-  padding: 1px 4px;
+  font-size: 11px;
+  padding: 3px 7px;
+}
+.cards-grid.view-semana .pof .chip {
+  font-size: 11px !important;
+  padding: 3px 6px !important;
 }
 
 @media (max-width: 767px) {
