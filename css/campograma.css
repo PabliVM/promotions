@@ -74,7 +74,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
 /* ── Desktop (≥1200px): 3 cols fijo, botones vista ocultos ── */
 @media(min-width:1200px){
   body{ background:var(--bg); }
-  #app-wrap{ max-width:1400px; box-shadow:none; }
+  #app-wrap{ max-width:100%; box-shadow:none; }
   .cards-grid{ grid-template-columns:repeat(3,1fr)!important; gap:14px; padding:14px; }
   #bottom-nav{ max-width:1400px; }
   #season-box,#cfg-tipos-box,#uyl-box{ max-width:680px; }
