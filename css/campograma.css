@@ -1394,7 +1394,7 @@ body.dark .app-footer-maestro{
   flex-direction: column;
   gap: 6px;
   flex-shrink: 0;
-  width: 340px;
+  width: 680px;
   scroll-snap-align: start;
 }
 
