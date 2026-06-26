@@ -2291,51 +2291,73 @@ function renderCardsSemana(grid){
   const hoy = new Date();
   const lista = eqF==='TODOS' ? EQUIPOS : [eqF];
 
-  // Una fila por equipo, una columna por día (scroll horizontal)
+  // Estructura: tabla con filas=equipos, columnas=días
+  // grid es el contenedor con overflow-x:auto
+  // Creamos una tabla interna
+  const table = document.createElement('table');
+  table.className = 'semana-table';
+
+  // Cabecera con los días
+  const thead = document.createElement('thead');
+  const trHead = document.createElement('tr');
+  const thEmpty = document.createElement('th');
+  thEmpty.className = 'semana-th-eq';
+  trHead.appendChild(thEmpty);
+
+  DIAS.forEach(d => {
+    const fechaStr = FECHAS[d] || '';
+    const [dd2,mm2] = (fechaStr||'').split('/');
+    const aaStr = String(hoy.getFullYear()).slice(2);
+    const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
+    const esHoy = (()=>{
+      const [dd,mm] = (fechaStr||'').split('/');
+      return dd && mm && parseInt(dd)===hoy.getDate() && parseInt(mm)===(hoy.getMonth()+1);
+    })();
+    const th = document.createElement('th');
+    th.className = 'semana-th-dia' + (esHoy ? ' dia-hoy' : '');
+    th.innerHTML = `<span class="semana-th-nombre">${d}</span><span class="semana-th-fecha">${fechaFmt}</span>`;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  // Cuerpo: una fila por equipo
+  const tbody = document.createElement('tbody');
   lista.forEach(eq => {
-    const row = document.createElement('div');
-    row.className = 'semana-eq-row';
+    const tr = document.createElement('tr');
+    tr.className = 'semana-tr-eq';
 
+    // Celda con el nombre del equipo (columna fija izquierda)
+    const tdEq = document.createElement('td');
+    tdEq.className = 'semana-td-eq-label';
+    tdEq.textContent = EQ_LABEL[eq] || eq;
+    tr.appendChild(tdEq);
+
+    // Una celda por día
     DIAS.forEach(d => {
-      const fechaStr = FECHAS[d] || '';
-      const esHoy = (()=>{
-        const [dd,mm] = (fechaStr||'').split('/');
-        return dd && mm &&
-          parseInt(dd)===hoy.getDate() &&
-          parseInt(mm)===(hoy.getMonth()+1);
-      })();
-      const [dd2,mm2] = (fechaStr||'').split('/');
-      const aaStr = String(hoy.getFullYear()).slice(2);
-      const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
-
       const diaOrig = dia;
       dia = d;
       const card = buildCard(eq);
       dia = diaOrig;
 
+      // Quitar la fecha del card-hdr (ya sale en el header de tabla)
       const nm = card.querySelector('.card-hdr-name');
       if(nm){
         const nombreHtml = nm.innerHTML;
-        nm.innerHTML = '';
-        const nombreSpan = document.createElement('span');
-        nombreSpan.className = 'card-hdr-nombre-txt';
-        nombreSpan.innerHTML = nombreHtml;
-        nm.appendChild(nombreSpan);
-        const fechaSpan = document.createElement('span');
-        fechaSpan.className = 'card-hdr-fecha';
-        fechaSpan.textContent = d + ' ' + fechaFmt;
-        if(esHoy) fechaSpan.style.color = '#C8A800';
-        nm.appendChild(fechaSpan);
+        nm.innerHTML = nombreHtml; // mantener tal cual
       }
 
-      const wrap = document.createElement('div');
-      wrap.className = 'semana-card-wrap';
-      wrap.appendChild(card);
-      row.appendChild(wrap);
+      const td = document.createElement('td');
+      td.className = 'semana-td-card';
+      td.appendChild(card);
+      tr.appendChild(td);
     });
 
-    grid.appendChild(row);
+    tbody.appendChild(tr);
   });
+
+  table.appendChild(tbody);
+  grid.appendChild(table);
 }
 function buildCard(eq){
   const d=data[dia][eq];
