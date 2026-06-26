@@ -1410,24 +1410,27 @@ body.dark .app-footer-maestro{
 /* Tabla semana */
 .semana-table {
   border-collapse: separate;
-  border-spacing: 6px;
+  border-spacing: 8px 0;
   min-width: max-content;
+  table-layout: fixed;
 }
 
-/* Cabecera días */
+/* Cabecera días — ancho fijo idéntico para todas las columnas */
 .semana-th-dia {
   background: #2563eb;
   color: #fff;
-  padding: 6px 12px;
-  border-radius: 8px 8px 0 0;
+  padding: 7px 0;
+  border-radius: 6px 6px 0 0;
   text-align: center;
-  min-width: 640px;
   width: 640px;
+  min-width: 640px;
+  max-width: 640px;
+  box-sizing: border-box;
   position: sticky;
   top: 0;
   z-index: 10;
 }
-.semana-th-dia.dia-hoy { background: #C8A800; color: #000; }
+.semana-th-dia.dia-hoy { background: #1d4ed8; }
 .semana-th-nombre {
   display: block;
   font-family: 'Segoe UI', sans-serif;
@@ -1435,27 +1438,24 @@ body.dark .app-footer-maestro{
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .05em;
+  color: #fff;
 }
 .semana-th-fecha {
   display: block;
   font-family: 'Segoe UI', sans-serif;
   font-size: 11px;
   font-weight: 400;
-  opacity: .8;
-}
-.semana-th-eq {
-  min-width: 0;
-  width: 0;
-  padding: 0;
+  color: rgba(255,255,255,.75);
 }
 
-/* Etiqueta equipo (columna izquierda) */
-.semana-td-eq-label { display: none; }
-
-/* Celdas de cards */
+/* Celdas de cards — mismo ancho que el th */
 .semana-td-card {
   vertical-align: top;
   padding: 0;
+  width: 640px;
+  min-width: 640px;
+  max-width: 640px;
+  box-sizing: border-box;
 }
 .semana-tr-eq { vertical-align: top; }
 
@@ -1492,29 +1492,51 @@ body.dark .app-footer-maestro{
 }
 
 /* Cards compactas */
-.cards-grid.view-semana .card-eq {
+.cards-grid.view-semana .card-eq,
+.semana-td-card .card {
   width: 100%;
-  font-size: 10px;
+  box-sizing: border-box;
 }
-.cards-grid.view-semana .card-hdr {
+.cards-grid.view-semana .card-hdr,
+.semana-td-card .card-hdr {
   background: #ffffff;
   border-bottom: 2px solid #2563eb;
 }
-.cards-grid.view-semana .card-hdr-name {
+.cards-grid.view-semana .card-hdr-name,
+.semana-td-card .card-hdr-name {
   color: #2563eb;
-  font-weight: 800;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
-.cards-grid.view-semana .card-hdr-count {
+.semana-td-card .card-hdr-nombre-txt {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2563eb;
+}
+.semana-td-card .card-hdr-fecha {
+  font-size: 11px;
+  font-weight: 400;
+  color: #5a6170;
+}
+.semana-td-card .card-hdr-count {
   color: #2563eb;
   background: rgba(37,99,235,.1);
   border: 1px solid rgba(37,99,235,.2);
 }
-body.dark .cards-grid.view-semana .card-hdr {
+.semana-td-card .card-hdr-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+body.dark .cards-grid.view-semana .card-hdr,
+body.dark .semana-td-card .card-hdr {
   background: #161b22;
   border-bottom-color: #3b82f6;
 }
-body.dark .cards-grid.view-semana .card-hdr-name { color: #3b82f6; }
-body.dark .cards-grid.view-semana .card-hdr-fecha { color: #8b949e; }
+body.dark .semana-td-card .card-hdr-nombre-txt { color: #3b82f6; }
+body.dark .semana-td-card .card-hdr-fecha { color: #8b949e; }
 .cards-grid.view-semana .modo-btn,
 .cards-grid.view-semana .snap-btn,
 .cards-grid.view-semana .reset-btn {
