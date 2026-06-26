@@ -1500,24 +1500,27 @@ body.dark .app-footer-maestro{
 /* Fecha en card-hdr vista semana */
 .card-hdr-fecha {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   color: #5a6170;
-  margin-top: 2px;
+  margin-top: 0;
   letter-spacing: .01em;
+  line-height: 1.2;
 }
 
 /* card-hdr en vista semana: más espacio para botones */
 .cards-grid.view-semana .card-hdr {
   flex-wrap: nowrap;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
 }
 .cards-grid.view-semana .card-hdr-name {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0;
+  gap: 1px;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 /* Leyenda en sub-header */
