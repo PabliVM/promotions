@@ -299,12 +299,7 @@ body:has(.cards-grid.view-semana) #app-wrap {
 .hdr-icon-btn svg{width:16px;height:16px;}
 .hdr-icon-btn:active{background:rgba(200,168,0,.2);color:#C8A800;}
 /* ══ LEYENDA FINA ══ */
-#leyenda-strip{
-  display:flex;align-items:center;justify-content:center;
-  gap:14px;padding:5px 16px;
-  background:rgba(0,0,0,.3);
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
+#leyenda-strip { display: none !important; }
 .ley2{display:flex;align-items:center;gap:4px;}
 .ley2-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .ley2 span:last-child{
@@ -1496,11 +1491,12 @@ body.dark .app-footer-maestro{
 
 /* Fecha en card-hdr vista semana */
 .card-hdr-fecha {
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(37,99,235,.6);
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
   margin-left: 10px;
-  letter-spacing: .02em;
+  letter-spacing: .01em;
+  opacity: .75;
 }
 
 /* card-hdr en vista semana: más espacio para botones */
