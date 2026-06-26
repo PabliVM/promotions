@@ -2317,12 +2317,19 @@ function renderCardsSemana(grid){
       // Inyectar fecha en el card-hdr después de buildCard
       const card = buildCard(eq);
 
-      // Añadir día + fecha al nombre del equipo en el card-hdr
+      // Añadir día + fecha debajo del nombre del equipo
       const nm = card.querySelector('.card-hdr-name');
       if(nm){
+        // Guardar contenido actual y envolverlo en span
+        const nombreHtml = nm.innerHTML;
+        nm.innerHTML = '';
+        const nombreSpan = document.createElement('span');
+        nombreSpan.className = 'card-hdr-nombre-txt';
+        nombreSpan.innerHTML = nombreHtml;
+        nm.appendChild(nombreSpan);
+        // Añadir fecha debajo
         const fechaSpan = document.createElement('span');
         fechaSpan.className = 'card-hdr-fecha';
-        // Abreviaturas de días
         fechaSpan.textContent = d + ' ' + fechaFmt;
         if(esHoy) fechaSpan.style.color = '#C8A800';
         nm.appendChild(fechaSpan);
