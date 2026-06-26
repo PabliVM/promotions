@@ -2291,50 +2291,47 @@ function renderCardsSemana(grid){
   const hoy = new Date();
   const lista = eqF==='TODOS' ? EQUIPOS : [eqF];
 
-  // Estructura: tabla con filas=equipos, columnas=días
-  // grid es el contenedor con overflow-x:auto
-  // Creamos una tabla interna
   const table = document.createElement('table');
   table.className = 'semana-table';
 
-  // Cabecera con los días
-  const thead = document.createElement('thead');
-  const trHead = document.createElement('tr');
-  DIAS.forEach(d => {
-    const fechaStr = FECHAS[d] || '';
-    const [dd2,mm2] = (fechaStr||'').split('/');
-    const aaStr = String(hoy.getFullYear()).slice(2);
-    const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
-    const esHoy = (()=>{
-      const [dd,mm] = (fechaStr||'').split('/');
-      return dd && mm && parseInt(dd)===hoy.getDate() && parseInt(mm)===(hoy.getMonth()+1);
-    })();
-    const th = document.createElement('th');
-    th.className = 'semana-th-dia' + (esHoy ? ' dia-hoy' : '');
-    th.innerHTML = `<span class="semana-th-nombre">${d}</span><span class="semana-th-fecha">${fechaFmt}</span>`;
-    trHead.appendChild(th);
-  });
-  thead.appendChild(trHead);
-  table.appendChild(thead);
-
-  // Cuerpo: una fila por equipo
+  // SIN thead — el día/fecha va en el header de cada card
   const tbody = document.createElement('tbody');
+
   lista.forEach(eq => {
     const tr = document.createElement('tr');
     tr.className = 'semana-tr-eq';
 
-    // Una celda por día
     DIAS.forEach(d => {
+      const fechaStr = FECHAS[d] || '';
+      const esHoy = (()=>{
+        const [dd,mm] = (fechaStr||'').split('/');
+        return dd && mm && parseInt(dd)===hoy.getDate() && parseInt(mm)===(hoy.getMonth()+1);
+      })();
+      const [dd2,mm2] = (fechaStr||'').split('/');
+      const aaStr = String(hoy.getFullYear()).slice(2);
+      const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
+
       const diaOrig = dia;
       dia = d;
       const card = buildCard(eq);
       dia = diaOrig;
 
-      // Quitar la fecha del card-hdr (ya sale en el header de tabla)
+      // Sustituir el card-hdr-name con: EQUIPO (negrita) + DIA DD/MM/AA (debajo, normal)
       const nm = card.querySelector('.card-hdr-name');
       if(nm){
         const nombreHtml = nm.innerHTML;
-        nm.innerHTML = nombreHtml; // mantener tal cual
+        nm.innerHTML = '';
+
+        const nombreSpan = document.createElement('span');
+        nombreSpan.className = 'card-hdr-nombre-txt';
+        nombreSpan.innerHTML = nombreHtml;
+        nm.appendChild(nombreSpan);
+
+        const fechaSpan = document.createElement('span');
+        fechaSpan.className = 'card-hdr-fecha';
+        fechaSpan.textContent = d + '  ' + fechaFmt;
+        if(esHoy) fechaSpan.style.fontWeight = '700';
+        nm.appendChild(fechaSpan);
       }
 
       const td = document.createElement('td');
