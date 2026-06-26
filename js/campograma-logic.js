@@ -1150,7 +1150,7 @@ function buildCardPrimerEquipo(){
 // ══════════════════════════════════════════════════
 // SELECTOR DE VISTA
 // ══════════════════════════════════════════════════
-let vistaActual = '1'; // '1', '2col', '3col'
+let vistaActual = 'semana';
 let eqsMultiSel = new Set(EQUIPOS);
 function setView(n){
   vistaActual = n;
