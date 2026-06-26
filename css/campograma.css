@@ -1433,6 +1433,11 @@ body.dark .app-footer-maestro{
   max-width: 640px;
   box-sizing: border-box;
 }
+.semana-td-card .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 .semana-tr-eq { vertical-align: top; }
 .semana-tr-eq + .semana-tr-eq .semana-td-card {
   padding-top: 16px;
@@ -1461,7 +1466,7 @@ body.dark .app-footer-maestro{
 .cards-grid.view-semana .zona-disponibles {
   padding: 6px 8px;
   min-height: 80px;
-  height: auto;
+  flex: 1;
   overflow: visible;
 }
 .cards-grid.view-semana .cols-estado .col {
