@@ -5,13 +5,12 @@
 // ================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA19qehf21kHWkKNN_jVjXQ1dpsuHN7hTE",
-  authDomain: "promociones-c76fd.firebaseapp.com",
-  projectId: "promociones-c76fd",
-  storageBucket: "promociones-c76fd.firebasestorage.app",
-  messagingSenderId: "518492143356",
-  appId: "1:518492143356:web:d0c8b05c53cac8d55e6179",
-  measurementId: "G-WFRD7XJMW3"
+  apiKey: "AIzaSyCvoSR0sAyXkQ96HdaO4G5sF8kBn0go-Ig",
+  authDomain: "promotions-532a7.firebaseapp.com",
+  projectId: "promotions-532a7",
+  storageBucket: "promotions-532a7.firebasestorage.app",
+  messagingSenderId: "365543412948",
+  appId: "1:365543412948:web:19afe2a748305fd2f71741"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
