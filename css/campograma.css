@@ -1460,15 +1460,15 @@ body.dark .app-footer-maestro{
 /* Zonas visibles en vista semana pero más compactas */
 .cards-grid.view-semana .zona-disponibles {
   padding: 6px 8px;
-  height: 160px;
-  overflow-y: auto;
-  box-sizing: border-box;
+  min-height: 80px;
+  height: auto;
+  overflow: visible;
 }
 .cards-grid.view-semana .cols-estado .col {
   padding: 4px 6px;
-  height: 160px;
-  overflow-y: auto;
-  box-sizing: border-box;
+  min-height: 80px;
+  height: auto;
+  overflow: visible;
 }
 .cards-grid.view-semana .col .chip {
   font-size: 9px;
