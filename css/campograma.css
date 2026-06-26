@@ -1394,7 +1394,7 @@ body.dark .app-footer-maestro{
   flex-direction: column;
   gap: 6px;
   flex-shrink: 0;
-  width: 220px;
+  width: 340px;
   scroll-snap-align: start;
 }
 
@@ -1418,12 +1418,19 @@ body.dark .app-footer-maestro{
   color: #000;
 }
 
-/* Campo más compacto en vista semana */
+/* Vista semana — campo y zonas */
 .cards-grid.view-semana .campo-wrap {
-  padding-bottom: 75% !important;
+  padding-bottom: 100% !important;
 }
 
-/* Cards más compactas */
+/* Ocultar zonas disponibles/estado en vista semana */
+.cards-grid.view-semana .zona-disponibles,
+.cards-grid.view-semana .cols-estado,
+.cards-grid.view-semana .zona-banquillo {
+  display: none !important;
+}
+
+/* Cards compactas */
 .cards-grid.view-semana .card-eq {
   width: 100%;
   font-size: 10px;
