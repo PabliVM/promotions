@@ -1492,18 +1492,25 @@ body.dark .app-footer-maestro{
 
 /* Fecha en card-hdr vista semana */
 .card-hdr-fecha {
-  font-size: 12px;
-  font-weight: 600;
-  color: #2563eb;
-  margin-left: 10px;
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: #5a6170;
+  margin-top: 2px;
   letter-spacing: .01em;
-  opacity: .75;
 }
 
 /* card-hdr en vista semana: más espacio para botones */
 .cards-grid.view-semana .card-hdr {
   flex-wrap: nowrap;
-  min-height: 36px;
+  min-height: 40px;
+  align-items: center;
+}
+.cards-grid.view-semana .card-hdr-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
 }
 
 /* Leyenda en sub-header */
@@ -1525,8 +1532,8 @@ body.dark .app-footer-maestro{
   color: #5a6170;
 }
 .sub-ley-dot {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -1549,8 +1556,8 @@ body.dark .app-footer-maestro{
   white-space: nowrap;
 }
 .sub-ley-dot {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -1573,4 +1580,10 @@ body.dark .hdr-action-btn:hover {
 body.dark .sub-ley { color: #8b949e; }
 body.dark #sub-header > div[style*="background:#dfe1e6"] {
   background: #30363d !important;
+}
+
+/* Nombre equipo como bloque para que fecha baje */
+.cards-grid.view-semana .card-hdr-nombre-txt,
+.cards-grid.view-semana .card-hdr-name > *:first-child {
+  display: block;
 }
