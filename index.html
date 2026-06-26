@@ -246,6 +246,16 @@
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
     Copiar
   </button>
+
+  <!-- Leyenda equipos -->
+  <div id="sub-leyenda">
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#003087"></span>CAS</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#7030A0"></span>RMC</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#FFC000"></span>JA</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#275317"></span>JB</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#D80E9E"></span>JC</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#0070C0"></span>CA</span>
+  </div>
 </div>
 <!-- Leyenda colores equipos — fina, integrada -->
 <div id="leyenda-strip">
@@ -394,18 +404,20 @@
 ════════════════════════════════ -->
 <!-- ═══════════ TABLA CONTROL ═══════════ -->
 <div id="control-overlay">
-  <div id="control-hdr">
-    <div>
-      <h2>✓ Tabla de control</h2>
-      <span id="control-dia-lbl"></span>
+  <div id="control-box">
+    <div id="control-hdr">
+      <div>
+        <h2>✓ Tabla de control</h2>
+        <span id="control-dia-lbl"></span>
+      </div>
+      <button id="control-close" onclick="cerrarControl()">✕</button>
     </div>
-    <button id="control-close" onclick="cerrarControl()">✕</button>
-  </div>
-  <div id="control-body">
-    <table id="control-table">
-      <thead id="control-thead"></thead>
-      <tbody id="control-tbody"></tbody>
-    </table>
+    <div id="control-body">
+      <table id="control-table">
+        <thead id="control-thead"></thead>
+        <tbody id="control-tbody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 <nav id="bottom-nav" style="display:none">
