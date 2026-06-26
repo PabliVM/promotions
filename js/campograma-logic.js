@@ -2314,13 +2314,19 @@ function renderCardsSemana(grid){
       const wrap = document.createElement('div');
       wrap.className = 'semana-card-wrap';
 
-      // Header fecha encima de cada card
-      const hdr = document.createElement('div');
-      hdr.className = 'semana-col-hdr' + (esHoy ? ' dia-hoy' : '');
-      hdr.textContent = fechaFmt;
-      wrap.appendChild(hdr);
-
+      // Inyectar fecha en el card-hdr después de buildCard
       const card = buildCard(eq);
+
+      // Añadir fecha al nombre del equipo en el card-hdr
+      const nm = card.querySelector('.card-hdr-name');
+      if(nm){
+        const fechaSpan = document.createElement('span');
+        fechaSpan.className = 'card-hdr-fecha';
+        fechaSpan.textContent = fechaFmt;
+        if(esHoy) fechaSpan.style.color = '#C8A800';
+        nm.appendChild(fechaSpan);
+      }
+
       wrap.appendChild(card);
       col.appendChild(wrap);
     });
