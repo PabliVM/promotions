@@ -2323,11 +2323,7 @@ function renderCardsSemana(grid){
         const fechaSpan = document.createElement('span');
         fechaSpan.className = 'card-hdr-fecha';
         // Abreviaturas de días
-        const DIA_LABEL = {
-          'LUNES':'LUN','MARTES':'MAR','MIÉRCOLES':'MIÉ',
-          'JUEVES':'JUE','VIERNES':'VIE','SÁBADO':'SÁB','DOMINGO':'DOM'
-        };
-        fechaSpan.textContent = (DIA_LABEL[d]||d) + ' ' + fechaFmt;
+        fechaSpan.textContent = d + ' ' + fechaFmt;
         if(esHoy) fechaSpan.style.color = '#C8A800';
         nm.appendChild(fechaSpan);
       }
