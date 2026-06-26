@@ -1474,3 +1474,8 @@ body.dark .app-footer-maestro{
   .semana-col { width: 100%; }
   .cards-grid.view-semana .campo-wrap { padding-bottom: 118% !important; }
 }
+
+/* ── Ocultar barras no necesarias en vista semana ── */
+#semana-nav { display: none !important; }
+#eq-strip   { display: none !important; }
+#view-bar   { display: none !important; }
