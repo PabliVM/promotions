@@ -1438,6 +1438,19 @@ body.dark .app-footer-maestro{
   display: flex;
   flex-direction: column;
 }
+/* Campo: altura fija proporcional, no crece */
+.semana-td-card .campo-wrap {
+  flex-shrink: 0;
+}
+/* Disponibles: crece para llenar el espacio */
+.semana-td-card .zona-disponibles {
+  flex: 1 1 auto;
+  min-height: 60px;
+}
+/* cols-estado: tamaño fijo */
+.semana-td-card .cols-estado {
+  flex-shrink: 0;
+}
 .semana-tr-eq { vertical-align: top; }
 .semana-tr-eq + .semana-tr-eq .semana-td-card {
   padding-top: 16px;
