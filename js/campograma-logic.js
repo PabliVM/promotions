@@ -1157,7 +1157,7 @@ function setView(n){
   const grid = document.getElementById('grid');
   if(grid) grid.className = 'cards-grid view-'+n;
   // Botones activos
-  ['1','2col','3col'].forEach(v=>{
+  ['1','2col','3col','semana'].forEach(v=>{
     const btn=document.getElementById('vbtn-'+v);
     if(btn) btn.classList.toggle('active', v===String(n));
   });
@@ -2268,6 +2268,11 @@ function renderCopyBar(){ /* eliminado — usar modal copiar */ }
 function renderCards(){
   const grid=document.getElementById('grid'); grid.innerHTML='';
   grid.className='cards-grid view-'+vistaActual;
+  if(vistaActual==='semana'){
+    renderCardsSemana(grid);
+    initDrag();
+    return;
+  }
   if(eqF==='1ER EQUIPO'){
     grid.appendChild(buildCardPrimerEquipo());
   } else if(vistaActual==='2col' || vistaActual==='3col'){
@@ -2280,6 +2285,39 @@ function renderCards(){
   }
   initDrag();
   requestAnimationFrame(equalizarCards);
+}
+
+function renderCardsSemana(grid){
+  const hoy = new Date();
+  DIAS.forEach(d => {
+    const col = document.createElement('div');
+    col.className = 'semana-col';
+
+    // Header del día
+    const hdr = document.createElement('div');
+    const fechaStr = FECHAS[d] || '';
+    const esHoy = (()=>{
+      const [dd,mm] = (fechaStr||'').split('/');
+      return dd && mm &&
+        parseInt(dd)===hoy.getDate() &&
+        parseInt(mm)===(hoy.getMonth()+1);
+    })();
+    hdr.className = 'semana-col-hdr' + (esHoy ? ' dia-hoy' : '');
+    hdr.textContent = d + (fechaStr ? '  ' + fechaStr : '');
+    col.appendChild(hdr);
+
+    // Cards de cada equipo para ese día
+    const diaOrig = dia; // guardar día activo
+    dia = d;             // cambiar globalmente para que buildCard use este día
+    const lista = eqF==='TODOS' ? EQUIPOS : [eqF];
+    lista.forEach(eq => {
+      const card = buildCard(eq);
+      col.appendChild(card);
+    });
+    dia = diaOrig;       // restaurar día activo
+
+    grid.appendChild(col);
+  });
 }
 function buildCard(eq){
   const d=data[dia][eq];
