@@ -1372,3 +1372,74 @@ body.dark .app-footer-maestro{
 
 /* === Footer MAESTRO (sobre el #bottom-nav, minimalista) === */
 /* No lo añadimos porque #bottom-nav ocupa el bottom fixed. */
+
+/* ══════════════════════════════════════════════════
+   VISTA SEMANA — scroll horizontal, columnas por día
+   ══════════════════════════════════════════════════ */
+.cards-grid.view-semana {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 8px;
+  min-height: calc(100vh - 160px);
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.semana-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 220px;
+  scroll-snap-align: start;
+}
+
+.semana-col-hdr {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--rm-blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 0;
+  border-radius: 6px 6px 0 0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.semana-col-hdr.dia-hoy {
+  background: var(--rm-gold, #c9a227);
+  color: #000;
+}
+
+/* Campo más compacto en vista semana */
+.cards-grid.view-semana .campo-wrap {
+  padding-bottom: 75% !important;
+}
+
+/* Cards más compactas */
+.cards-grid.view-semana .card-eq {
+  width: 100%;
+  font-size: 10px;
+}
+
+.cards-grid.view-semana .cf {
+  font-size: 8px;
+  padding: 1px 4px;
+}
+
+@media (max-width: 767px) {
+  .cards-grid.view-semana {
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow-x: hidden;
+  }
+  .semana-col { width: 100%; }
+  .cards-grid.view-semana .campo-wrap { padding-bottom: 118% !important; }
+}
