@@ -62,6 +62,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
   padding-right:env(safe-area-inset-right,0);
   transition:background var(--tr);
 }
+/* Vista semana: permitir scroll horizontal */
+body:has(.cards-grid.view-semana) #app-wrap {
+  overflow-x: visible;
+}
 /* ── Tablet (≥768px): 2 cols fijo, botones vista ocultos ── */
 @media(min-width:768px){
   #app-wrap{ max-width:900px; }
@@ -1383,20 +1387,33 @@ body.dark .app-footer-maestro{
   align-items: flex-start;
   gap: 6px;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: auto;
   padding: 8px;
-  min-height: calc(100vh - 160px);
+  height: calc(100vh - 120px);
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
+  position: sticky;
+  top: 0;
 }
 
 .semana-col {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 16px;
   flex-shrink: 0;
   width: 680px;
   scroll-snap-align: start;
+  padding-right: 12px;
+  border-right: 1px solid rgba(0,0,0,.08);
+}
+
+.semana-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.10);
 }
 
 .semana-col-hdr {
