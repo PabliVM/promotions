@@ -51,12 +51,6 @@ let rivales     = {}; // rivales[dia][eq] = 'Nombre rival'
 let tipoPartido  = {}; // tipoPartido[dia][eq] = key del tipo
 // Configuración de tipos por equipo — editable por el usuario
 // { key, label, color (hex), esUYL? }
-const TIPOS_BASE = [
-  {k:'liga',    l:'🏆 Liga',         c:'#3b82f6'},
-  {k:'amistoso',l:'🤝 Amistoso',     c:'#6b7280'},
-  {k:'copa',    l:'🏅 Copa',         c:'#f59e0b'},
-  {k:'torneo',  l:'🎯 Torneo',       c:'#8b5cf6'},
-];
 // tiposConfig[eq] = [{k,l,c,uyl?}] — null = usar base
 let tiposConfig = {};
 // Inicializar con valores por equipo
@@ -84,7 +78,6 @@ const key    = (d,e,n) => d+'|'+e+'|'+n;
 const getPos = (d,e,n,i) => pos[key(d,e,n)] || POS_DEF[i%POS_DEF.length] || [50,50];
 const savePos= (d,e,n,t,l) => pos[key(d,e,n)] = [clamp(t,0,100), clamp(l,0,100)];
 // Zona del área (portero) — viewBox 0 0 100 118 — portero a partir de top 85%
-const AREA_Y = 82;  // portero = top > 82% (rombo: 84%, 90%, 96%)
 function esPortero(eq,nombre,i){
   const [t,l]=getPos(dia,eq,nombre,i);
   return t>84 && l>=24 && l<=76;
