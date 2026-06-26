@@ -2271,6 +2271,7 @@ function renderCards(){
   if(vistaActual==='semana'){
     renderCardsSemana(grid);
     initDrag();
+    requestAnimationFrame(() => igualarZonasSemana(grid));
     return;
   }
   if(eqF==='1ER EQUIPO'){
@@ -2285,6 +2286,45 @@ function renderCards(){
   }
   initDrag();
   requestAnimationFrame(equalizarCards);
+}
+
+function igualarZonasSemana(grid){
+  const rows = grid.querySelectorAll('.semana-tr-eq');
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('.semana-td-card');
+    // Igualar altura de zona-disponibles
+    cells.forEach(td => {
+      const z = td.querySelector('.zona-disponibles');
+      if(z) z.style.minHeight = '';
+    });
+    let maxDisp = 0;
+    cells.forEach(td => {
+      const z = td.querySelector('.zona-disponibles');
+      if(z) maxDisp = Math.max(maxDisp, z.scrollHeight);
+    });
+    if(maxDisp > 0){
+      cells.forEach(td => {
+        const z = td.querySelector('.zona-disponibles');
+        if(z) z.style.minHeight = maxDisp + 'px';
+      });
+    }
+    // Igualar altura de cols-estado
+    cells.forEach(td => {
+      const c = td.querySelector('.cols-estado');
+      if(c) c.style.minHeight = '';
+    });
+    let maxCols = 0;
+    cells.forEach(td => {
+      const c = td.querySelector('.cols-estado');
+      if(c) maxCols = Math.max(maxCols, c.scrollHeight);
+    });
+    if(maxCols > 0){
+      cells.forEach(td => {
+        const c = td.querySelector('.cols-estado');
+        if(c) c.style.minHeight = maxCols + 'px';
+      });
+    }
+  });
 }
 
 function renderCardsSemana(grid){
