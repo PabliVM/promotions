@@ -2291,43 +2291,36 @@ function renderCardsSemana(grid){
   const hoy = new Date();
   const lista = eqF==='TODOS' ? EQUIPOS : [eqF];
 
-  // Una columna por día
-  DIAS.forEach(d => {
-    const fechaStr = FECHAS[d] || '';
-    const esHoy = (()=>{
-      const [dd,mm] = (fechaStr||'').split('/');
-      return dd && mm &&
-        parseInt(dd)===hoy.getDate() &&
-        parseInt(mm)===(hoy.getMonth()+1);
-    })();
-    const [dd2,mm2] = (fechaStr||'').split('/');
-    const aaStr = String(hoy.getFullYear()).slice(2);
-    const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
+  // Una fila por equipo, una columna por día (scroll horizontal)
+  lista.forEach(eq => {
+    const row = document.createElement('div');
+    row.className = 'semana-eq-row';
 
-    const col = document.createElement('div');
-    col.className = 'semana-col';
+    DIAS.forEach(d => {
+      const fechaStr = FECHAS[d] || '';
+      const esHoy = (()=>{
+        const [dd,mm] = (fechaStr||'').split('/');
+        return dd && mm &&
+          parseInt(dd)===hoy.getDate() &&
+          parseInt(mm)===(hoy.getMonth()+1);
+      })();
+      const [dd2,mm2] = (fechaStr||'').split('/');
+      const aaStr = String(hoy.getFullYear()).slice(2);
+      const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
 
-    const diaOrig = dia;
-    dia = d;
-
-    lista.forEach(eq => {
-      const wrap = document.createElement('div');
-      wrap.className = 'semana-card-wrap';
-
-      // Inyectar fecha en el card-hdr después de buildCard
+      const diaOrig = dia;
+      dia = d;
       const card = buildCard(eq);
+      dia = diaOrig;
 
-      // Añadir día + fecha debajo del nombre del equipo
       const nm = card.querySelector('.card-hdr-name');
       if(nm){
-        // Guardar contenido actual y envolverlo en span
         const nombreHtml = nm.innerHTML;
         nm.innerHTML = '';
         const nombreSpan = document.createElement('span');
         nombreSpan.className = 'card-hdr-nombre-txt';
         nombreSpan.innerHTML = nombreHtml;
         nm.appendChild(nombreSpan);
-        // Añadir fecha debajo
         const fechaSpan = document.createElement('span');
         fechaSpan.className = 'card-hdr-fecha';
         fechaSpan.textContent = d + ' ' + fechaFmt;
@@ -2335,12 +2328,13 @@ function renderCardsSemana(grid){
         nm.appendChild(fechaSpan);
       }
 
+      const wrap = document.createElement('div');
+      wrap.className = 'semana-card-wrap';
       wrap.appendChild(card);
-      col.appendChild(wrap);
+      row.appendChild(wrap);
     });
 
-    dia = diaOrig;
-    grid.appendChild(col);
+    grid.appendChild(row);
   });
 }
 function buildCard(eq){
