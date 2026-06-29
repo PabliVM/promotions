@@ -370,14 +370,7 @@ function capturarCampo(eq, card){
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
     ctx.fillText(fechaFmt, 16, HEADER_H/2 + 8);
-    // Escudo arriba derecha en header
-    const _shieldHdr = cWrap.querySelector('.campo-shield');
-    if(_shieldHdr && _shieldHdr.src){
-      const _sh = HEADER_H - 12;
-      ctx.save();
-      ctx.drawImage(_shieldHdr, W - 16 - _sh, 6, _sh, _sh);
-      ctx.restore();
-    }
+    // Sin escudo en header (evitar fondo negro por transparencia)
     // Campo capturado
     ctx.drawImage(fieldCanvas, 0, HEADER_H, W, FIELD_H);
     function dibujarColumnas(){
@@ -388,7 +381,7 @@ function capturarCampo(eq, card){
       colDefs.push({ label: colN[0], items: proms, color:'#7c3aed', destinos: promoInfoEq });
       colDefs.push({ label: colN[1], items: lesion, color:'#dc2626' });
       colDefs.push({ label: colN[2], items: otros, color:'#6b7280' });
-      if(extra.length) colDefs.push({ label: colN[3]||'EXTRA', items: extra, color:'#0070C0' });
+      if(extra && extra.length) colDefs.push({ label: colN[3]||colNames[eq]?.[3]||'EXTRA', items: extra, color:'#7c3aed' });
       const cW = Math.floor(W / colDefs.length);
       colDefs.forEach((col, ci)=>{
         const cx = ci * cW;
