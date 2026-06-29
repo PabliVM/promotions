@@ -185,110 +185,116 @@ body:has(.cards-grid.view-semana) #app-wrap {
 /* Modal temporada */
 #season-modal{
   position:fixed;inset:0;z-index:10100;
-  background:rgba(0,0,0,.7);
-  display:none;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.4);
+  display:none;align-items:center;justify-content:center;
   backdrop-filter:blur(4px);
+  padding:20px;
 }
 #season-modal.open{display:flex;}
 #season-box{
-  width:100%;max-width:480px;
-  background:#111827;
-  border-radius:20px 20px 0 0;
-  border:1px solid rgba(255,255,255,.1);
-  padding:0 0 calc(16px + env(safe-area-inset-bottom,0px));
+  width:100%;max-width:400px;
+  background:#fff;
+  border-radius:16px;
+  border:none;
+  padding:0;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);
+  overflow:hidden;
 }
 #season-box-hdr{
   display:flex;align-items:center;justify-content:space-between;
-  padding:16px 20px 12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  padding:14px 18px 12px;
+  background:#2563eb;
 }
 #season-box-title{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:16px;font-weight:900;
-  text-transform:uppercase;letter-spacing:.8px;color:#fff;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:15px;font-weight:700;
+  color:#fff;letter-spacing:0;
 }
 #season-box-close{
   background:none;border:none;cursor:pointer;
-  color:rgba(255,255,255,.5);font-size:20px;line-height:1;padding:4px;
+  color:rgba(255,255,255,.8);font-size:20px;line-height:1;padding:4px;
 }
+#season-box-close:hover{color:#fff;}
 .season-row{
   display:flex;align-items:center;justify-content:space-between;
-  padding:14px 20px;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:12px 18px;
+  border-bottom:1px solid #f0f4fa;
   cursor:pointer;transition:background .12s;
 }
-.season-row:hover{background:rgba(255,255,255,.04);}
-.season-row.active{background:rgba(26,58,140,.3);}
+.season-row:hover{background:#f8fafd;}
+.season-row.active{background:rgba(37,99,235,.06);}
 .season-row-name{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:15px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.4px;color:#fff;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:14px;font-weight:600;
+  color:#1a1d23;letter-spacing:0;
 }
 .season-row-meta{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:10px;font-weight:400;
-  color:rgba(255,255,255,.35);
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:11px;font-weight:400;
+  color:#9ca3af;
 }
 .season-row-badge{
-  font-family:'Barlow Condensed',sans-serif;
+  font-family:'Segoe UI',-apple-system,sans-serif;
   font-size:10px;font-weight:700;
-  color:var(--rm-gold);
-  background:rgba(200,168,0,.1);
-  padding:2px 8px;border-radius:10px;
-  border:1px solid rgba(200,168,0,.3);
+  color:#2563eb;
+  background:rgba(37,99,235,.08);
+  padding:2px 10px;border-radius:20px;
+  border:1px solid rgba(37,99,235,.2);
 }
 #season-new-btn{
-  margin:12px 20px 0;width:calc(100% - 40px);
-  padding:11px;border-radius:12px;border:none;cursor:pointer;
-  background:var(--rm-blue,#1a3a8c);color:#fff;
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:13px;font-weight:800;
-  text-transform:uppercase;letter-spacing:.6px;
+  margin:12px 18px;width:calc(100% - 36px);
+  padding:10px;border-radius:20px;border:none;cursor:pointer;
+  background:#2563eb;color:#fff;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:13px;font-weight:600;
   transition:background .15s;
 }
-#season-new-btn:hover{background:#1e4aaa;}
+#season-new-btn:hover{background:#1d4ed8;}
+
 /* Confirmación ascenso */
 #ascenso-modal{
   position:fixed;inset:0;z-index:10200;
-  background:rgba(0,0,0,.75);
+  background:rgba(0,0,0,.4);
   display:none;align-items:center;justify-content:center;
   padding:20px;backdrop-filter:blur(4px);
 }
 #ascenso-modal.open{display:flex;}
 #ascenso-box{
-  background:#111827;border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
+  background:#fff;border-radius:16px;
+  border:none;
   width:100%;max-width:360px;padding:20px;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);
 }
 #ascenso-title{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:18px;font-weight:900;
-  text-transform:uppercase;letter-spacing:.6px;
-  color:#fff;margin-bottom:8px;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:16px;font-weight:700;
+  color:#1a1d23;margin-bottom:8px;
 }
 #ascenso-body{
-  font-family:var(--font);
-  font-size:13px;color:rgba(255,255,255,.6);
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:13px;color:#5a6170;
   line-height:1.5;margin-bottom:16px;
 }
 .ascenso-equipo-row{
   display:flex;align-items:center;gap:10px;
   padding:8px 10px;border-radius:8px;
-  background:rgba(255,255,255,.04);
+  background:#f8fafd;border:1px solid #e8eef8;
   margin-bottom:6px;
-  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
-  text-transform:uppercase;color:rgba(255,255,255,.7);
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:12px;font-weight:600;
+  color:#374151;
 }
-.ascenso-arrow{color:var(--rm-gold);font-size:14px;}
+.ascenso-arrow{color:#2563eb;font-size:14px;}
 .ascenso-btns{display:flex;gap:8px;margin-top:16px;}
 .ascenso-btn{
-  flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;
-  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;
-  text-transform:uppercase;letter-spacing:.4px;transition:all .15s;
+  flex:1;padding:10px;border-radius:20px;border:none;cursor:pointer;
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:12px;font-weight:700;
+  transition:all .15s;
 }
-.ascenso-btn.cancel{background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);}
-.ascenso-btn.confirm{background:var(--rm-blue,#1a3a8c);color:#fff;}
-.hdr-icon-btn{
+.ascenso-btn.cancel{background:#f0f4fa;color:#5a6170;border:1px solid #dfe1e6;}
+.ascenso-btn.cancel:hover{background:#e2e8f0;}
+.ascenso-btn.confirm{background:#2563eb;color:#fff;}
+.ascenso-btn.confirm:hover{background:#1d4ed8;}
+
   width:36px;height:36px;border-radius:10px;
   border:1px solid rgba(255,255,255,.1);
   background:rgba(255,255,255,.05);
@@ -758,9 +764,10 @@ body:has(.cards-grid.view-semana) #app-wrap {
 #foto-multi-cancel{flex:1;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.6);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 #foto-multi-ok{flex:2;padding:13px;border-radius:12px;border:none;background:#C8A800;color:#000;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;cursor:pointer;}
 /* ── MODAL COPIAR ── */
-#copy-modal-overlay{position:fixed;inset:0;z-index:10015;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+#copy-modal-overlay{position:fixed;inset:0;z-index:10015;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
 #copy-modal-overlay.open{display:flex;}
-#copy-modal{background:#fff;border-radius:16px 16px 0 0;padding:20px 18px 32px;width:100%;max-width:520px;border-top:3px solid #2563eb;box-shadow:0 -4px 24px rgba(0,0,0,.1);}
+#copy-modal{background:#fff;border-radius:16px;padding:20px 20px 24px;width:100%;max-width:520px;border-top:3px solid #2563eb;box-shadow:0 8px 32px rgba(0,0,0,.15);}
+.copy-dias-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
 #copy-modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
 #copy-modal-hdr span{font-family:'Segoe UI',-apple-system,sans-serif;font-size:16px;font-weight:700;color:#1a1d23;letter-spacing:0;}
 #copy-modal-hdr button{background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;padding:4px;}
