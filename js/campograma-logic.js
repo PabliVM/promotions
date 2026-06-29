@@ -1472,7 +1472,7 @@ let _lastManualTS = null;
 function buildPayload(manualSave=false){
   if(manualSave) _lastManualTS = new Date().toISOString();
   return {
-    data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,
+    data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,notas:window._notasData||{},
     modoUYL, listaUYL, listaUYLExcl: window.listaUYLExcl||[], tipoPartido, tiposConfig, modoDescanso,
     modoPartido, primerEquipoJugadores, rivales: window.rivales||{},
     ts: _lastManualTS
@@ -2667,6 +2667,24 @@ function buildCard(eq){
     cols.appendChild(col);
   });
   card.appendChild(cols);
+
+  // Bloque de notas debajo de las columnas
+  const notasKey = eq + '_' + dia + '_notas';
+  const notasWrap = mk('div', 'card-notas-wrap');
+  const notasTA = mk('textarea', 'card-notas-input');
+  notasTA.placeholder = '📝 Notas del día...';
+  notasTA.rows = 2;
+  // Cargar notas guardadas
+  if(!window._notasData) window._notasData = {};
+  notasTA.value = window._notasData[notasKey] || '';
+  notasTA.oninput = () => {
+    window._notasData[notasKey] = notasTA.value;
+    autoGuardar();
+  };
+  notasTA.onkeydown = e => e.stopPropagation();
+  notasWrap.appendChild(notasTA);
+  card.appendChild(notasWrap);
+
   return card;
 }
 // Formatea nombre en 2 líneas para chips de campo (cf)
