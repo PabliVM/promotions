@@ -677,8 +677,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Cargar plantillas Firebase cuando esté listo
   window.addEventListener('firebase-ready', ()=>{
     if(window._fbPlantillas){
-      // Solo usar si no hay datos en localStorage
-      const hayLocal = localStorage.getItem('rm_cantera_v2');
+      // Firebase es la única fuente de verdad
+      const hayLocal = false; // localStorage desactivado
       if(!hayLocal){
         Object.assign(plantillas, window._fbPlantillas);
         if(window._fbOrigen) Object.assign(origen, window._fbOrigen);
@@ -1485,7 +1485,7 @@ function autoGuardar(){
   _autoSaveTimer=setTimeout(()=>{
     try{
       const payload=buildPayload(false);
-      localStorage.setItem(LS_KEY, JSON.stringify(payload));
+      // localStorage desactivado — solo Firebase
       // Sync Firebase — siempre en sesión 'principal'
       if(window._fbReady){
         if(!_fbSesionActiva) _fbSesionActiva = 'principal';
@@ -1502,7 +1502,7 @@ let _fbSesionActiva = null; // nombre de la sesión Firebase activa
 function guardarManual(){
   try{
     const payload=buildPayload(true);  // true → guarda timestamp ahora
-    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+    // localStorage desactivado
     // Si hay sesión Firebase activa, guardar también en la nube
     if(window._fbReady){
       if(!_fbSesionActiva) _fbSesionActiva = 'principal';
@@ -1531,15 +1531,12 @@ function guardarDia(){ guardarManual(); }
 let temporadas = [];
 let temporadaActual = null;   // id de la temporada activa
 function cargarTemporadas(){
-  try{
-    const raw = localStorage.getItem(LS_SEASONS);
-    if(raw) temporadas = JSON.parse(raw);
-    temporadaActual = localStorage.getItem(LS_CUR) || null;
-  }catch(e){ temporadas=[]; temporadaActual=null; }
+  // localStorage desactivado — temporadas vienen de Firebase
+  temporadas = [];
+  temporadaActual = null;
 }
 function guardarTemporadas(){
-  localStorage.setItem(LS_SEASONS, JSON.stringify(temporadas));
-  if(temporadaActual) localStorage.setItem(LS_CUR, temporadaActual);
+  // localStorage desactivado
 }
 // Calcular nombre siguiente temporada: "2025-26" → "2026-27"
 function siguienteNombreTemporada(actual){
@@ -1724,7 +1721,7 @@ if(!temporadaActual && temporadas.length===0){
 actualizarBadgeTemporada();
 function cargarGuardado(){
   try{
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = null; // localStorage desactivado
     if(!raw) return false;
     let payload;
     try{ payload = JSON.parse(raw); } catch(pe){ console.error('[cargarGuardado] JSON parse error:', pe); return false; }
@@ -3671,14 +3668,13 @@ function ejecutarCopia(){
         const lunesKey = _copyDiaSemanaLunes.toISOString().slice(0,10);
         const storeKey = 'campograma_semana_'+lunesKey;
         let semanaDest = {};
-        try{ semanaDest = JSON.parse(localStorage.getItem(storeKey)||'{}'); }catch(e){}
         _copyDiasDest.forEach(d=>{
           if(!semanaDest[d]) semanaDest[d]={};
           eqs.forEach(eq=>{
             semanaDest[d][eq] = JSON.parse(JSON.stringify(data[_copyDiaOrigen||dia][eq]));
           });
         });
-        localStorage.setItem(storeKey, JSON.stringify(semanaDest));
+        // localStorage desactivado
         toast('Copiado a semana '+ fechasDest['LUNES']+' – '+fechasDest['DOMINGO']);
         cerrarCopiarModal(); autoGuardar(); return;
       }
@@ -3967,7 +3963,7 @@ async function arrancarDesdeFirebase(){
       initTiposConfig();
       _fbSesionActiva = 'principal';
       // Guardar en local como caché
-      try{ localStorage.setItem(LS_KEY, JSON.stringify(payload)); }catch(e){}
+      // localStorage desactivado
       render(); renderDias(); renderEqs(); renderCards(); renderMultiEqBar();
       console.log('✅ Sesión principal cargada desde Firebase');
     } else {
