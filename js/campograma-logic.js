@@ -2546,14 +2546,14 @@ function buildCard(eq){
   };
   right.appendChild(listaBtn);
   // Botón vista lista individual
-  const listaBtn=mk('button','snap-btn');
-  listaBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
-  listaBtn.title='Vista lista';
-  listaBtn.style.cssText='padding:4px 6px;display:flex;align-items:center;justify-content:center;';
+  const listaBtn2=mk('button','snap-btn');
+  listaBtn2.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
+  listaBtn2.title='Vista lista';
+  listaBtn2.style.cssText='padding:4px 6px;display:flex;align-items:center;justify-content:center;';
   const _diaLista = dia;
-  if(esVistaLista(eq,dia)) listaBtn.style.color='#2563eb';
-  listaBtn.onclick=(e)=>{e.stopPropagation();toggleVistaListaCard(eq,_diaLista);};
-  right.appendChild(listaBtn);
+  if(esVistaLista(eq,dia)) listaBtn2.style.color='#2563eb';
+  listaBtn2.onclick=(e)=>{e.stopPropagation();toggleVistaListaCard(eq,_diaLista);};
+  right.appendChild(listaBtn2);
 
   const camBtn=mk('button','snap-btn');
   camBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>';
