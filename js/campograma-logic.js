@@ -3524,6 +3524,7 @@ let _copyTipo = 'dia'; // 'dia' | 'semana'
 let _copyDiasDest = new Set();
 let _copyDiaSemanaLunes = null; // semana destino para modo día (null = semana actual)
 let _copyEqs = new Set(EQUIPOS);
+let _copyDiaOrigen = null; // día origen seleccionado
 function abrirCopiarModal(){
   // Reset
   _copyTipo='dia';
@@ -3531,6 +3532,7 @@ function abrirCopiarModal(){
   _copyEqs=new Set(EQUIPOS);
   _copySemanaDestLunes=null;
   _copyDiaSemanaLunes=null;
+  _copyDiaOrigen = dia; // por defecto el día activo
   // Equipos
   const checksEl=document.getElementById('copy-eq-checks');
   checksEl.innerHTML='';
@@ -3539,6 +3541,22 @@ function abrirCopiarModal(){
     lbl.innerHTML=`<input type="checkbox" checked onchange="toggleCopyEq('${eq}',this.checked)"><span>${eq}</span>`;
     checksEl.appendChild(lbl);
   });
+  // Día ORIGEN
+  const origenEl = document.getElementById('copy-origen-btns');
+  if(origenEl){
+    origenEl.innerHTML='';
+    DIAS.forEach(d=>{
+      const btn=mk('button','copy-dia-btn'+(d===_copyDiaOrigen?' sel':''));
+      btn.textContent=d.slice(0,3);
+      btn.title=d;
+      btn.onclick=()=>{
+        _copyDiaOrigen=d;
+        origenEl.querySelectorAll('.copy-dia-btn').forEach(b=>b.classList.remove('sel'));
+        btn.classList.add('sel');
+      };
+      origenEl.appendChild(btn);
+    });
+  }
   // Días destino
   renderCopyDias();
   document.getElementById('ctype-dia').classList.add('active');
