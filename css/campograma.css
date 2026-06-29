@@ -454,105 +454,119 @@ body:has(.cards-grid.view-semana) #app-wrap {
 /* ── CONFIG TIPOS MODAL ── */
 #cfg-tipos-modal{
   position:fixed;inset:0;z-index:10200;
-  background:rgba(0,0,0,.75);
-  display:none;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.4);
+  display:none;align-items:flex-start;justify-content:center;
+  padding:calc(20px + env(safe-area-inset-top,0px)) 16px 24px;
   backdrop-filter:blur(4px);
+  overflow-y:auto;
 }
 #cfg-tipos-modal.open{display:flex;}
 #cfg-tipos-box{
-  width:100%;max-width:480px;
-  background:#111827;
-  border-radius:20px 20px 0 0;
-  border:1px solid rgba(255,255,255,.1);
+  width:100%;max-width:560px;
+  background:#fff;
+  border-radius:12px;
+  border:none;
   max-height:85vh;display:flex;flex-direction:column;
-  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 8px 32px rgba(0,0,0,.15);
+  overflow:hidden;
+  padding-bottom:12px;
 }
 #cfg-tipos-hdr{
   display:flex;align-items:center;justify-content:space-between;
-  padding:16px 20px 12px;
-  border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;
+  padding:14px 20px;
+  background:#2563eb;
+  flex-shrink:0;
 }
 #cfg-tipos-title{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:15px;font-weight:900;
-  text-transform:uppercase;letter-spacing:.8px;color:#fff;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:15px;font-weight:700;
+  color:#fff;letter-spacing:0;
 }
 #cfg-tipos-close{
   background:none;border:none;cursor:pointer;
-  color:rgba(255,255,255,.5);font-size:20px;line-height:1;padding:4px;
+  color:rgba(255,255,255,.8);font-size:20px;line-height:1;padding:4px;
 }
+#cfg-tipos-close:hover{color:#fff;}
 #cfg-tipos-eq-strip{
-  display:flex;gap:6px;padding:12px 20px 8px;overflow-x:auto;
+  display:flex;gap:6px;padding:12px 16px 8px;overflow-x:auto;
   scrollbar-width:none;flex-shrink:0;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid #e8eef8;
+  background:#f8fafd;
 }
 #cfg-tipos-eq-strip::-webkit-scrollbar{display:none;}
 .cfg-eq-btn{
-  padding:5px 12px;border-radius:20px;white-space:nowrap;
-  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.4px;
-  border:1px solid rgba(255,255,255,.12);background:transparent;
-  color:rgba(255,255,255,.45);cursor:pointer;transition:all .15s;
+  padding:4px 12px;border-radius:20px;white-space:nowrap;
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:11px;font-weight:600;
+  text-transform:none;letter-spacing:0;
+  border:1.5px solid #dfe1e6;background:#fff;
+  color:#5a6170;cursor:pointer;transition:all .15s;
 }
 .cfg-eq-btn.active{
-  background:rgba(26,58,140,.4);border-color:#3b82f6;color:#fff;
+  background:rgba(37,99,235,.08);border-color:#2563eb;color:#2563eb;
 }
 #cfg-tipos-list{overflow-y:auto;flex:1;padding:8px 12px;}
 .cfg-tipo-row{
   display:flex;align-items:center;gap:10px;
-  padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.05);
+  padding:10px 8px;border-bottom:1px solid #f0f4fa;
   border-radius:8px;
 }
 .cfg-tipo-color{
-  width:10px;height:10px;border-radius:50%;flex-shrink:0;
+  width:12px;height:12px;border-radius:50%;flex-shrink:0;
 }
 .cfg-tipo-label{
   flex:1;
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
-  color:#f9fafb;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:13px;font-weight:600;
+  color:#1a1d23;
 }
 .cfg-tipo-del{
   background:none;border:none;cursor:pointer;
-  color:rgba(255,255,255,.25);font-size:16px;padding:2px 6px;
+  color:#d1d9e6;font-size:16px;padding:2px 6px;
   transition:color .15s;
 }
-.cfg-tipo-del:hover{color:var(--rojo,#ef4444);}
+.cfg-tipo-del:hover{color:#ef4444;}
 #cfg-tipo-add-row{
-  display:flex;gap:8px;padding:10px 12px 4px;flex-shrink:0;
-  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;gap:8px;padding:10px 16px 4px;flex-shrink:0;
+  border-top:1px solid #e8eef8;
 }
 #cfg-tipo-new-label{
   flex:1;padding:8px 12px;
-  border:1px solid rgba(255,255,255,.12);border-radius:20px;
-  background:rgba(255,255,255,.05);color:#f9fafb;
-  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.4px;outline:none;
+  border:1.5px solid #dfe1e6;border-radius:20px;
+  background:#f8fafd;color:#1a1d23;
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:12px;font-weight:500;
+  text-transform:none;letter-spacing:0;outline:none;
 }
-#cfg-tipo-new-label::placeholder{color:rgba(255,255,255,.25);font-weight:400;text-transform:none;}
+#cfg-tipo-new-label::placeholder{color:#9ca3af;}
+#cfg-tipo-new-label:focus{border-color:#2563eb;}
 #cfg-tipo-new-color{
   width:36px;height:36px;border-radius:50%;border:none;
   cursor:pointer;padding:2px;background:transparent;
 }
 #cfg-tipo-add-btn{
   padding:8px 16px;border-radius:20px;border:none;cursor:pointer;
-  background:#3b82f6;color:#fff;
-  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;
-  text-transform:uppercase;letter-spacing:.4px;
+  background:#2563eb;color:#fff;
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:12px;font-weight:600;
+  text-transform:none;letter-spacing:0;
 }
+#cfg-tipo-add-btn:hover{background:#1d4ed8;}
 #cfg-tipos-footer{
-  padding:10px 20px 0;display:flex;gap:8px;flex-shrink:0;
+  padding:10px 16px 0;display:flex;gap:8px;flex-shrink:0;
 }
 #cfg-tipos-reset{
-  padding:9px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.12);
-  background:transparent;color:rgba(255,255,255,.5);
-  font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;
-  text-transform:uppercase;cursor:pointer;
+  padding:9px 16px;border-radius:20px;border:1.5px solid #dfe1e6;
+  background:#fff;color:#5a6170;
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:11px;font-weight:600;
+  text-transform:none;cursor:pointer;
 }
+#cfg-tipos-reset:hover{background:#f0f4fa;}
 #cfg-tipos-save{
   flex:1;padding:9px;border-radius:20px;border:none;cursor:pointer;
-  background:#1a3a8c;color:#fff;
-  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;
+  background:#2563eb;color:#fff;
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:12px;font-weight:700;
+  text-transform:none;letter-spacing:0;
+}
+#cfg-tipos-save:hover{background:#1d4ed8;}
+
   text-transform:uppercase;letter-spacing:.4px;
 }
 /* ── UYL BADGE ── */
