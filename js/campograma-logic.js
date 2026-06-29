@@ -2265,6 +2265,81 @@ function renderEqs(){
   w.appendChild(b1);
 }
 function renderCopyBar(){ /* eliminado — usar modal copiar */ }
+
+// ══════════════════════════════════════════════════
+// VISTA LISTA — alternativa al campo
+// ══════════════════════════════════════════════════
+let _vistaListaGlobal = false;
+const _vistaListaCards = new Set(); // cards individuales en modo lista
+
+function toggleVistaListaGlobal(){
+  _vistaListaGlobal = !_vistaListaGlobal;
+  const btn = document.getElementById('btn-vista-lista-global');
+  if(btn){
+    btn.style.background = _vistaListaGlobal ? 'rgba(37,99,235,.08)' : '';
+    btn.style.borderColor = _vistaListaGlobal ? '#2563eb' : '';
+    btn.style.color = _vistaListaGlobal ? '#2563eb' : '';
+  }
+  renderCards();
+  if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+}
+
+function toggleVistaListaCard(eq, d){
+  const key = eq+'_'+d;
+  if(_vistaListaCards.has(key)) _vistaListaCards.delete(key);
+  else _vistaListaCards.add(key);
+  renderCards();
+  if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+}
+
+function esVistaLista(eq, d){
+  return _vistaListaGlobal || _vistaListaCards.has(eq+'_'+(d||dia));
+}
+
+function buildListaView(eq, d){
+  const diaKey = d || dia;
+  const eqData = data[diaKey][eq] || {};
+  const wrap = mk('div','card-lista-wrap');
+
+  const zonas = [
+    { key:'campo',          label:'EN EL CAMPO',  color:'#2563eb' },
+    { key:'banquillo',      label:'BANQUILLO',     color:'#d97706' },
+    { key:'disponibles',    label:'DISPONIBLES',   color:'#16a34a' },
+    { key:'promovidos_1er', label:'PROMOCIÓN',     color:'#d97706' },
+    { key:'lesionados',     label:'LESIÓN',        color:'#dc2626' },
+    { key:'otros',          label:'OTROS',         color:'#6b7280' },
+    { key:'extra',          label:colNames[eq]?.[3]||'EXTRA', color:'#7c3aed' },
+  ];
+
+  zonas.forEach(({key, label, color}) => {
+    const jugadores = eqData[key] || [];
+    if(!jugadores.length) return;
+
+    const seccion = mk('div','card-lista-seccion');
+    const lbl = mk('div','card-lista-lbl');
+    lbl.textContent = label;
+    lbl.style.color = color;
+    lbl.style.borderLeftColor = color;
+    seccion.appendChild(lbl);
+
+    jugadores.forEach(nombre => {
+      const row = mk('div','card-lista-row');
+      row.textContent = nombre;
+      seccion.appendChild(row);
+    });
+
+    wrap.appendChild(seccion);
+  });
+
+  if(!wrap.children.length){
+    const empty = mk('div','card-lista-empty');
+    empty.textContent = 'Sin jugadores';
+    wrap.appendChild(empty);
+  }
+
+  return wrap;
+}
+
 function renderCards(){
   const grid=document.getElementById('grid'); grid.innerHTML='';
   grid.className='cards-grid view-'+vistaActual;
@@ -2470,6 +2545,16 @@ function buildCard(eq){
     }
   };
   right.appendChild(listaBtn);
+  // Botón vista lista individual
+  const listaBtn=mk('button','snap-btn');
+  listaBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
+  listaBtn.title='Vista lista';
+  listaBtn.style.cssText='padding:4px 6px;display:flex;align-items:center;justify-content:center;';
+  const _diaLista = dia;
+  if(esVistaLista(eq,dia)) listaBtn.style.color='#2563eb';
+  listaBtn.onclick=(e)=>{e.stopPropagation();toggleVistaListaCard(eq,_diaLista);};
+  right.appendChild(listaBtn);
+
   const camBtn=mk('button','snap-btn');
   camBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>';
   camBtn.title='Capturar imagen del campo';
@@ -2557,7 +2642,13 @@ function buildCard(eq){
   } else {
     card.classList.remove('en-descanso');
   }
-  card.appendChild(cWrap);
+  // Vista lista: reemplazar campo por listado de jugadores
+  if(esVistaLista(eq, dia)){
+    const lista = buildListaView(eq, dia);
+    card.appendChild(lista);
+  } else {
+    card.appendChild(cWrap);
+  }
   // Banquillo (solo en modo partido, justo debajo del campo)
   if(esPartido(eq)){
     const zBanq=mk('div','zona-banquillo dz');
