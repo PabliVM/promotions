@@ -1501,7 +1501,7 @@ body.dark .app-footer-maestro{
 
 /* Vista semana — campo proporcional al ancho */
 .semana-td-card .campo-wrap {
-  padding-bottom: 110% !important;
+  padding-bottom: 118% !important;
   height: auto !important;
 }
 
