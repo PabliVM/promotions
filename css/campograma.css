@@ -1499,9 +1499,10 @@ body.dark .app-footer-maestro{
 
 .semana-col-hdr { display: none; }
 
-/* Vista semana — campo y zonas */
-.cards-grid.view-semana .campo-wrap {
-  padding-bottom: 100% !important;
+/* Vista semana — campo altura fija */
+.semana-td-card .campo-wrap {
+  padding-bottom: 0 !important;
+  height: 420px !important;
 }
 
 /* Zonas visibles en vista semana pero más compactas */
