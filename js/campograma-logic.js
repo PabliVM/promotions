@@ -2089,6 +2089,8 @@ function renderDias(){
     iniEl.textContent = lunes  || '—';
     finEl.textContent = domingo|| '—';
   }
+  const subLbl = document.getElementById('sub-semana-lbl');
+  if(subLbl) subLbl.textContent = (lunes && domingo) ? lunes + ' – ' + domingo : 'Semana';
   document.getElementById('top-semana-lbl').textContent =
     lunes ? lunes + ' – ' + domingo : 'Semana';
   // Días strip
