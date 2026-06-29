@@ -1551,7 +1551,7 @@ function siguienteNombreTemporada(actual){
 function actualizarBadgeTemporada(){
   const t = temporadas.find(t=>t.id===temporadaActual);
   const lbl = document.getElementById('season-label');
-  if(lbl) lbl.textContent = t ? t.nombre : '2025-26';
+  if(lbl) lbl.textContent = t ? t.nombre : '2026-27';
 }
 // ── Modal de selección ──
 function abrirSeasonModal(){
@@ -1573,7 +1573,7 @@ function abrirSeasonModal(){
     list.appendChild(row);
   });
   if(!temporadas.length){
-    list.innerHTML = '<div style="padding:16px 20px;font-family:Barlow Condensed,sans-serif;font-size:12px;color:rgba(255,255,255,.3);text-transform:uppercase;">Sin temporadas guardadas aún</div>';
+    list.innerHTML = '<div style="padding:16px 20px;font-family:Segoe UI,sans-serif;font-size:12px;color:#9ca3af;">Sin temporadas guardadas aún</div>';
   }
   document.getElementById('season-modal').classList.add('open');
 }
@@ -1613,7 +1613,7 @@ function nuevaTemporada(){
   document.getElementById('season-modal').classList.remove('open');
   // Calcular nombre sugerido
   const actual = temporadas.find(t=>t.id===temporadaActual);
-  const nombreActual = actual ? actual.nombre : '2025-26';
+  const nombreActual = actual ? actual.nombre : '2026-27';
   const nombreNuevo  = siguienteNombreTemporada(nombreActual);
   // Construir vista previa de ascenso
   const ascensoVista = JERARQUIA.map(eq=>{
