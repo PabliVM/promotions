@@ -2292,11 +2292,34 @@ function igualarZonasSemana(grid){
   const rows = grid.querySelectorAll('.semana-tr-eq');
   rows.forEach(tr => {
     const cells = tr.querySelectorAll('.semana-td-card');
-    // Igualar altura de zona-disponibles
+
+    // Reset alturas previas
     cells.forEach(td => {
       const z = td.querySelector('.zona-disponibles');
+      const c = td.querySelector('.cols-estado');
+      const cw = td.querySelector('.campo-wrap');
       if(z) z.style.minHeight = '';
+      if(c) c.style.minHeight = '';
+      if(cw) cw.style.paddingBottom = '';
     });
+
+    // Igualar campo-wrap: todos a la misma altura que el más alto
+    let maxCampo = 0;
+    cells.forEach(td => {
+      const cw = td.querySelector('.campo-wrap');
+      if(cw) maxCampo = Math.max(maxCampo, cw.offsetHeight);
+    });
+    if(maxCampo > 0){
+      cells.forEach(td => {
+        const cw = td.querySelector('.campo-wrap');
+        if(cw){
+          const w = cw.offsetWidth;
+          if(w > 0) cw.style.paddingBottom = (maxCampo / w * 100) + '%';
+        }
+      });
+    }
+
+    // Igualar zona-disponibles
     let maxDisp = 0;
     cells.forEach(td => {
       const z = td.querySelector('.zona-disponibles');
@@ -2308,11 +2331,8 @@ function igualarZonasSemana(grid){
         if(z) z.style.minHeight = maxDisp + 'px';
       });
     }
-    // Igualar altura de cols-estado
-    cells.forEach(td => {
-      const c = td.querySelector('.cols-estado');
-      if(c) c.style.minHeight = '';
-    });
+
+    // Igualar cols-estado
     let maxCols = 0;
     cells.forEach(td => {
       const c = td.querySelector('.cols-estado');
@@ -2973,6 +2993,7 @@ function togglePartido(eq){
   modoPartido[dia][eq] = !modoPartido[dia][eq];
   autoGuardar();
   renderCards();
+  if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
 }
 function esPartido(eq){
   return !!(modoPartido[dia]?.[eq]);
