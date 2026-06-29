@@ -1883,3 +1883,57 @@ body.dark .card-notas-input { background: #0d1117; border-color: #30363d; color:
 .semana-td-card .card {
   background: #fff;
 }
+
+/* ══════════════════════════════════════════════════
+   VISTA LISTA — alternativa al campo
+   ══════════════════════════════════════════════════ */
+.card-lista-wrap {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 200px;
+  background: #fff;
+  flex: 1;
+}
+
+.card-lista-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.card-lista-lbl {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 2px 0 4px 8px;
+  border-left: 3px solid currentColor;
+  margin-bottom: 2px;
+}
+
+.card-lista-row {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1d23;
+  padding: 4px 8px;
+  background: #f8fafd;
+  border-radius: 6px;
+  border: 1px solid #e8eef8;
+  text-transform: uppercase;
+  letter-spacing: .2px;
+}
+
+.card-lista-empty {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 32px 0;
+}
+
+body.dark .card-lista-wrap { background: #161b22; }
+body.dark .card-lista-row { background: #0d1117; border-color: #30363d; color: #e6edf3; }
