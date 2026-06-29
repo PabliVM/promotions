@@ -3561,7 +3561,8 @@ function abrirCopiarModal(){
   renderCopyDias();
   document.getElementById('ctype-dia').classList.add('active');
   document.getElementById('ctype-semana').classList.remove('active');
-  document.getElementById('copy-dia-sel').style.display='block';
+  const _cdsel = document.getElementById('copy-dia-sel');
+  if(_cdsel) _cdsel.style.display='block';
   document.getElementById('copy-modal-overlay').classList.add('open');
 }
 function cerrarCopiarModal(){
