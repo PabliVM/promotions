@@ -324,30 +324,37 @@
       <span>Copiar campograma</span>
       <button onclick="cerrarCopiarModal()">✕</button>
     </div>
+
+    <!-- Equipos -->
     <div class="copy-section-lbl">Equipos</div>
     <div id="copy-eq-checks"></div>
-    <div class="copy-section-lbl" style="margin-top:14px;">Destino</div>
-    <div id="copy-tipo-btns">
+
+    <!-- Día ORIGEN -->
+    <div class="copy-section-lbl" style="margin-top:14px;">Día origen</div>
+    <div id="copy-origen-btns" class="copy-dias-row"></div>
+
+    <!-- Día(s) DESTINO -->
+    <div class="copy-section-lbl" style="margin-top:14px;">Día(s) destino</div>
+    <div id="copy-dias-btns" class="copy-dias-row"></div>
+    <div id="copy-dia-semana-lbl" style="display:none;font-size:11px;color:#2563eb;margin:4px 0 6px;font-family:'Segoe UI',sans-serif;"></div>
+    <div style="margin-top:8px;">
+      <button id="copy-dia-semana-btn" onclick="abrirCalCopiaDir()" style="font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;cursor:pointer;">
+        📅 Otra semana
+      </button>
+    </div>
+
+    <!-- Mantener compatibilidad con setCopyTipo -->
+    <div id="copy-tipo-btns" style="display:none;">
       <button class="copy-tipo-btn active" id="ctype-dia" onclick="setCopyTipo('dia')">Día concreto</button>
       <button class="copy-tipo-btn" id="ctype-semana" onclick="setCopyTipo('semana')">Semana completa</button>
     </div>
-    <div id="copy-dia-sel" style="margin-top:12px;">
-      <div class="copy-section-lbl" style="display:flex;align-items:center;justify-content:space-between;">
-        <span>Día destino</span>
-        <button id="copy-dia-semana-btn" onclick="abrirCalCopiaDir()" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;border:1px solid rgba(96,180,255,.3);background:rgba(96,180,255,.08);color:#60b4ff;cursor:pointer;">
-          📅 Otra semana
-        </button>
-      </div>
-      <div id="copy-dia-semana-lbl" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#60b4ff;margin:4px 0 6px;"></div>
-      <div id="copy-dias-btns"></div>
-    </div>
     <div id="copy-semana-sel" style="display:none;margin-top:12px;">
-      <div class="copy-section-lbl">Semana destino</div>
-      <button id="copy-semana-btn" onclick="abrirCalCopia()" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:all .15s;">
+      <button id="copy-semana-btn" onclick="abrirCalCopia()" style="width:100%;padding:10px 14px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <span id="copy-semana-lbl">Seleccionar semana…</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       </button>
     </div>
+
     <div id="copy-modal-footer">
       <button id="copy-ok-btn" onclick="ejecutarCopia()">Copiar ✓</button>
     </div>
