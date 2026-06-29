@@ -1499,10 +1499,10 @@ body.dark .app-footer-maestro{
 
 .semana-col-hdr { display: none; }
 
-/* Vista semana — campo altura fija */
+/* Vista semana — campo proporcional al ancho */
 .semana-td-card .campo-wrap {
-  padding-bottom: 0 !important;
-  height: 420px !important;
+  padding-bottom: 110% !important;
+  height: auto !important;
 }
 
 /* Zonas visibles en vista semana pero más compactas */
@@ -1866,3 +1866,15 @@ body.dark .card-notas-input { background: #0d1117; border-color: #30363d; color:
 #fb-nueva-inp { border: 1px solid #dfe1e6; background: #f8fafd; color: #1a1d23; border-radius: 8px; font-family: 'Segoe UI',-apple-system,sans-serif; }
 #fb-nueva-inp::placeholder { color: #9ca3af; }
 #fb-box .fb-sesion-row, #fb-box h3, #fb-nueva-row { padding-left: 20px; padding-right: 20px; }
+
+/* Vista semana: banner partido y tipos flotan sobre el campo */
+.semana-td-card .partido-banner {
+  position: relative;
+  z-index: 5;
+  margin-bottom: -1px;
+}
+.semana-td-card .tipo-partido-sel {
+  position: relative;
+  z-index: 5;
+  margin-bottom: -1px;
+}
