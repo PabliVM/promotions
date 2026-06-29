@@ -3650,7 +3650,7 @@ function ejecutarCopia(){
     DIAS.forEach((d, i)=>{
       // Copiar el día actual a cada día de la semana destino
       // Como data usa nombres de días (LUNES, MARTES…) no fechas, copiamos entre mismos días
-      copyDiaBase(dia, d, eqs);
+      copyDiaBase(_copyDiaOrigen||dia, d, eqs);
     });
     const fechas = calcFechasSemana(_copySemanaDestLunes);
     toast('Copiado a semana ' + fechas['LUNES'] + ' – ' + fechas['DOMINGO']);
@@ -3661,7 +3661,7 @@ function ejecutarCopia(){
       const fechasDest = calcFechasSemana(_copyDiaSemanaLunes);
       const esMismaSemana = fechasDest['LUNES'] === FECHAS['LUNES'];
       if(esMismaSemana){
-        _copyDiasDest.forEach(d=>copyDiaBase(dia,d,eqs));
+        _copyDiasDest.forEach(d=>copyDiaBase(_copyDiaOrigen||dia,d,eqs));
       } else {
         // Guardar datos de semana destino en localStorage con clave propia
         const lunesKey = _copyDiaSemanaLunes.toISOString().slice(0,10);
@@ -3671,7 +3671,7 @@ function ejecutarCopia(){
         _copyDiasDest.forEach(d=>{
           if(!semanaDest[d]) semanaDest[d]={};
           eqs.forEach(eq=>{
-            semanaDest[d][eq] = JSON.parse(JSON.stringify(data[dia][eq]));
+            semanaDest[d][eq] = JSON.parse(JSON.stringify(data[_copyDiaOrigen||dia][eq]));
           });
         });
         localStorage.setItem(storeKey, JSON.stringify(semanaDest));
@@ -3679,7 +3679,7 @@ function ejecutarCopia(){
         cerrarCopiarModal(); autoGuardar(); return;
       }
     } else {
-      _copyDiasDest.forEach(d=>copyDiaBase(dia,d,eqs));
+      _copyDiasDest.forEach(d=>copyDiaBase(_copyDiaOrigen||dia,d,eqs));
     }
     toast('Copiado a '+ [..._copyDiasDest].map(d=>d.slice(0,3)).join(', '));
   }
