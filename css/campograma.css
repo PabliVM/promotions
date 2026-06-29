@@ -1937,3 +1937,31 @@ body.dark .card-notas-input { background: #0d1117; border-color: #30363d; color:
 
 body.dark .card-lista-wrap { background: #161b22; }
 body.dark .card-lista-row { background: #0d1117; border-color: #30363d; color: #e6edf3; }
+
+/* Acciones del listado */
+.card-lista-acciones {
+  display: flex;
+  gap: 6px;
+  padding: 6px 0 8px;
+  border-bottom: 1px solid #e8eef8;
+  margin-bottom: 8px;
+}
+.card-lista-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1.5px solid #dfe1e6;
+  background: #fff;
+  color: #5a6170;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.card-lista-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
