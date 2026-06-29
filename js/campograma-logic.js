@@ -1713,9 +1713,9 @@ function confirmarAscenso(){
 // Inicializar temporadas al arrancar
 cargarTemporadas();
 if(!temporadaActual && temporadas.length===0){
-  // Primera vez: crear temporada 2025-26 automáticamente
-  temporadaActual = '2025_26';
-  temporadas = [{ id:'2025_26', nombre:'2025-26', payload:{}, ts:Date.now() }];
+  // Primera vez: crear temporada 2026-27 automáticamente
+  temporadaActual = '2026_27';
+  temporadas = [{ id:'2026_27', nombre:'2026-27', payload:{}, ts:Date.now() }];
   guardarTemporadas();
 }
 actualizarBadgeTemporada();
