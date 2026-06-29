@@ -2229,6 +2229,7 @@ function aplicarSemana(){
   FECHAS = calcFechasSemana(_calLunesSel);
   autoGuardar();
   renderDias();
+  renderCards();
   cerrarCal();
   toast('📅 Semana actualizada');
 }
