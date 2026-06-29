@@ -1424,7 +1424,7 @@ body.dark .app-footer-maestro{
 /* Tabla semana */
 .semana-table {
   border-collapse: separate;
-  border-spacing: 8px 0;
+  border-spacing: 20px 0;
   min-width: max-content;
   table-layout: fixed;
 }
@@ -1494,6 +1494,12 @@ body.dark .app-footer-maestro{
   flex: 1;
   overflow: visible;
 }
+/* Banquillo visible en vista semana */
+.cards-grid.view-semana .zona-banquillo {
+  padding: 5px 8px;
+  min-height: 32px;
+  flex-shrink: 0;
+}
 .cards-grid.view-semana .cols-estado .col {
   padding: 4px 6px;
   min-height: 80px;
@@ -1551,10 +1557,15 @@ body.dark .semana-td-card .card-hdr {
 }
 body.dark .semana-td-card .card-hdr-nombre-txt { color: #e6edf3; }
 body.dark .semana-td-card .card-hdr-fecha { color: #8b949e; }
-.cards-grid.view-semana .modo-btn,
+/* En vista semana: mostrar modo-btn, ocultar snap y reset */
 .cards-grid.view-semana .snap-btn,
 .cards-grid.view-semana .reset-btn {
   display: none;
+}
+.cards-grid.view-semana .modo-btn {
+  display: inline-flex;
+  font-size: 9px;
+  padding: 2px 6px;
 }
 
 .cards-grid.view-semana .cf {
