@@ -2300,24 +2300,32 @@ function igualarZonasSemana(grid){
       const cw = td.querySelector('.campo-wrap');
       if(z) z.style.minHeight = '';
       if(c) c.style.minHeight = '';
-      if(cw) cw.style.paddingBottom = '';
+      if(cw) cw.style.marginTop = '';
     });
 
-    // Igualar campo-wrap: todos a la misma altura que el más alto
-    let maxCampo = 0;
+    // Igualar inicio del campo: medir altura de todo lo que hay ENCIMA del campo
+    // (card-hdr + partido-banner + tipo-partido-sel)
+    let maxPreCampo = 0;
     cells.forEach(td => {
+      const card = td.querySelector('.card');
       const cw = td.querySelector('.campo-wrap');
-      if(cw) maxCampo = Math.max(maxCampo, cw.offsetHeight);
+      if(!card || !cw) return;
+      const cardTop = card.getBoundingClientRect().top;
+      const cwTop = cw.getBoundingClientRect().top;
+      const preCampo = cwTop - cardTop;
+      maxPreCampo = Math.max(maxPreCampo, preCampo);
     });
-    if(maxCampo > 0){
-      cells.forEach(td => {
-        const cw = td.querySelector('.campo-wrap');
-        if(cw){
-          const w = cw.offsetWidth;
-          if(w > 0) cw.style.paddingBottom = (maxCampo / w * 100) + '%';
-        }
-      });
-    }
+    // Añadir margin-top al campo de los días que tienen menos elementos encima
+    cells.forEach(td => {
+      const card = td.querySelector('.card');
+      const cw = td.querySelector('.campo-wrap');
+      if(!card || !cw) return;
+      const cardTop = card.getBoundingClientRect().top;
+      const cwTop = cw.getBoundingClientRect().top;
+      const preCampo = cwTop - cardTop;
+      const diff = maxPreCampo - preCampo;
+      if(diff > 2) cw.style.marginTop = diff + 'px';
+    });
 
     // Igualar zona-disponibles
     let maxDisp = 0;
