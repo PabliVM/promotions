@@ -570,18 +570,18 @@ body:has(.cards-grid.view-semana) #app-wrap {
 .uyl-badge:hover{background:rgba(0,100,200,.4);}
 .tipo-partido-sel{
   display:flex;gap:4px;flex-wrap:wrap;
-  padding:8px 12px;
-  background:#0d1420;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:6px 10px;
+  background:#f8fafd;
+  border-bottom:1px solid #e8eef8;
 }
 .tipo-btn{
   padding:4px 10px;border-radius:20px;
-  border:1px solid rgba(255,255,255,.12);
-  background:transparent;
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.4px;
-  color:rgba(255,255,255,.4);
+  border:1.5px solid #dfe1e6;
+  background:#fff;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:10px;font-weight:600;
+  text-transform:none;letter-spacing:0;
+  color:#5a6170;
   cursor:pointer;transition:all .15s;white-space:nowrap;
 }
 .tipo-btn.active{color:#fff;border-color:currentColor;}
@@ -1094,11 +1094,14 @@ body:has(.cards-grid.view-semana) #app-wrap {
 .zona-disponibles.dz-active{background:rgba(74,222,128,.05);outline:2px dashed var(--verde-bd);outline-offset:-2px;}
 body.dark .zona-disponibles{background:#1c2333;border-top:1px solid #30363d;}
 /* ZONA BANQUILLO */
-.zona-banquillo{padding:7px 10px;background:#1a1200;border-top:2px solid #f59e0b;min-height:44px;}
-.zona-banquillo.dz-active{background:#292200;outline:2px dashed #f59e0b;outline-offset:-2px;}
-.partido-banner{background:#1a1000;border-top:2px solid #f59e0b;border-bottom:1px solid rgba(245,158,11,.2);padding:5px 12px;display:flex;align-items:center;gap:10px;}
-.partido-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:900;color:#f59e0b;letter-spacing:2px;white-space:nowrap;}
-.rival-inp{flex:1;background:transparent;border:none;border-bottom:1px solid rgba(245,158,11,.3);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;padding:1px 0;outline:none;}
+.zona-banquillo{padding:7px 10px;background:#fffbeb;border-top:2px solid #d97706;min-height:44px;}
+.zona-banquillo.dz-active{background:#fef3c7;outline:2px dashed #d97706;outline-offset:-2px;}
+.zona-banquillo .zona-lbl{color:#d97706;}
+.partido-banner{background:#fffbeb;border-top:2px solid #d97706;border-bottom:1px solid #fde68a;padding:6px 12px;display:flex;align-items:center;gap:10px;}
+.partido-lbl{font-family:'Segoe UI',-apple-system,sans-serif;font-size:11px;font-weight:700;color:#d97706;letter-spacing:.3px;white-space:nowrap;}
+.rival-inp{flex:1;background:transparent;border:none;border-bottom:1px solid #fcd34d;color:#1a1d23;font-family:'Segoe UI',-apple-system,sans-serif;font-size:13px;font-weight:600;padding:1px 0;outline:none;}
+.rival-inp::placeholder{color:#9ca3af;}
+.rival-inp:focus{border-bottom-color:#d97706;}
 .rival-inp::placeholder{color:rgba(255,255,255,.25);}
 .rival-inp:focus{border-bottom-color:#f59e0b;}
 .modo-btn{padding:3px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.5);font-size:10px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;}
