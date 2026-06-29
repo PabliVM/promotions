@@ -1671,3 +1671,34 @@ body.dark #sub-header > div[style*="background:#dfe1e6"] {
 .cards-grid.view-semana .card-hdr-name > *:first-child {
   display: block;
 }
+
+/* ── BLOQUE DE NOTAS ── */
+.card-notas-wrap {
+  padding: 6px 8px 8px;
+  border-top: 1px solid #e8eef8;
+  background: #fff;
+}
+.card-notas-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid #e8eef8;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 11px;
+  color: #374151;
+  background: #f8fafd;
+  outline: none;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.card-notas-input:focus {
+  border-color: #2563eb;
+  background: #fff;
+}
+.card-notas-input::placeholder {
+  color: #9ca3af;
+}
+body.dark .card-notas-wrap { background: #161b22; border-top-color: #30363d; }
+body.dark .card-notas-input { background: #0d1117; border-color: #30363d; color: #e6edf3; }
