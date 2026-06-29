@@ -347,19 +347,15 @@ function capturarCampo(eq, card){
     cv.style.height = H + 'px';
     const ctx = cv.getContext('2d');
     ctx.scale(DPR, DPR);
-    // Fondo
-    ctx.fillStyle = '#0a1628';
+    // Fondo blanco
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, W, H);
-    // Cabecera gradient
-    const grad = ctx.createLinearGradient(0,0,W,0);
-    grad.addColorStop(0,'#001a52'); grad.addColorStop(1,'#0a1628');
-    ctx.fillStyle = grad;
+    // Cabecera azul corporativa
+    ctx.fillStyle = '#2563eb';
     ctx.fillRect(0, 0, W, HEADER_H);
-    ctx.fillStyle = '#C8A800';
-    ctx.fillRect(0, HEADER_H-2, W, 2);
     // Equipo arriba izquierda pequeño
-    ctx.fillStyle = 'rgba(255,255,255,.55)';
-    ctx.font = '600 13px -apple-system, Helvetica Neue, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.75)';
+    ctx.font = '600 13px Segoe UI, -apple-system, sans-serif';
     ctx.textBaseline = 'top';
     ctx.textAlign = 'left';
     ctx.fillText(eq, 16, 10);
@@ -370,7 +366,7 @@ function capturarCampo(eq, card){
       ? (dia + '  ' + partesFecha[0] + '/' + partesFecha[1] + '/' + aaStr)
       : dia;
     ctx.fillStyle = '#ffffff';
-    ctx.font = '700 32px -apple-system, Helvetica Neue, sans-serif';
+    ctx.font = '700 32px Segoe UI, -apple-system, sans-serif';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
     ctx.fillText(fechaFmt, 16, HEADER_H/2 + 8);
@@ -396,21 +392,22 @@ function capturarCampo(eq, card){
       const cW = Math.floor(W / colDefs.length);
       colDefs.forEach((col, ci)=>{
         const cx = ci * cW;
-        ctx.globalAlpha = 0.85;
-        ctx.fillStyle = col.color;
+        // Cabecera columna con color de zona
+        ctx.fillStyle = '#f8fafd';
         ctx.fillRect(cx+2, colY, cW-4, 30);
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '700 14px -apple-system, Helvetica Neue, sans-serif';
+        ctx.fillStyle = col.color;
+        ctx.fillRect(cx+2, colY, 4, 30);
+        ctx.fillStyle = col.color;
+        ctx.font = '700 12px Segoe UI, -apple-system, sans-serif';
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'left';
-        ctx.fillText(col.label, cx+10, colY+15);
+        ctx.fillText(col.label, cx+12, colY+15);
         col.items.forEach((nombre, ri)=>{
           const ry = colY + 30 + ri*ROW_H;
-          ctx.fillStyle = ri%2===0 ? 'rgba(255,255,255,.07)' : 'transparent';
+          ctx.fillStyle = ri%2===0 ? '#f8fafd' : '#ffffff';
           ctx.fillRect(cx+2, ry, cW-4, ROW_H);
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 15px sans-serif';
+          ctx.fillStyle = '#1a1d23';
+          ctx.font = '600 14px Segoe UI, -apple-system, sans-serif';
           ctx.fillText(nombre, cx+10, ry+ROW_H/2);
           // Destino promoción
           if(col.destinos && col.destinos[nombre]){
@@ -424,8 +421,8 @@ function capturarCampo(eq, card){
           }
         });
         if(!col.items.length){
-          ctx.fillStyle = 'rgba(255,255,255,.35)';
-          ctx.font = '14px sans-serif';
+          ctx.fillStyle = '#9ca3af';
+          ctx.font = '14px Segoe UI, sans-serif';
           ctx.fillText('—', cx+10, colY+30+ROW_H/2);
         }
       });
