@@ -2309,18 +2309,13 @@ function buildListaView(eq, d){
   btnCopiar.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar';
   btnCopiar.onclick = (e) => {
     e.stopPropagation();
-    let texto = eq + ' — ' + diaKey + ' ' + (FECHAS[diaKey]||'') + '
-';
-    texto += '='.repeat(30) + '
-';
+    let texto = eq + ' - ' + diaKey + ' ' + (FECHAS[diaKey]||'') + '\n';
+    texto += '='.repeat(30) + '\n';
     zonas.forEach(({key, label}) => {
       const jugs = eqData[key] || [];
       if(!jugs.length) return;
-      texto += '
-' + label + ':
-';
-      jugs.forEach(n => { texto += '  • ' + n + '
-'; });
+      texto += '\n' + label + ':\n';
+      jugs.forEach(n => { texto += '  - ' + n + '\n'; });
     });
     navigator.clipboard.writeText(texto).then(()=>toast('✓ Copiado al portapapeles')).catch(()=>toast('❌ Error al copiar'));
   };
