@@ -2295,15 +2295,53 @@ function buildListaView(eq, d){
     { key:'campo',          label:'EN EL CAMPO',  color:'#2563eb' },
     { key:'banquillo',      label:'BANQUILLO',     color:'#d97706' },
     { key:'disponibles',    label:'DISPONIBLES',   color:'#16a34a' },
-    { key:'promovidos_1er', label:'PROMOCIÓN',     color:'#d97706' },
-    { key:'lesionados',     label:'LESIÓN',        color:'#dc2626' },
-    { key:'otros',          label:'OTROS',         color:'#6b7280' },
-    { key:'extra',          label:colNames[eq]?.[3]||'EXTRA', color:'#7c3aed' },
+    { key:'promovidos_1er', label: colNames[eq]?.[0]||'PROMOCIÓN', color:'#d97706' },
+    { key:'lesionados',     label: colNames[eq]?.[1]||'LESIÓN',    color:'#dc2626' },
+    { key:'otros',          label: colNames[eq]?.[2]||'OTROS',     color:'#6b7280' },
+    { key:'extra',          label: colNames[eq]?.[3]||'EXTRA',     color:'#7c3aed' },
   ];
 
+  // Barra de acciones
+  const acciones = mk('div','card-lista-acciones');
+
+  // Botón copiar texto
+  const btnCopiar = mk('button','card-lista-btn');
+  btnCopiar.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar';
+  btnCopiar.onclick = (e) => {
+    e.stopPropagation();
+    let texto = eq + ' — ' + diaKey + ' ' + (FECHAS[diaKey]||'') + '
+';
+    texto += '='.repeat(30) + '
+';
+    zonas.forEach(({key, label}) => {
+      const jugs = eqData[key] || [];
+      if(!jugs.length) return;
+      texto += '
+' + label + ':
+';
+      jugs.forEach(n => { texto += '  • ' + n + '
+'; });
+    });
+    navigator.clipboard.writeText(texto).then(()=>toast('✓ Copiado al portapapeles')).catch(()=>toast('❌ Error al copiar'));
+  };
+  acciones.appendChild(btnCopiar);
+
+  // Botón foto/imprimir
+  const btnFoto = mk('button','card-lista-btn');
+  btnFoto.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Foto';
+  btnFoto.onclick = (e) => {
+    e.stopPropagation();
+    capturarLista(eq, diaKey, zonas, eqData);
+  };
+  acciones.appendChild(btnFoto);
+  wrap.appendChild(acciones);
+
+  // Zonas
+  let hayJugadores = false;
   zonas.forEach(({key, label, color}) => {
     const jugadores = eqData[key] || [];
     if(!jugadores.length) return;
+    hayJugadores = true;
 
     const seccion = mk('div','card-lista-seccion');
     const lbl = mk('div','card-lista-lbl');
@@ -2321,13 +2359,96 @@ function buildListaView(eq, d){
     wrap.appendChild(seccion);
   });
 
-  if(!wrap.children.length){
+  if(!hayJugadores){
     const empty = mk('div','card-lista-empty');
     empty.textContent = 'Sin jugadores';
     wrap.appendChild(empty);
   }
 
   return wrap;
+}
+
+function capturarLista(eq, diaKey, zonas, eqData){
+  if(typeof html2canvas === 'undefined'){ toast('❌ html2canvas no cargado'); return; }
+  toast('Generando imagen…');
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const fecha = FECHAS[diaKey] || '';
+  const W = 700;
+  const HEADER_H = 70;
+  const ROW_H = 30;
+  const LABEL_H = 26;
+  const PAD = 16;
+
+  // Calcular altura total
+  let totalH = HEADER_H + PAD;
+  zonas.forEach(({key}) => {
+    const jugs = eqData[key] || [];
+    if(!jugs.length) return;
+    totalH += LABEL_H + jugs.length * ROW_H + 8;
+  });
+  totalH += PAD;
+
+  const DPR = Math.min(window.devicePixelRatio||2, 3);
+  const cv = document.createElement('canvas');
+  cv.width = W * DPR; cv.height = totalH * DPR;
+  const ctx = cv.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  // Fondo blanco
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, totalH);
+
+  // Header azul
+  ctx.fillStyle = '#2563eb';
+  ctx.fillRect(0, 0, W, HEADER_H);
+  ctx.fillStyle = 'rgba(255,255,255,.7)';
+  ctx.font = '600 13px Segoe UI, sans-serif';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  ctx.fillText(eq, PAD, 10);
+  const partesFecha = fecha.split('/');
+  const aaStr = new Date().getFullYear().toString().slice(2);
+  const fechaFmt = partesFecha.length===2
+    ? (diaKey + '  ' + partesFecha[0] + '/' + partesFecha[1] + '/' + aaStr)
+    : diaKey;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 28px Segoe UI, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(fechaFmt, PAD, HEADER_H/2 + 6);
+
+  // Zonas
+  let y = HEADER_H + PAD;
+  zonas.forEach(({key, label, color}) => {
+    const jugs = eqData[key] || [];
+    if(!jugs.length) return;
+
+    // Label con barra de color
+    ctx.fillStyle = color;
+    ctx.fillRect(PAD, y, 4, LABEL_H);
+    ctx.fillStyle = color;
+    ctx.font = '700 11px Segoe UI, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.fillText(label.toUpperCase(), PAD + 10, y + LABEL_H/2);
+    y += LABEL_H;
+
+    jugs.forEach((nombre, i) => {
+      ctx.fillStyle = i%2===0 ? '#f8fafd' : '#ffffff';
+      ctx.fillRect(PAD, y, W - PAD*2, ROW_H);
+      // Borde
+      ctx.strokeStyle = '#e8eef8';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(PAD, y, W - PAD*2, ROW_H);
+      ctx.fillStyle = '#1a1d23';
+      ctx.font = '600 14px Segoe UI, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(nombre, PAD + 10, y + ROW_H/2);
+      y += ROW_H;
+    });
+    y += 8;
+  });
+
+  _exportarImagen(cv, eq, diaKey, fecha, isIOS);
 }
 
 function renderCards(){
