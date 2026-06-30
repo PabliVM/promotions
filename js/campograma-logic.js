@@ -2540,17 +2540,20 @@ function buildListaView(eq, d){
     e.stopPropagation();
     let texto = eq + ' - ' + diaKey + ' ' + (FECHAS[diaKey]||'') + '\n';
     texto += '='.repeat(30) + '\n';
-    // Zonas con contador de porteros: campo, banquillo, promoción
-    const ZONAS_CON_CONTADOR = ['campo','banquillo','promovidos_1er'];
     zonas.forEach(({key, label}) => {
       const jugs = eqData[key] || [];
       if(!jugs.length) return;
       let labelOut = label.toUpperCase();
-      if(ZONAS_CON_CONTADOR.includes(key)){
+      if(key === 'campo'){
+        // Listado de jugadores: contador con porteros separados (21+3)
         const numPorteros = jugs.filter(n => porteros.includes(n)).length;
-        const numCampo = jugs.length - numPorteros;
-        labelOut += ' (' + numCampo + (numPorteros>0 ? '+'+numPorteros : '') + ')';
+        const numNormal = jugs.length - numPorteros;
+        labelOut += ' (' + numNormal + (numPorteros>0 ? '+'+numPorteros : '') + ')';
+      } else if(key === 'banquillo'){
+        // Banquillo: solo el total
+        labelOut += ' (' + jugs.length + ')';
       }
+      // Promocionados y demás zonas: sin número
       texto += '\n*' + labelOut + ':*\n';
       // Porteros primero, luego el resto, manteniendo orden relativo dentro de cada grupo
       const jugsOrdenados = [...jugs].sort((a, b) => {
