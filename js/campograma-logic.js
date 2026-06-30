@@ -2474,6 +2474,7 @@ function renderCards(){
   const grid=document.getElementById('grid'); grid.innerHTML='';
   grid.className='cards-grid view-'+vistaActual;
   if(vistaActual==='semana'){
+    renderFiltrosSemana();
     renderCardsSemana(grid);
     initDrag();
     requestAnimationFrame(() => igualarZonasSemana(grid));
@@ -2560,9 +2561,57 @@ function igualarZonasSemana(grid){
   });
 }
 
+
+// ══════════════════════════════════════════════════
+// FILTROS VISTA SEMANA — días y equipos visibles
+// ══════════════════════════════════════════════════
+let _filtroDiasActivos = new Set(DIAS);
+let _filtroEqsActivos = new Set(EQUIPOS);
+
+function renderFiltrosSemana(){
+  const diasRow = document.getElementById('filtro-dias-row');
+  const eqsRow = document.getElementById('filtro-eqs-row');
+  if(!diasRow || !eqsRow) return;
+
+  const DIA_INICIAL = {'LUNES':'L','MARTES':'M','MIÉRCOLES':'X','JUEVES':'J','VIERNES':'V','SÁBADO':'S','DOMINGO':'D'};
+
+  diasRow.innerHTML='';
+  DIAS.forEach(d=>{
+    const btn=mk('button','filtro-dia-btn'+(_filtroDiasActivos.has(d)?' activo':''));
+    btn.textContent = DIA_INICIAL[d]||d[0];
+    btn.title = d;
+    btn.onclick=()=>{
+      if(_filtroDiasActivos.has(d)) _filtroDiasActivos.delete(d);
+      else _filtroDiasActivos.add(d);
+      renderFiltrosSemana();
+      renderCards();
+      if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+    };
+    diasRow.appendChild(btn);
+  });
+
+  eqsRow.innerHTML='';
+  const EQ_CORTO = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
+  EQUIPOS.forEach(eq=>{
+    const btn=mk('button','filtro-eq-btn'+(_filtroEqsActivos.has(eq)?' activo':''));
+    btn.textContent = EQ_CORTO[eq]||eq;
+    btn.title = eq;
+    btn.onclick=()=>{
+      if(_filtroEqsActivos.has(eq)) _filtroEqsActivos.delete(eq);
+      else _filtroEqsActivos.add(eq);
+      renderFiltrosSemana();
+      renderCards();
+      if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+    };
+    eqsRow.appendChild(btn);
+  });
+}
+
 function renderCardsSemana(grid){
   const hoy = new Date();
-  const lista = eqF==='TODOS' ? EQUIPOS : [eqF];
+  let lista = eqF==='TODOS' ? EQUIPOS : [eqF];
+  lista = lista.filter(eq => _filtroEqsActivos.has(eq));
+  const diasFiltrados = DIAS.filter(d => _filtroDiasActivos.has(d));
 
   const table = document.createElement('table');
   table.className = 'semana-table';
@@ -2574,7 +2623,7 @@ function renderCardsSemana(grid){
     const tr = document.createElement('tr');
     tr.className = 'semana-tr-eq';
 
-    DIAS.forEach(d => {
+    diasFiltrados.forEach(d => {
       const fechaStr = FECHAS[d] || '';
       const esHoy = (()=>{
         const [dd,mm] = (fechaStr||'').split('/');
