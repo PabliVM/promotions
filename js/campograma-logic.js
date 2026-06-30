@@ -1433,8 +1433,72 @@ function renderPlantBody(){
   document.getElementById('plant-count').textContent = jugadores.length + ' jugadores';
   jugadores.forEach((nombre, i)=>{
     const row = mk('div','plant-row');
+    row.draggable = true;
+    row.dataset.nombre = nombre;
+
+    // Drag para reordenar
+    row.ondragstart = (e) => {
+      e.dataTransfer.setData('text/plain', nombre);
+      e.dataTransfer.effectAllowed = 'move';
+      row.classList.add('dragging-row');
+    };
+    row.ondragend = () => row.classList.remove('dragging-row');
+    row.ondragover = (e) => { e.preventDefault(); row.classList.add('drag-over-row'); };
+    row.ondragleave = () => row.classList.remove('drag-over-row');
+    row.ondrop = (e) => {
+      e.preventDefault();
+      row.classList.remove('drag-over-row');
+      const nombreMovido = e.dataTransfer.getData('text/plain');
+      if(nombreMovido && nombreMovido !== nombre){
+        const arr = plantillas[plantEqActivo];
+        const fromIdx = arr.indexOf(nombreMovido);
+        const toIdx = arr.indexOf(nombre);
+        if(fromIdx >= 0 && toIdx >= 0){
+          arr.splice(fromIdx, 1);
+          const newToIdx = arr.indexOf(nombre);
+          arr.splice(newToIdx, 0, nombreMovido);
+          autoGuardar();
+          renderPlantBody();
+        }
+      }
+    };
+
+    const dragHandle = mk('span','plant-drag-handle'); dragHandle.textContent = '⠿';
     const num = mk('span','plant-num'); num.textContent = (i+1);
     const nm  = mk('span','plant-name'); nm.textContent = nombre;
+
+    // Botón editar nombre
+    const editBtn = mk('button','plant-edit-btn'); editBtn.innerHTML = '✏️';
+    editBtn.title = 'Editar nombre';
+    editBtn.onclick = () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = nombre;
+      input.className = 'plant-edit-input';
+      row.innerHTML = '';
+      row.appendChild(input);
+      input.focus();
+      input.select();
+      const guardarEdit = () => {
+        const nuevo = input.value.trim().toUpperCase();
+        if(nuevo && nuevo !== nombre){
+          const arr = plantillas[plantEqActivo];
+          const idx = arr.indexOf(nombre);
+          if(idx >= 0) arr[idx] = nuevo;
+          renombrarJugadorGlobal(nombre, nuevo);
+          renderPlantBody();
+        } else {
+          renderPlantBody();
+        }
+      };
+      input.onblur = guardarEdit;
+      input.onkeydown = (ev) => {
+        ev.stopPropagation();
+        if(ev.key === 'Enter') input.blur();
+        if(ev.key === 'Escape'){ input.onblur = null; renderPlantBody(); }
+      };
+    };
+
     // Checkbox portero
     const porLabel = mk('label','plant-portero-chk');
     const porInput = mk('input','');
@@ -1454,10 +1518,13 @@ function renderPlantBody(){
     porTxt.textContent = 'POR';
     porLabel.appendChild(porInput);
     porLabel.appendChild(porTxt);
+
     const del = mk('button','plant-del'); del.textContent = '×';
     del.title = 'Eliminar '+nombre;
     del.onclick = ()=> plantEliminar(nombre);
-    row.appendChild(num); row.appendChild(nm); row.appendChild(porLabel); row.appendChild(del);
+
+    row.appendChild(dragHandle); row.appendChild(num); row.appendChild(nm);
+    row.appendChild(editBtn); row.appendChild(porLabel); row.appendChild(del);
     list.appendChild(row);
   });
 }
