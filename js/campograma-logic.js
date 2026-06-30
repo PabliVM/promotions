@@ -322,17 +322,32 @@ function capturarCampo(eq, card, diaParam){
     banquillo = d.banquillo   || [];
     promoInfoEq = promInfo[dia]?.[eq] || {};
   }
+  const _campoArr = (eq === '1ER EQUIPO') ? [] : (data[dia][eq]?.campo || []);
+  const _numPorterosCampo = _campoArr.filter(n => porteros.includes(n)).length;
+  const _numCampoNormal = _campoArr.length - _numPorterosCampo;
+  const _contadorTxt = _numCampoNormal + (_numPorterosCampo>0 ? '+'+_numPorterosCampo : '');
   const cWrap = card.querySelector('.campo-wrap');
   if(!cWrap){ toast('❌ No se encontró el campo'); return; }
   // Ocultar escudo: html2canvas no soporta mix-blend-mode
   const shieldEl = cWrap.querySelector('.campo-shield');
   if(shieldEl) shieldEl.style.visibility = 'hidden';
+  // Resaltar porteros en el campo con borde amarillo grueso temporal
+  const _chipsPortero = [];
+  cWrap.querySelectorAll('.chip[data-nombre]').forEach(chipEl => {
+    const nombreChip = chipEl.dataset.nombre;
+    if(porteros.includes(nombreChip)){
+      chipEl.style.outline = '3px solid #facc15';
+      chipEl.style.outlineOffset = '1px';
+      _chipsPortero.push(chipEl);
+    }
+  });
   html2canvas(cWrap, {
     scale: 3, useCORS: true, allowTaint: true,
     backgroundColor: '#1a6b2a', logging: false, imageTimeout: 0
   }).then(fieldCanvas=>{
-    // Restaurar escudo en la UI
+    // Restaurar escudo y bordes de porteros en la UI
     if(shieldEl) shieldEl.style.visibility = '';
+    _chipsPortero.forEach(c => { c.style.outline=''; c.style.outlineOffset=''; });
     // Dimensiones del canvas — respeta la proporción real del campo capturado
     const W       = 800;
     const HEADER_H = 80;
@@ -341,7 +356,7 @@ function capturarCampo(eq, card, diaParam){
     const ROW_H    = 28;
     const maxRows  = Math.max(proms.length, lesion.length, otros.length, extra.length, banquillo.length, 1);
     const COL_H    = 30 + maxRows * ROW_H + 16;
-    const bannerHpre = esPartidoHoy ? 32 : 0;
+    const bannerHpre = esPartidoHoy ? 42 : 0;
     const H        = HEADER_H + bannerHpre + FIELD_H + COL_H + 10;
     // Escalar canvas por devicePixelRatio para salida nítida en retina/iPhone
     const DPR = Math.min(window.devicePixelRatio || 2, 3);
@@ -374,12 +389,20 @@ function capturarCampo(eq, card, diaParam){
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
     ctx.fillText(fechaFmt, 16, HEADER_H/2 + 8);
+    // Contador de jugadores en campo (con porteros) — arriba derecha
+    if(eq !== '1ER EQUIPO'){
+      ctx.fillStyle = 'rgba(255,255,255,.95)';
+      ctx.font = '700 20px Segoe UI, -apple-system, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(_contadorTxt, W - 16, HEADER_H/2 + 8);
+      ctx.textAlign = 'left';
+    }
     // Sin escudo en header (evitar fondo negro por transparencia)
 
     // Banner PARTIDO vs Rival + tipo, si aplica
     let bannerH = 0;
     if(esPartidoHoy){
-      bannerH = 32;
+      bannerH = 42;
       const rivalVal = rivales[dia]?.[eq] || 'Rival por confirmar';
       const tiposBase = (tiposConfig[eq] && tiposConfig[eq].length) ? tiposConfig[eq] : TIPOS_BASE;
       const tipoKey = tipoPartido[dia]?.[eq] || tiposBase[0]?.k || 'liga';
@@ -387,15 +410,15 @@ function capturarCampo(eq, card, diaParam){
       ctx.fillStyle = '#eff4fe';
       ctx.fillRect(0, HEADER_H, W, bannerH);
       ctx.fillStyle = '#2563eb';
-      ctx.fillRect(0, HEADER_H, W, 2);
-      ctx.font = '700 13px Segoe UI, -apple-system, sans-serif';
+      ctx.fillRect(0, HEADER_H, W, 3);
+      ctx.font = '700 16px Segoe UI, -apple-system, sans-serif';
       ctx.fillStyle = '#2563eb';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'left';
       ctx.fillText('⚽ PARTIDO', 16, HEADER_H + bannerH/2);
-      ctx.font = '600 13px Segoe UI, -apple-system, sans-serif';
+      ctx.font = '600 15px Segoe UI, -apple-system, sans-serif';
       ctx.fillStyle = '#1e3a8a';
-      ctx.fillText((tipoObj.l||'').toUpperCase() + '  vs ' + rivalVal, 130, HEADER_H + bannerH/2);
+      ctx.fillText((tipoObj.l||'').toUpperCase() + '  vs ' + rivalVal, 160, HEADER_H + bannerH/2);
     }
 
     // Campo capturado
