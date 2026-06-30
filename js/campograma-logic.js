@@ -22,6 +22,7 @@ function calcFechasSemana(lunesBase){
 }
 let FECHAS = calcFechasSemana();
 const origen = {};
+let porteros = []; // array de nombres marcados como portero
 // ══════════════════════════════════════════════════
 // ESTADO
 // ══════════════════════════════════════════════════
@@ -607,6 +608,7 @@ async function fbCargar(nombre){
   if(payload.plantillas)            plantillas = payload.plantillas;
   if(payload.origen)                origen = { ...origen, ...payload.origen };
   if(payload.colNames)              colNames = payload.colNames;
+  if(payload.porteros)               porteros = payload.porteros;
   if(payload.extraZonas)            extraZonas = payload.extraZonas;
   if(payload.promInfo)              promInfo = payload.promInfo;
   if(payload.multiEq)               multiEq = payload.multiEq;
@@ -1278,6 +1280,7 @@ function cargarFicheroImport(ev){
       if(payload.plantillas) plantillas = payload.plantillas;
       if(payload.origen)     Object.assign(origen, payload.origen);
       if(payload.colNames)   colNames   = payload.colNames;
+      if(payload.porteros)    porteros   = payload.porteros;
       if(payload.extraZonas) extraZonas = payload.extraZonas;
       if(payload.promInfo)   promInfo   = payload.promInfo;
     if(payload.multiEq)    multiEq    = payload.multiEq;
@@ -1409,10 +1412,29 @@ function renderPlantBody(){
     const row = mk('div','plant-row');
     const num = mk('span','plant-num'); num.textContent = (i+1);
     const nm  = mk('span','plant-name'); nm.textContent = nombre;
+    // Checkbox portero
+    const porLabel = mk('label','plant-portero-chk');
+    const porInput = mk('input','');
+    porInput.type = 'checkbox';
+    porInput.checked = porteros.includes(nombre);
+    porInput.title = 'Marcar como portero';
+    porInput.onchange = ()=>{
+      if(porInput.checked){
+        if(!porteros.includes(nombre)) porteros.push(nombre);
+      } else {
+        const idx = porteros.indexOf(nombre);
+        if(idx>=0) porteros.splice(idx,1);
+      }
+      autoGuardar();
+    };
+    const porTxt = document.createElement('span');
+    porTxt.textContent = 'POR';
+    porLabel.appendChild(porInput);
+    porLabel.appendChild(porTxt);
     const del = mk('button','plant-del'); del.textContent = '×';
     del.title = 'Eliminar '+nombre;
     del.onclick = ()=> plantEliminar(nombre);
-    row.appendChild(num); row.appendChild(nm); row.appendChild(del);
+    row.appendChild(num); row.appendChild(nm); row.appendChild(porLabel); row.appendChild(del);
     list.appendChild(row);
   });
 }
@@ -1499,7 +1521,7 @@ let _lastManualTS = null;
 function buildPayload(manualSave=false){
   if(manualSave) _lastManualTS = new Date().toISOString();
   return {
-    data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,notas:window._notasData||{},
+    data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,notas:window._notasData||{},porteros,
     modoUYL, listaUYL, listaUYLExcl: window.listaUYLExcl||[], tipoPartido, tiposConfig, modoDescanso,
     modoPartido, primerEquipoJugadores, rivales: window.rivales||{},
     ts: _lastManualTS
@@ -1623,6 +1645,7 @@ function cambiarATemporada(id){
   if(p.plantillas) plantillas = p.plantillas;
   if(p.origen) Object.assign(origen, p.origen);
   if(p.colNames) colNames = p.colNames;
+  if(p.porteros) porteros = p.porteros;
   if(p.fechas) FECHAS = p.fechas;
   if(p.ts){ _lastManualTS=p.ts; updateSaveTS('Guardado '+fmtTS(new Date(p.ts))); }
   guardarTemporadas();
@@ -1758,6 +1781,7 @@ function cargarGuardado(){
     if(payload.plantillas && typeof payload.plantillas === 'object') plantillas  = payload.plantillas;
     if(payload.origen     && typeof payload.origen === 'object')     Object.assign(origen, payload.origen);
     if(payload.colNames   && typeof payload.colNames === 'object')   colNames    = payload.colNames;
+    if(payload.porteros   && Array.isArray(payload.porteros))            porteros    = payload.porteros;
     if(payload.extraZonas && typeof payload.extraZonas === 'object') extraZonas  = payload.extraZonas;
     if(payload.fechas     && typeof payload.fechas === 'object')     FECHAS      = payload.fechas;
     if(payload.promInfo   && typeof payload.promInfo === 'object')   promInfo    = payload.promInfo;
@@ -2347,11 +2371,22 @@ function buildListaView(eq, d){
     e.stopPropagation();
     let texto = eq + ' - ' + diaKey + ' ' + (FECHAS[diaKey]||'') + '\n';
     texto += '='.repeat(30) + '\n';
+    // Zonas con contador de porteros: campo, banquillo, promoción
+    const ZONAS_CON_CONTADOR = ['campo','banquillo','promovidos_1er'];
     zonas.forEach(({key, label}) => {
       const jugs = eqData[key] || [];
       if(!jugs.length) return;
-      texto += '\n*' + label.toUpperCase() + ':*\n';
-      jugs.forEach(n => { texto += '  - ' + n + '\n'; });
+      let labelOut = label.toUpperCase();
+      if(ZONAS_CON_CONTADOR.includes(key)){
+        const numPorteros = jugs.filter(n => porteros.includes(n)).length;
+        const numCampo = jugs.length - numPorteros;
+        labelOut += ' (' + numCampo + (numPorteros>0 ? '+'+numPorteros : '') + ')';
+      }
+      texto += '\n*' + labelOut + ':*\n';
+      jugs.forEach(n => {
+        const esPor = porteros.includes(n);
+        texto += '  - ' + n + (esPor ? ' (POR)' : '') + '\n';
+      });
     });
     navigator.clipboard.writeText(texto).then(()=>toast('✓ Copiado al portapapeles')).catch(()=>toast('❌ Error al copiar'));
   };
@@ -4282,6 +4317,7 @@ async function arrancarDesdeFirebase(){
       if(payload.plantillas  && typeof payload.plantillas==='object')  plantillas  = payload.plantillas;
       if(payload.origen      && typeof payload.origen==='object')      Object.assign(origen, payload.origen);
       if(payload.colNames    && typeof payload.colNames==='object')    colNames    = payload.colNames;
+      if(payload.porteros    && Array.isArray(payload.porteros))           porteros    = payload.porteros;
       if(payload.extraZonas  && typeof payload.extraZonas==='object')  extraZonas  = payload.extraZonas;
       if(payload.promInfo    && typeof payload.promInfo==='object')    promInfo    = payload.promInfo;
       if(payload.tiposConfig && typeof payload.tiposConfig==='object') tiposConfig = payload.tiposConfig;
