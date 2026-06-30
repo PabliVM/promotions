@@ -2339,3 +2339,30 @@ body.dark #login-email, body.dark #login-pass {
 .plant-portero-chk:has(input:checked) span {
   color: #2563eb;
 }
+
+/* Edición de nombre en listado */
+.card-lista-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: .4;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  transition: opacity .15s;
+}
+.card-lista-row:hover .card-lista-edit-btn {
+  opacity: .9;
+}
+.card-lista-edit-input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1.5px solid #2563eb;
+  border-radius: 6px;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #1a1d23;
+  outline: none;
+}
