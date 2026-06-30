@@ -1965,3 +1965,61 @@ body.dark .card-lista-row { background: #0d1117; border-color: #30363d; color: #
   border-color: #2563eb;
   color: #2563eb;
 }
+
+/* ── Barra de filtros vista semana: días y equipos ── */
+#filtros-semana-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e8eef8;
+}
+#filtro-dias-row, #filtro-eqs-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.filtros-sep {
+  width: 1px;
+  height: 18px;
+  background: #dfe1e6;
+  flex-shrink: 0;
+}
+.filtro-dia-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid #dfe1e6;
+  background: #fff;
+  color: #9ca3af;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filtro-dia-btn.activo {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.filtro-eq-btn {
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1.5px solid #dfe1e6;
+  background: #fff;
+  color: #9ca3af;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.filtro-eq-btn.activo {
+  background: rgba(37,99,235,.08);
+  border-color: #2563eb;
+  color: #2563eb;
+}
