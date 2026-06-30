@@ -2024,3 +2024,26 @@ body.dark .card-lista-row { background: #0d1117; border-color: #30363d; color: #
   border-color: #2563eb;
   color: #2563eb;
 }
+
+/* Dark mode — barra de filtros días/equipos */
+body.dark #filtros-semana-bar {
+  background: #161b22;
+  border-bottom-color: #30363d;
+}
+body.dark .filtros-sep { background: #30363d; }
+body.dark .filtro-dia-btn,
+body.dark .filtro-eq-btn {
+  background: #0d1117;
+  border-color: #30363d;
+  color: #8b949e;
+}
+body.dark .filtro-dia-btn.activo {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+body.dark .filtro-eq-btn.activo {
+  background: rgba(59,130,246,.15);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
