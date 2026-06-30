@@ -21,12 +21,31 @@
 
 <!-- Firebase compat 9.23.0 -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="js/campograma-firebase-init.js"></script>
 
 </head>
 <body>
-<div id="app-wrap">
+
+<!-- ── PANTALLA DE LOGIN ── -->
+<div id="login-overlay">
+  <div id="login-box">
+    <div id="login-logo">
+      <img src="rm.png" alt="Real Madrid"/>
+    </div>
+    <h1 id="login-title">Campograma</h1>
+    <p id="login-sub">Real Madrid · Cantera</p>
+    <form id="login-form" onsubmit="return false;">
+      <input id="login-email" type="email" placeholder="Email" autocomplete="username" required/>
+      <input id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password" required/>
+      <button id="login-btn" type="submit" onclick="handleLogin()">Entrar</button>
+      <div id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="app-wrap" style="display:none">
 <div id="ghost"></div>
 <div id="alert-overlay">
   <div id="alert-box">
@@ -477,6 +496,38 @@ if('serviceWorker' in navigator){
       .catch(e => console.log('SW error:', e));
   });
 }
+</script>
+
+<script>
+// ── LOGIN HANDLING ──
+function handleLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  if(!email || !pass){ errEl.textContent = 'Rellena email y contraseña.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  window.fbLogin(email, pass).then(res => {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+    if(!res.ok){
+      errEl.textContent = res.message;
+    }
+    // Si ok, onAuthStateChanged se encarga de mostrar la app
+  });
+}
+
+document.addEventListener('auth-ready', () => {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app-wrap').style.display = '';
+});
+
+document.addEventListener('auth-logout', () => {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('app-wrap').style.display = 'none';
+});
 </script>
 
 <script src="js/campograma-darkmode.js"></script>
