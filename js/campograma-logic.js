@@ -3043,7 +3043,7 @@ function buildCard(eq){
   }
   // Campo
   const cWrap=mk('div','campo-wrap dz');
-  cWrap.dataset.eq=eq; cWrap.dataset.zona='campo';
+  cWrap.dataset.eq=eq; cWrap.dataset.zona='campo'; cWrap.dataset.dia=dia;
   cWrap.innerHTML=`
     <svg class="campo-svg" viewBox="0 0 100 118" preserveAspectRatio="none">
       <rect x="2" y="2" width="96" height="114" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>
@@ -3089,7 +3089,7 @@ function buildCard(eq){
   // Banquillo (solo en modo partido, justo debajo del campo)
   if(esPartido(eq)){
     const zBanq=mk('div','zona-banquillo dz');
-    zBanq.dataset.eq=eq; zBanq.dataset.zona='banquillo';
+    zBanq.dataset.eq=eq; zBanq.dataset.zona='banquillo'; zBanq.dataset.dia=dia;
     const lblB=mk('div','zona-lbl'); lblB.textContent='🔄 BANQUILLO';
     zBanq.appendChild(lblB);
     const cwB=mk('div','chips-wrap');
@@ -3100,7 +3100,7 @@ function buildCard(eq){
   }
   // Disponibles
   const zDisp=mk('div','zona-disponibles dz');
-  zDisp.dataset.eq=eq; zDisp.dataset.zona='disponibles';
+  zDisp.dataset.eq=eq; zDisp.dataset.zona='disponibles'; zDisp.dataset.dia=dia;
   const lblD=mk('div','zona-lbl'); lblD.textContent='DISPONIBLES ('+(d.disponibles||[]).length+')';
   zDisp.appendChild(lblD);
   const cwD=mk('div','chips-wrap');
@@ -3158,7 +3158,7 @@ function buildCard(eq){
   colDefs.forEach(({zona,cls,cc,idx})=>{
     if(!d[zona]) d[zona]=[];
     const col=mk('div',cls+' dz');
-    col.dataset.eq=eq; col.dataset.zona=zona;
+    col.dataset.eq=eq; col.dataset.zona=zona; col.dataset.dia=dia;
     // Label
     const lblWrap=mk('div','zona-lbl-wrap');
     const lbl=mk('input','zona-lbl-edit');
@@ -3264,7 +3264,7 @@ function chip(nombre,eq,zona,color,type){
   const esPort = porteros.includes(nombre);
   const c=mk('div',`chip ${cf} ${multi?'c-multi':''} ${type}${isCampo?' chip-2l':''}${esPort?' chip-portero':''}`);
   c.innerHTML=chipHTML(nombre, isCampo);
-  c.dataset.eq=eq; c.dataset.zona=zona; c.dataset.nombre=nombre;
+  c.dataset.eq=eq; c.dataset.zona=zona; c.dataset.nombre=nombre; c.dataset.dia=dia;
   if(prueba) c.title='Jugador a prueba';
   else if(multi){
     const eqs = eqsDeNombre(dia,nombre).join(', ');
@@ -3916,6 +3916,7 @@ function startChip(c,ev){
   const esDeCampo = c.classList.contains('cf');
   drag={
     c, nombre:c.dataset.nombre, eq:c.dataset.eq, zona:c.dataset.zona||'campo',
+    dia: c.dataset.dia || dia, // día de origen del chip (vista semana)
     esDeCampo,
     pof: esDeCampo ? c.parentElement : null,
     campo: esDeCampo ? c.parentElement.closest('.campo-wrap') : null
@@ -3951,125 +3952,134 @@ function moveChip(e){
   if(t){const dz=t.closest('.dz');if(dz)dz.classList.add('dz-active');}
 }
 function endChip(e){
-  off('touchmove',moveChip);off('touchend',endChip);off('mousemove',moveChip);off('mouseup',endChip);
-  if(!drag){
-    // Puede que el drag no haya arrancado todavía (dentro del delay de 160ms)
-    // En ese caso no hacer nada — el doble tap ya se habrá gestionado
-    return;
-  }
-  document.getElementById('ghost').style.display='none';
-  drag.c.classList.remove('dragging');
-  if(drag.pof){ drag.pof.classList.remove('no-anim'); drag.pof.style.zIndex=''; }
-  document.querySelectorAll('.dz').forEach(z=>z.classList.remove('dz-active'));
-  const ev=e.changedTouches?e.changedTouches[0]:e;
-  // ── Detectar zona destino
-  // En touch, ocultar también el chip arrastrado para que elementFromPoint lo atraviese
-  const _chipWasHidden = drag.c.style.visibility;
-  drag.c.style.visibility='hidden';
-  if(drag.pof) drag.pof.style.visibility='hidden';
-  const t=document.elementFromPoint(ev.clientX,ev.clientY);
-  drag.c.style.visibility=_chipWasHidden||'';
-  if(drag.pof) drag.pof.style.visibility='';
-  const dz=t&&t.closest('.dz');
-  if(!dz){
-    // Soltado fuera de todo — si era del campo volver a snap, si era de zona no hacer nada
-    if(drag.esDeCampo && drag.campo){
-      const cr=drag.campo.getBoundingClientRect();
-      const inside=ev.clientX>=cr.left&&ev.clientX<=cr.right&&ev.clientY>=cr.top&&ev.clientY<=cr.bottom;
-      if(inside){
-        const rawT=clamp(((ev.clientY-dOff.y-cr.top   )/cr.height)*100,0,100);
-        const rawL=clamp(((ev.clientX-dOff.x-cr.left  )/cr.width )*100,0,100);
-        const [snapT,snapL]=snapToGrid(drag.eq,drag.nombre,rawT,rawL);
-        savePos(dia,drag.eq,drag.nombre,snapT,snapL);
-        drag.pof.style.top=snapT+'%'; drag.pof.style.left=snapL+'%';
-        updateCount(drag.eq); autoGuardar();
-      } else {
-        // Fuera del campo → borrar
-        const arr=data[dia][drag.eq].campo;
-        const i=arr.indexOf(drag.nombre); if(i>=0) arr.splice(i,1);
-        drag.pof.remove();
-        autoGuardar(); updateCount(drag.eq);
-        render();
+  const _diaOrigDrop = dia;
+  try {
+    off('touchmove',moveChip);off('touchend',endChip);off('mousemove',moveChip);off('mouseup',endChip);
+    if(!drag){
+      // Puede que el drag no haya arrancado todavía (dentro del delay de 160ms)
+      // En ese caso no hacer nada — el doble tap ya se habrá gestionado
+      return;
+    }
+    // Usar el día de origen del chip arrastrado (vista semana puede tener varios días)
+    dia = drag.dia || dia;
+    document.getElementById('ghost').style.display='none';
+    drag.c.classList.remove('dragging');
+    if(drag.pof){ drag.pof.classList.remove('no-anim'); drag.pof.style.zIndex=''; }
+    document.querySelectorAll('.dz').forEach(z=>z.classList.remove('dz-active'));
+    const ev=e.changedTouches?e.changedTouches[0]:e;
+    // ── Detectar zona destino
+    // En touch, ocultar también el chip arrastrado para que elementFromPoint lo atraviese
+    const _chipWasHidden = drag.c.style.visibility;
+    drag.c.style.visibility='hidden';
+    if(drag.pof) drag.pof.style.visibility='hidden';
+    const t=document.elementFromPoint(ev.clientX,ev.clientY);
+    drag.c.style.visibility=_chipWasHidden||'';
+    if(drag.pof) drag.pof.style.visibility='';
+    const dz=t&&t.closest('.dz');
+    if(!dz){
+      // Soltado fuera de todo — si era del campo volver a snap, si era de zona no hacer nada
+      if(drag.esDeCampo && drag.campo){
+        const cr=drag.campo.getBoundingClientRect();
+        const inside=ev.clientX>=cr.left&&ev.clientX<=cr.right&&ev.clientY>=cr.top&&ev.clientY<=cr.bottom;
+        if(inside){
+          const rawT=clamp(((ev.clientY-dOff.y-cr.top   )/cr.height)*100,0,100);
+          const rawL=clamp(((ev.clientX-dOff.x-cr.left  )/cr.width )*100,0,100);
+          const [snapT,snapL]=snapToGrid(drag.eq,drag.nombre,rawT,rawL);
+          savePos(dia,drag.eq,drag.nombre,snapT,snapL);
+          drag.pof.style.top=snapT+'%'; drag.pof.style.left=snapL+'%';
+          updateCount(drag.eq); autoGuardar();
+        } else {
+          // Fuera del campo → borrar
+          const arr=data[dia][drag.eq].campo;
+          const i=arr.indexOf(drag.nombre); if(i>=0) arr.splice(i,1);
+          drag.pof.remove();
+          autoGuardar(); updateCount(drag.eq);
+          render();
+        }
       }
+      drag=null; return;
     }
-    drag=null; return;
-  }
-  const toEq=dz.dataset.eq, toZona=dz.dataset.zona;
-  // ── Destino: campo
-  if(toZona==='campo'){
-    const cr=dz.getBoundingClientRect();
-    const rawT=clamp(((ev.clientY-cr.top )/cr.height)*100,0,100);
-    const rawL=clamp(((ev.clientX-cr.left)/cr.width )*100,0,100);
-    const [snapT,snapL]=snapToGrid(toEq,drag.nombre,rawT,rawL);
-    savePos(dia,toEq,drag.nombre,snapT,snapL);
-    // Caso especial: campo del Primer Equipo
-    if(toEq==='1ER EQUIPO'){
-      // Quitar de zona origen
-      if(drag.eq !== '1ER EQUIPO'){
-        const arr=data[dia][drag.eq]?.[drag.zona];
-        if(arr){ const i=arr.indexOf(drag.nombre); if(i>=0) arr.splice(i,1); }
+    const toEq=dz.dataset.eq, toZona=dz.dataset.zona;
+    const toDia = dz.dataset.dia || dia;
+    dia = toDia; // el destino manda: usar el día de la columna donde se suelta
+    // ── Destino: campo
+    if(toZona==='campo'){
+      const cr=dz.getBoundingClientRect();
+      const rawT=clamp(((ev.clientY-cr.top )/cr.height)*100,0,100);
+      const rawL=clamp(((ev.clientX-cr.left)/cr.width )*100,0,100);
+      const [snapT,snapL]=snapToGrid(toEq,drag.nombre,rawT,rawL);
+      savePos(dia,toEq,drag.nombre,snapT,snapL);
+      // Caso especial: campo del Primer Equipo
+      if(toEq==='1ER EQUIPO'){
+        // Quitar de zona origen
+        if(drag.eq !== '1ER EQUIPO'){
+          const arr=data[dia][drag.eq]?.[drag.zona];
+          if(arr){ const i=arr.indexOf(drag.nombre); if(i>=0) arr.splice(i,1); }
+        }
+        // Añadir a primerEquipoJugadores
+        if(!primerEquipoJugadores[dia]) primerEquipoJugadores[dia]=[];
+        if(!primerEquipoJugadores[dia].includes(drag.nombre))
+          primerEquipoJugadores[dia].push(drag.nombre);
+        drag=null; autoGuardar(); render(); return;
       }
-      // Añadir a primerEquipoJugadores
-      if(!primerEquipoJugadores[dia]) primerEquipoJugadores[dia]=[];
-      if(!primerEquipoJugadores[dia].includes(drag.nombre))
-        primerEquipoJugadores[dia].push(drag.nombre);
-      drag=null; autoGuardar(); render(); return;
-    }
-    // ── PROMOCIÓN AUTOMÁTICA ──
-    // Si el jugador (sea de su equipo propio o prestado) va al campo de un equipo
-    // distinto a su EQUIPO PROPIO, se registra como promovido desde su equipo propio.
-    const _nombre2 = drag.nombre;
-    const _fromEq2 = drag.eq;
-    const _fromZona2 = drag.zona;
-    const _eqPropio2 = origen[_nombre2] || _fromEq2;
-    const _zonasOrigenValidas = ['disponibles','campo'];
-    const esPromocionAuto = (
-      toEq !== _eqPropio2 &&                       // destino distinto a su equipo propio
-      _zonasOrigenValidas.includes(_fromZona2)     // viene de disponibles o campo
-    );
-    if(esPromocionAuto){
-      // Quitar de la zona origen (puede ser su equipo propio o uno prestado)
-      const srcArr = data[dia][_fromEq2]?.[_fromZona2];
-      if(srcArr){ const si=srcArr.indexOf(_nombre2); if(si>=0) srcArr.splice(si,1); }
-      // Si venía prestado en otro equipo, también quitar cualquier rastro de promoción previa
-      if(_fromEq2 !== _eqPropio2){
-        const promArrPrevio = data[dia][_eqPropio2]?.promovidos_1er;
-        if(promArrPrevio){ const pi=promArrPrevio.indexOf(_nombre2); if(pi>=0) promArrPrevio.splice(pi,1); }
+      // ── PROMOCIÓN AUTOMÁTICA ──
+      // Si el jugador (sea de su equipo propio o prestado) va al campo de un equipo
+      // distinto a su EQUIPO PROPIO, se registra como promovido desde su equipo propio.
+      const _nombre2 = drag.nombre;
+      const _fromEq2 = drag.eq;
+      const _fromZona2 = drag.zona;
+      const _eqPropio2 = origen[_nombre2] || _fromEq2;
+      const _zonasOrigenValidas = ['disponibles','campo'];
+      const esPromocionAuto = (
+        toEq !== _eqPropio2 &&                       // destino distinto a su equipo propio
+        _zonasOrigenValidas.includes(_fromZona2)     // viene de disponibles o campo
+      );
+      if(esPromocionAuto){
+        // Quitar de la zona origen (puede ser su equipo propio o uno prestado)
+        const srcArr = data[dia][_fromEq2]?.[_fromZona2];
+        if(srcArr){ const si=srcArr.indexOf(_nombre2); if(si>=0) srcArr.splice(si,1); }
+        // Si venía prestado en otro equipo, también quitar cualquier rastro de promoción previa
+        if(_fromEq2 !== _eqPropio2){
+          const promArrPrevio = data[dia][_eqPropio2]?.promovidos_1er;
+          if(promArrPrevio){ const pi=promArrPrevio.indexOf(_nombre2); if(pi>=0) promArrPrevio.splice(pi,1); }
+        }
+        // Añadir al campo del equipo destino (ya guardamos pos arriba)
+        data[dia][toEq].campo.push(_nombre2);
+        // Registrar en promovidos_1er del equipo PROPIO con el nuevo destino
+        autoPromocionar(_nombre2, _eqPropio2, toEq);
+        toast(_nombre2 + ' → ' + toEq + ' (promoción auto)');
+        drag=null; autoGuardar(); render(); return;
       }
-      // Añadir al campo del equipo destino (ya guardamos pos arriba)
-      data[dia][toEq].campo.push(_nombre2);
-      // Registrar en promovidos_1er del equipo PROPIO con el nuevo destino
-      autoPromocionar(_nombre2, _eqPropio2, toEq);
-      toast(_nombre2 + ' → ' + toEq + ' (promoción auto)');
-      drag=null; autoGuardar(); render(); return;
+      move(drag.eq,drag.zona,toEq,'campo',drag.nombre);
+      drag=null; render(); return;
     }
-    move(drag.eq,drag.zona,toEq,'campo',drag.nombre);
-    drag=null; render(); return;
-  }
-  // ── Destino: misma zona origen → recolocar en campo si viene del campo
-  if(drag.eq===toEq && drag.zona===toZona){ drag=null; return; }
-  // ── Destino: promovidos_1er → preguntar a qué equipo va
-  if(toZona==='promovidos_1er'){
-    const _nombre=drag.nombre, _fromEq=drag.eq, _fromZona=drag.zona;
-    // Quitar de zona origen (puede ser campo, disponibles, etc.)
-    if(_fromZona==='campo'){
-      // Si viene del campo, quitar pos
-      delete pos[key(dia,_fromEq,_nombre)];
-      if(drag.pof) drag.pof.remove();
+    // ── Destino: misma zona origen → recolocar en campo si viene del campo
+    if(drag.eq===toEq && drag.zona===toZona){ drag=null; return; }
+    // ── Destino: promovidos_1er → preguntar a qué equipo va
+    if(toZona==='promovidos_1er'){
+      const _nombre=drag.nombre, _fromEq=drag.eq, _fromZona=drag.zona;
+      // Quitar de zona origen (puede ser campo, disponibles, etc.)
+      if(_fromZona==='campo'){
+        // Si viene del campo, quitar pos
+        delete pos[key(dia,_fromEq,_nombre)];
+        if(drag.pof) drag.pof.remove();
+      }
+      const srcArr = data[dia][_fromEq]?.[_fromZona];
+      if(srcArr){ const i=srcArr.indexOf(_nombre); if(i>=0) srcArr.splice(i,1); }
+      // El equipo origen para la promoción es siempre el equipo propio del jugador
+      const _eqPropio = origen[_nombre] || _fromEq;
+      drag=null;
+      abrirPromoDestModal(_nombre, _eqPropio, (destino)=>{
+        ejecutarPromocion(_nombre, _eqPropio, destino);
+      });
+      return;
     }
-    const srcArr = data[dia][_fromEq]?.[_fromZona];
-    if(srcArr){ const i=srcArr.indexOf(_nombre); if(i>=0) srcArr.splice(i,1); }
-    // El equipo origen para la promoción es siempre el equipo propio del jugador
-    const _eqPropio = origen[_nombre] || _fromEq;
-    drag=null;
-    abrirPromoDestModal(_nombre, _eqPropio, (destino)=>{
-      ejecutarPromocion(_nombre, _eqPropio, destino);
-    });
-    return;
+    // ── Destino: cualquier otra zona
+    move(drag.eq,drag.zona,toEq,toZona,drag.nombre);
+    drag=null; render();
+  } finally {
+    dia = _diaOrigDrop;
   }
-  // ── Destino: cualquier otra zona
-  move(drag.eq,drag.zona,toEq,toZona,drag.nombre);
-  drag=null; render();
 }
 const ZONA_NAMES={campo:'Campo',banquillo:'Banquillo',disponibles:'Disponibles',promovidos_1er:'Promovido',lesionados:'Lesión',otros:'Otros'};
 function move(fromEq,fromZona,toEq,toZona,nombre){
