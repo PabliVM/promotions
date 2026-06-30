@@ -2876,6 +2876,7 @@ function buildCard(eq){
   } else {
     card.appendChild(cWrap);
   }
+  if(!esVistaLista(eq, dia)){
   // Banquillo (solo en modo partido, justo debajo del campo)
   if(esPartido(eq)){
     const zBanq=mk('div','zona-banquillo dz');
@@ -3013,6 +3014,7 @@ function buildCard(eq){
     cols.appendChild(col);
   });
   card.appendChild(cols);
+  }
 
   // Bloque de notas debajo de las columnas
   const notasKey = eq + '_' + dia + '_notas';
