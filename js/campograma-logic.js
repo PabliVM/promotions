@@ -383,17 +383,17 @@ function capturarCampo(eq, card, diaParam){
       const tiposBase = (tiposConfig[eq] && tiposConfig[eq].length) ? tiposConfig[eq] : TIPOS_BASE;
       const tipoKey = tipoPartido[dia]?.[eq] || tiposBase[0]?.k || 'liga';
       const tipoObj = tiposBase.find(t=>t.k===tipoKey) || tiposBase[0] || {l:'Liga'};
-      ctx.fillStyle = '#fffbeb';
+      ctx.fillStyle = '#eff4fe';
       ctx.fillRect(0, HEADER_H, W, bannerH);
-      ctx.fillStyle = '#d97706';
+      ctx.fillStyle = '#2563eb';
       ctx.fillRect(0, HEADER_H, W, 2);
       ctx.font = '700 13px Segoe UI, -apple-system, sans-serif';
-      ctx.fillStyle = '#d97706';
+      ctx.fillStyle = '#2563eb';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'left';
       ctx.fillText('⚽ PARTIDO', 16, HEADER_H + bannerH/2);
       ctx.font = '600 13px Segoe UI, -apple-system, sans-serif';
-      ctx.fillStyle = '#92400e';
+      ctx.fillStyle = '#1e3a8a';
       ctx.fillText((tipoObj.l||'').toUpperCase() + '  vs ' + rivalVal, 130, HEADER_H + bannerH/2);
     }
 
