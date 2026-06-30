@@ -2187,9 +2187,24 @@ body.dark #login-email, body.dark #login-pass {
   color: #fff;
 }
 .semana-td-card .card-hdr.card-hdr-hoy .modo-btn {
-  background: rgba(255,255,255,.1);
-  border-color: rgba(255,255,255,.3);
-  color: #fff;
+  background: #fff;
+  border-color: #fff;
+  color: #2563eb;
+}
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn.partido {
+  background: #fffbeb;
+  border-color: #fffbeb;
+  color: #d97706;
+}
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn.uyl.active {
+  background: #dbeafe;
+  border-color: #dbeafe;
+  color: #2563eb;
+}
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn.uyl:not(.active) {
+  background: rgba(255,255,255,.85);
+  border-color: rgba(255,255,255,.85);
+  color: #5a6170;
 }
 
 /* Scrollbar visible en vista semana */
