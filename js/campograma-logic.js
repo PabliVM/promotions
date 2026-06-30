@@ -2320,9 +2320,8 @@ function buildListaView(eq, d){
   const wrap = mk('div','card-lista-wrap');
 
   const zonas = [
-    { key:'campo',          label:'EN EL CAMPO',  color:'#2563eb' },
+    { key:'campo',          label:'LISTADO DE JUGADORES',  color:'#2563eb' },
     { key:'banquillo',      label:'BANQUILLO',     color:'#d97706' },
-    { key:'disponibles',    label:'DISPONIBLES',   color:'#16a34a' },
     { key:'promovidos_1er', label: colNames[eq]?.[0]||'PROMOCIÓN', color:'#d97706' },
     { key:'lesionados',     label: colNames[eq]?.[1]||'LESIÓN',    color:'#dc2626' },
     { key:'otros',          label: colNames[eq]?.[2]||'OTROS',     color:'#6b7280' },
@@ -2656,7 +2655,7 @@ function renderCardsSemana(grid){
         const fechaSpan = document.createElement('span');
         fechaSpan.className = 'card-hdr-fecha';
         fechaSpan.textContent = d + '  ' + fechaFmt;
-        if(esHoy) fechaSpan.style.fontWeight = '700';
+        if(esHoy) fechaSpan.className = 'card-hdr-fecha card-hdr-fecha-hoy';
         nm.appendChild(fechaSpan);
       }
 
