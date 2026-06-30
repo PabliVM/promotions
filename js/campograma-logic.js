@@ -2350,7 +2350,7 @@ function buildListaView(eq, d){
     zonas.forEach(({key, label}) => {
       const jugs = eqData[key] || [];
       if(!jugs.length) return;
-      texto += '\n' + label + ':\n';
+      texto += '\n*' + label.toUpperCase() + ':*\n';
       jugs.forEach(n => { texto += '  - ' + n + '\n'; });
     });
     navigator.clipboard.writeText(texto).then(()=>toast('✓ Copiado al portapapeles')).catch(()=>toast('❌ Error al copiar'));
