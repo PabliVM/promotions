@@ -1324,19 +1324,20 @@ td.td-vacio{color:#d1d9e6;}
 #control-dia-lbl{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;color:rgba(255,255,255,.8);letter-spacing:0;}
 
 /* ══ MODAL DESTINO PROMOCIÓN ══ */
-#promo-dest-overlay{position:fixed;inset:0;z-index:10030;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;}
+#promo-dest-overlay{position:fixed;inset:0;z-index:10030;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
 #promo-dest-overlay.open{display:flex;}
-#promo-dest-modal{background:#0f1a2e;border-radius:20px 20px 0 0;padding:18px 16px 32px;width:100%;max-width:420px;border-top:1px solid rgba(200,168,0,.25);}
-#promo-dest-modal h3{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:#fff;margin:0 0 4px;}
-#promo-dest-modal p{font-size:11px;color:rgba(255,255,255,.4);margin:0 0 14px;font-family:'Barlow Condensed',sans-serif;}
-#promo-dest-opts{display:flex;flex-direction:column;gap:8px;}
-.promo-dest-opt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);cursor:pointer;transition:all .15s;}
-.promo-dest-opt:active{background:rgba(200,168,0,.15);border-color:#C8A800;}
+#promo-dest-modal{background:#fff;border-radius:16px;padding:0;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.15);overflow:hidden;}
+#promo-dest-modal h3{font-family:'Segoe UI',-apple-system,sans-serif;font-size:15px;font-weight:700;color:#fff;margin:0;padding:14px 20px;background:#2563eb;}
+#promo-dest-modal p{font-size:11px;color:#5a6170;margin:10px 20px 14px;font-family:'Segoe UI',-apple-system,sans-serif;}
+#promo-dest-opts{display:flex;flex-direction:column;gap:8px;padding:0 16px 16px;}
+.promo-dest-opt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;border:1.5px solid #dfe1e6;background:#f8fafd;cursor:pointer;transition:all .15s;}
+.promo-dest-opt:hover{background:#eff4fe;border-color:#2563eb;}
 .promo-dest-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.promo-dest-nombre{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#fff;}
-.promo-dest-1er{background:rgba(200,168,0,.08);border-color:rgba(200,168,0,.3);}
-.promo-dest-1er .promo-dest-nombre{color:#C8A800;}
-#promo-dest-cancel{margin-top:10px;width:100%;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.promo-dest-nombre{font-family:'Segoe UI',-apple-system,sans-serif;font-size:13px;font-weight:600;color:#1a1d23;}
+.promo-dest-1er{background:rgba(37,99,235,.06);border-color:rgba(37,99,235,.3);}
+.promo-dest-1er .promo-dest-nombre{color:#2563eb;font-weight:700;}
+#promo-dest-cancel{margin:0 16px 16px;width:calc(100% - 32px);padding:11px;border-radius:10px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;font-family:'Segoe UI',-apple-system,sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+#promo-dest-cancel:hover{background:#f0f4fa;}
 /* pestaña 1er equipo */
 .eq-tab.eq-primer{border-left:1px solid rgba(200,168,0,.2);color:rgba(200,168,0,.5);}
 .eq-tab.eq-primer.active{color:#C8A800;}
