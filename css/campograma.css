@@ -2048,3 +2048,13 @@ body.dark .filtro-eq-btn.activo {
   border-color: #3b82f6;
   color: #3b82f6;
 }
+
+/* Fecha de HOY destacada */
+.card-hdr-fecha-hoy {
+  font-weight: 700 !important;
+  color: #fff !important;
+  background: #2563eb;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block !important;
+}
