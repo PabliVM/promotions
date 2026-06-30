@@ -609,15 +609,14 @@ body:has(.cards-grid.view-semana) #app-wrap {
 .tipo-btn.t-copa.active    { background:rgba(245,158,11,.12); }
 .tipo-btn.t-uyl.active     { background:rgba(96,180,255,.12); }
 .modo-btn.uyl{
-  background:transparent;
-  border-color:rgba(96,180,255,.25);
-  color:rgba(96,180,255,.45);
+  background:#fff;
+  border-color:#dfe1e6;
+  color:#5a6170;
 }
 .modo-btn.uyl.active{
-  background:rgba(96,180,255,.18);
-  border-color:#60b4ff;
-  color:#60b4ff;
-  box-shadow:0 0 6px rgba(96,180,255,.3);
+  background:#1e3a8a;
+  border-color:#1e3a8a;
+  color:#fff;
 }
 /* Modal UYL */
 .uyl-section-hdr{padding:4px 10px;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;background:#f8fafc;border-top:1px solid #e2e8f0;}
