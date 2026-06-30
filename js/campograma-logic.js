@@ -2480,7 +2480,10 @@ function renderCards(){
     renderFiltrosSemana();
     renderCardsSemana(grid);
     initDrag();
-    requestAnimationFrame(() => igualarZonasSemana(grid));
+    requestAnimationFrame(() => {
+      igualarZonasSemana(grid);
+      sincronizarScrollBar(grid);
+    });
     return;
   }
   if(eqF==='1ER EQUIPO'){
@@ -2495,6 +2498,28 @@ function renderCards(){
   }
   initDrag();
   requestAnimationFrame(equalizarCards);
+}
+
+function sincronizarScrollBar(grid){
+  const bar = document.getElementById('scroll-sync-bar');
+  const inner = document.getElementById('scroll-sync-inner');
+  if(!bar || !inner || !grid) return;
+  // El ancho del inner debe igualar el scrollWidth del grid
+  inner.style.width = grid.scrollWidth + 'px';
+  // Sincronizar scroll en ambas direcciones, evitando bucle infinito
+  let syncing = false;
+  grid.onscroll = () => {
+    if(syncing) return;
+    syncing = true;
+    bar.scrollLeft = grid.scrollLeft;
+    syncing = false;
+  };
+  bar.onscroll = () => {
+    if(syncing) return;
+    syncing = true;
+    grid.scrollLeft = bar.scrollLeft;
+    syncing = false;
+  };
 }
 
 function igualarZonasSemana(grid){
