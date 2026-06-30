@@ -2064,7 +2064,7 @@ body.dark .filtro-eq-btn.activo {
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: #f0f4fa;
+  background: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;
