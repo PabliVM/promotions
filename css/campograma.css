@@ -1253,16 +1253,16 @@ body.dark .col-extra{background:#1a1625;}
 .reset-opt-arrow{color:rgba(255,255,255,.3);font-size:18px;}
 #reset-cancel{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;}
 /* ALERT */
-#alert-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10300;display:none;align-items:center;justify-content:center;}
+#alert-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
 #alert-overlay.show{display:flex;}
-#alert-box{background:#1e293b;border:1px solid rgba(200,168,0,.4);border-radius:12px;padding:20px 22px;max-width:300px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.5);}
-#alert-msg{color:#fff;font-size:13px;line-height:1.5;margin-bottom:14px;}
+#alert-box{background:#fff;border:none;border-radius:16px;padding:20px 22px;max-width:340px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.15);}
+#alert-msg{color:#1a1d23;font-size:13px;font-family:'Segoe UI',-apple-system,sans-serif;line-height:1.5;margin-bottom:16px;font-weight:500;}
 #alert-btns{display:flex;gap:8px;justify-content:flex-end;}
-.alert-btn{padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
-.alert-ok{background:var(--rm-gold);color:#000;}
-.alert-ok:hover{background:#e0bc00;}
-.alert-cancel{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);}
-.alert-cancel:hover{background:rgba(255,255,255,.2);}
+.alert-btn{padding:8px 18px;border-radius:20px;border:1.5px solid #dfe1e6;cursor:pointer;font-size:12px;font-weight:600;font-family:'Segoe UI',-apple-system,sans-serif;text-transform:none;letter-spacing:0;}
+.alert-ok{background:#2563eb;color:#fff;border-color:#2563eb;}
+.alert-ok:hover{background:#1d4ed8;}
+.alert-cancel{background:#fff;color:#5a6170;}
+.alert-cancel:hover{background:#f0f4fa;}
 /* ══ TABLA CONTROL ══ */
 #control-overlay{position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);overflow-y:auto;}
 #control-overlay.open{display:flex;}
