@@ -1098,12 +1098,12 @@ body:has(.cards-grid.view-semana) #app-wrap {
 /* Colores de zona — todos neutros, sin color por zona */
 .c-verde,.c-naranja,.c-rojo,.c-azul,.c-gris{background:#f1f5f9;color:#1e293b;border:1px solid #cbd5e1;}
 .c-prestado{background:#7c3aed;color:#fff;border:1px solid #6d28d9;}
-.c-prestado-CASTILLA{background:#003087;color:#fff;border:1px solid #003087;}
-.c-prestado-RMC{background:#7030A0;color:#fff;border:1px solid #7030A0;}
-.c-prestado-JUVENIL_A{background:#FFC000;color:#1a1a1a;border:1px solid #FFC000;}
-.c-prestado-JUVENIL_B{background:#275317;color:#fff;border:1px solid #275317;}
-.c-prestado-JUVENIL_C{background:#D80E9E;color:#fff;border:1px solid #D80E9E;}
-.c-prestado-CADETE_A{background:#0070C0;color:#fff;border:1px solid #0070C0;}
+.c-prestado-CASTILLA{background:#1e3a8a;color:#fff;border:1px solid #1e3a8a;}
+.c-prestado-RMC{background:#7c3aed;color:#fff;border:1px solid #7c3aed;}
+.c-prestado-JUVENIL_A{background:#eab308;color:#1a1a1a;border:1px solid #eab308;}
+.c-prestado-JUVENIL_B{background:#16a34a;color:#fff;border:1px solid #16a34a;}
+.c-prestado-JUVENIL_C{background:#db2777;color:#fff;border:1px solid #db2777;}
+.c-prestado-CADETE_A{background:#ea580c;color:#fff;border:1px solid #ea580c;}
 /* ZONA DISPONIBLES */
 .zona-disponibles{padding:7px 10px;background:#fff;border-top:1px solid #e8eef8;min-height:44px;}
 .zona-disponibles.dz-active{background:rgba(74,222,128,.05);outline:2px dashed var(--verde-bd);outline-offset:-2px;}
