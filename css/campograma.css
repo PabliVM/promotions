@@ -2413,3 +2413,9 @@ body.dark #login-email, body.dark #login-pass {
   color: #1a1d23;
   outline: none;
 }
+
+/* Chip de portero — borde amarillo en pantalla en vivo */
+.chip.chip-portero {
+  border: 2.5px solid #facc15 !important;
+  box-shadow: 0 0 0 1px rgba(250,204,21,.3);
+}
