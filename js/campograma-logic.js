@@ -338,7 +338,8 @@ function capturarCampo(eq, card){
     const ROW_H    = 28;
     const maxRows  = Math.max(proms.length, lesion.length, otros.length, extra.length, banquillo.length, 1);
     const COL_H    = 30 + maxRows * ROW_H + 16;
-    const H        = HEADER_H + FIELD_H + COL_H + 10;
+    const bannerHpre = esPartidoHoy ? 32 : 0;
+    const H        = HEADER_H + bannerHpre + FIELD_H + COL_H + 10;
     // Escalar canvas por devicePixelRatio para salida nítida en retina/iPhone
     const DPR = Math.min(window.devicePixelRatio || 2, 3);
     const cv  = document.createElement('canvas');
@@ -371,10 +372,33 @@ function capturarCampo(eq, card){
     ctx.textAlign = 'left';
     ctx.fillText(fechaFmt, 16, HEADER_H/2 + 8);
     // Sin escudo en header (evitar fondo negro por transparencia)
+
+    // Banner PARTIDO vs Rival + tipo, si aplica
+    let bannerH = 0;
+    if(esPartidoHoy){
+      bannerH = 32;
+      const rivalVal = rivales[dia]?.[eq] || 'Rival por confirmar';
+      const tiposBase = (tiposConfig[eq] && tiposConfig[eq].length) ? tiposConfig[eq] : TIPOS_BASE;
+      const tipoKey = tipoPartido[dia]?.[eq] || tiposBase[0]?.k || 'liga';
+      const tipoObj = tiposBase.find(t=>t.k===tipoKey) || tiposBase[0] || {l:'Liga'};
+      ctx.fillStyle = '#fffbeb';
+      ctx.fillRect(0, HEADER_H, W, bannerH);
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(0, HEADER_H, W, 2);
+      ctx.font = '700 13px Segoe UI, -apple-system, sans-serif';
+      ctx.fillStyle = '#d97706';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+      ctx.fillText('⚽ PARTIDO', 16, HEADER_H + bannerH/2);
+      ctx.font = '600 13px Segoe UI, -apple-system, sans-serif';
+      ctx.fillStyle = '#92400e';
+      ctx.fillText((tipoObj.l||'').toUpperCase() + '  vs ' + rivalVal, 130, HEADER_H + bannerH/2);
+    }
+
     // Campo capturado
-    ctx.drawImage(fieldCanvas, 0, HEADER_H, W, FIELD_H);
+    ctx.drawImage(fieldCanvas, 0, HEADER_H + bannerH, W, FIELD_H);
     function dibujarColumnas(){
-      const colY = HEADER_H + FIELD_H + 8;
+      const colY = HEADER_H + bannerH + FIELD_H + 8;
       const eqsShort = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
       const colDefs = [];
       if(esPartidoHoy && banquillo.length) colDefs.push({ label: '🔄 BANQUILLO', items: banquillo, color:'#f59e0b' });
