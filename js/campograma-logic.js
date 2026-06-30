@@ -2780,20 +2780,22 @@ function buildCard(eq){
   card.appendChild(hdr);
   // Banner partido: selector tipo + rival
   if(esPartido(eq)){
+    const _diaRival = dia;
     const banner=mk('div','partido-banner');
-    const rivalVal = rivales[dia]?.[eq] || '';
+    const rivalVal = rivales[_diaRival]?.[eq] || '';
     const sugerido = sugerirRival(eq);
     banner.innerHTML=`
       <span class="partido-lbl">⚽ PARTIDO</span>
       <input class="rival-inp" type="text" placeholder="${sugerido?'vs '+sugerido:'vs Rival...'}"
         value="${rivalVal}"
-        oninput="guardarRival('${eq}',this.value)"
+        oninput="guardarRival('${eq}',this.value,'${_diaRival}')"
         onclick="event.stopPropagation()">`;
     card.appendChild(banner);
     // Selector tipo de partido — dinámico desde tiposConfig
+    const _diaTipo = dia; // capturar día de ESTA card
     const tipoSel=mk('div','tipo-partido-sel');
     const tipos = tiposConfig[eq] || TIPOS_BASE;
-    const tipoActual = tipoPartido[dia]?.[eq] || tipos[0]?.k || 'liga';
+    const tipoActual = tipoPartido[_diaTipo]?.[eq] || tipos[0]?.k || 'liga';
     tipos.forEach(({k,l,c,uyl})=>{
       const btn=mk('button','tipo-btn'+(tipoActual===k?' active':''));
       btn.textContent=l;
@@ -2802,12 +2804,13 @@ function buildCard(eq){
       }
       btn.onclick=(e)=>{
         e.stopPropagation();
-        if(!tipoPartido[dia]) tipoPartido[dia]={};
-        tipoPartido[dia][eq]=k;
-        if(uyl) modoUYL[dia]=true;
-        else if(eq==='JUVENIL A') modoUYL[dia]=false;
+        if(!tipoPartido[_diaTipo]) tipoPartido[_diaTipo]={};
+        tipoPartido[_diaTipo][eq]=k;
+        if(uyl) modoUYL[_diaTipo]=true;
+        else if(eq==='JUVENIL A') modoUYL[_diaTipo]=false;
         autoGuardar();
         renderCards();
+        if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
       };
       tipoSel.appendChild(btn);
     });
@@ -4038,9 +4041,10 @@ function copyDia(from,to){
 // ══════════════════════════════════════════════════
 // RIVAL Y CALENDARIO DE PARTIDOS
 // ══════════════════════════════════════════════════
-function guardarRival(eq, valor){
-  if(!rivales[dia]) rivales[dia]={};
-  rivales[dia][eq] = valor;
+function guardarRival(eq, valor, diaParam){
+  const d = diaParam || dia;
+  if(!rivales[d]) rivales[d]={};
+  rivales[d][eq] = valor;
   autoGuardar();
 }
 function sugerirRival(eq){
