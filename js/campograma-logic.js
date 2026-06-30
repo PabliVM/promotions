@@ -337,8 +337,13 @@ function capturarCampo(eq, card, diaParam){
   cWrap.querySelectorAll('.chip[data-nombre]').forEach(chipEl => {
     const nombreChip = chipEl.dataset.nombre;
     if(porteros.includes(nombreChip)){
-      _chipsPorteroOriginal.push({el: chipEl, border: chipEl.style.border, shadow: chipEl.style.boxShadow});
-      chipEl.style.border = '3px solid #facc15';
+      _chipsPorteroOriginal.push({
+        el: chipEl,
+        border: chipEl.style.border,
+        shadow: chipEl.style.boxShadow,
+        padding: chipEl.style.padding
+      });
+      chipEl.style.border = '2.5px solid #facc15';
       chipEl.style.boxSizing = 'border-box';
       _chipsPortero.push(chipEl);
     }
@@ -349,7 +354,7 @@ function capturarCampo(eq, card, diaParam){
   }).then(fieldCanvas=>{
     // Restaurar escudo y bordes de porteros en la UI
     if(shieldEl) shieldEl.style.visibility = '';
-    _chipsPorteroOriginal.forEach(({el, border, shadow}) => { el.style.border = border; el.style.boxShadow = shadow; });
+    _chipsPorteroOriginal.forEach(({el, border, shadow, padding}) => { el.style.border = border; el.style.boxShadow = shadow; el.style.padding = padding; });
     // Dimensiones del canvas — respeta la proporción real del campo capturado
     const W       = 800;
     const HEADER_H = 80;
@@ -3306,7 +3311,8 @@ function chip(nombre,eq,zona,color,type){
   let cf = prueba ? 'c-prueba' : (prestado ? (EQ_COLORS[eqO]||'c-prestado') : color);
   const multi = esMulti(nombre);
   const isCampo = type === 'cf';
-  const c=mk('div',`chip ${cf} ${multi?'c-multi':''} ${type}${isCampo?' chip-2l':''}`);
+  const esPort = porteros.includes(nombre);
+  const c=mk('div',`chip ${cf} ${multi?'c-multi':''} ${type}${isCampo?' chip-2l':''}${esPort?' chip-portero':''}`);
   c.innerHTML=chipHTML(nombre, isCampo);
   c.dataset.eq=eq; c.dataset.zona=zona; c.dataset.nombre=nombre;
   if(prueba) c.title='Jugador a prueba';
@@ -4060,24 +4066,29 @@ function endChip(e){
       drag=null; autoGuardar(); render(); return;
     }
     // ── PROMOCIÓN AUTOMÁTICA ──
-    // Si el jugador viene de disponibles O campo de su equipo propio y va al campo de otro equipo
+    // Si el jugador (sea de su equipo propio o prestado) va al campo de un equipo
+    // distinto a su EQUIPO PROPIO, se registra como promovido desde su equipo propio.
     const _nombre2 = drag.nombre;
     const _fromEq2 = drag.eq;
     const _fromZona2 = drag.zona;
     const _eqPropio2 = origen[_nombre2] || _fromEq2;
     const _zonasOrigenValidas = ['disponibles','campo'];
     const esPromocionAuto = (
-      toEq !== _eqPropio2 &&                       // va a un equipo distinto al suyo
-      _zonasOrigenValidas.includes(_fromZona2) &&  // viene de disponibles o campo
-      _fromEq2 === _eqPropio2                       // de su propio equipo
+      toEq !== _eqPropio2 &&                       // destino distinto a su equipo propio
+      _zonasOrigenValidas.includes(_fromZona2)     // viene de disponibles o campo
     );
     if(esPromocionAuto){
-      // Quitar de la zona origen del equipo origen
+      // Quitar de la zona origen (puede ser su equipo propio o uno prestado)
       const srcArr = data[dia][_fromEq2]?.[_fromZona2];
       if(srcArr){ const si=srcArr.indexOf(_nombre2); if(si>=0) srcArr.splice(si,1); }
+      // Si venía prestado en otro equipo, también quitar cualquier rastro de promoción previa
+      if(_fromEq2 !== _eqPropio2){
+        const promArrPrevio = data[dia][_eqPropio2]?.promovidos_1er;
+        if(promArrPrevio){ const pi=promArrPrevio.indexOf(_nombre2); if(pi>=0) promArrPrevio.splice(pi,1); }
+      }
       // Añadir al campo del equipo destino (ya guardamos pos arriba)
       data[dia][toEq].campo.push(_nombre2);
-      // Registrar en promovidos_1er del equipo propio con destino
+      // Registrar en promovidos_1er del equipo PROPIO con el nuevo destino
       autoPromocionar(_nombre2, _eqPropio2, toEq);
       toast(_nombre2 + ' → ' + toEq + ' (promoción auto)');
       drag=null; autoGuardar(); render(); return;
