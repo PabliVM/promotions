@@ -1898,6 +1898,8 @@ function cargarGuardado(){
     EQUIPOS.forEach(eq=>{
       if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
       if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIONADOS'; // normalizar datos viejos
+      if(colNames[eq][0]==='PROMOCIÓN') colNames[eq][0]='PROMOCIONADOS';
+      if(colNames[eq][1]==='LESIÓN')    colNames[eq][1]='LESIONADOS';
     });
     // Asegurar zonas banquillo
     for(const d of DIAS) for(const e of EQUIPOS){
@@ -4517,6 +4519,9 @@ async function arrancarDesdeFirebase(){
       EQUIPOS.forEach(eq=>{
         if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
         if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIONADOS';
+        // Migrar nombres antiguos en singular a plural (solo si no fueron personalizados manualmente)
+        if(colNames[eq][0]==='PROMOCIÓN') colNames[eq][0]='PROMOCIONADOS';
+        if(colNames[eq][1]==='LESIÓN')    colNames[eq][1]='LESIONADOS';
       });
       // Asegurar estructura completa
       for(const d of DIAS) for(const e of EQUIPOS){
