@@ -2727,12 +2727,13 @@ function buildCard(eq){
   // Botón YL — solo Juvenil A: activa/desactiva modo Youth League en disponibles
   if(eq==='JUVENIL A'){
     const _esPartidoJA = esPartido('JUVENIL A');
-    const uylBtn=mk('button','modo-btn uyl'+(esUYL()&&!_esPartidoJA?' active':''));
+    const _diaUYL = dia;
+    const uylBtn=mk('button','modo-btn uyl'+(esUYL(_diaUYL)&&!_esPartidoJA?' active':''));
     uylBtn.textContent='YL';
-    uylBtn.title = _esPartidoJA ? 'No disponible en modo partido' : (esUYL() ? 'Youth League activa — clic para desactivar' : 'Activar Youth League');
+    uylBtn.title = _esPartidoJA ? 'No disponible en modo partido' : (esUYL(_diaUYL) ? 'Youth League activa — clic para desactivar' : 'Activar Youth League');
     uylBtn.style.opacity = _esPartidoJA ? '0.3' : '';
     uylBtn.style.cursor  = _esPartidoJA ? 'default' : '';
-    uylBtn.onclick=(e)=>{e.stopPropagation();toggleUYL();};
+    uylBtn.onclick=(e)=>{e.stopPropagation();toggleUYL(_diaUYL);};
     right.appendChild(uylBtn);
   }
   // Botón resetear equipo
@@ -3429,15 +3430,18 @@ function resetTiposConfig(){
   toast('↺ Tipos restablecidos');
 }
 // ── UYL ──
-function esUYL(){
-  return !!(modoUYL[dia]);
+function esUYL(diaParam){
+  const d = diaParam || dia;
+  return !!(modoUYL[d]);
 }
-function toggleUYL(){
-  if(esPartido('JUVENIL A')) return; // En partido no se puede activar YL
-  modoUYL[dia] = !modoUYL[dia];
+function toggleUYL(diaParam){
+  const d = diaParam || dia;
+  if(esPartido('JUVENIL A', d)) return; // En partido no se puede activar YL
+  modoUYL[d] = !modoUYL[d];
   autoGuardar();
   renderCards();
-  toast(modoUYL[dia]?'⚽ Youth League activada':'Youth League desactivada');
+  if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+  toast(modoUYL[d]?'⚽ Youth League activada':'Youth League desactivada');
 }
 function abrirUYL(){
   document.getElementById('uyl-search').value='';
