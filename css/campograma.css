@@ -1119,7 +1119,7 @@ body.dark .zona-disponibles{background:#1c2333;border-top:1px solid #30363d;}
 .rival-inp::placeholder{color:rgba(255,255,255,.25);}
 .rival-inp:focus{border-bottom-color:#f59e0b;}
 .modo-btn{padding:3px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.5);font-size:10px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;transition:all .15s;}
-.modo-btn.partido{background:rgba(245,158,11,.15);color:#f59e0b;border-color:#f59e0b;}
+.modo-btn.partido{background:rgba(37,99,235,.1);color:#2563eb;border-color:#2563eb;}
 .modo-btn.descanso{background:rgba(100,116,139,.15);color:#94a3b8;border-color:#64748b;}
 /* Overlay DESCANSA en diagonal sobre el campo */
 .campo-descanso-overlay{
@@ -1614,9 +1614,9 @@ body.dark .semana-td-card .card-hdr-fecha { color: #8b949e; }
   color: #2563eb;
 }
 .semana-td-card .modo-btn.partido {
-  background: rgba(245,158,11,.1);
-  color: #d97706;
-  border-color: #d97706;
+  background: rgba(37,99,235,.1);
+  color: #2563eb;
+  border-color: #2563eb;
 }
 .semana-td-card .modo-btn.descanso {
   background: rgba(100,116,139,.1);
@@ -2191,9 +2191,9 @@ body.dark #login-email, body.dark #login-pass {
   color: #2563eb;
 }
 .semana-td-card .card-hdr.card-hdr-hoy .modo-btn.partido {
-  background: #fffbeb;
-  border-color: #fffbeb;
-  color: #d97706;
+  background: #dbeafe;
+  border-color: #dbeafe;
+  color: #1e3a8a;
 }
 .semana-td-card .card-hdr.card-hdr-hoy .modo-btn.uyl.active {
   background: #1e3a8a;
