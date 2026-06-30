@@ -2658,6 +2658,10 @@ function renderCardsSemana(grid){
         if(esHoy) fechaSpan.className = 'card-hdr-fecha card-hdr-fecha-hoy';
         nm.appendChild(fechaSpan);
       }
+      if(esHoy){
+        const hdrEl = card.querySelector('.card-hdr');
+        if(hdrEl) hdrEl.classList.add('card-hdr-hoy');
+      }
 
       const td = document.createElement('td');
       td.className = 'semana-td-card';
