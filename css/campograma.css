@@ -2201,8 +2201,8 @@ body.dark #login-email, body.dark #login-pass {
   color: #fff;
 }
 .semana-td-card .card-hdr.card-hdr-hoy .modo-btn.uyl:not(.active) {
-  background: rgba(255,255,255,.85);
-  border-color: rgba(255,255,255,.85);
+  background: #fff;
+  border-color: #fff;
   color: #5a6170;
 }
 
