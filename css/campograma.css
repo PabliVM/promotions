@@ -2379,3 +2379,37 @@ body.dark #login-email, body.dark #login-pass {
 .card-lista-row.drag-over-row {
   border-top: 2px solid #2563eb;
 }
+
+/* Drag y editar en Plantillas */
+.plant-drag-handle {
+  cursor: grab;
+  color: #9ca3af;
+  font-size: 13px;
+  flex-shrink: 0;
+  padding: 0 2px;
+  user-select: none;
+}
+.plant-row.dragging-row { opacity: .4; }
+.plant-row.drag-over-row { border-top: 2px solid #2563eb; }
+.plant-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: .8;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+.plant-edit-btn:hover { opacity: 1; }
+.plant-edit-input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1.5px solid #2563eb;
+  border-radius: 6px;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #1a1d23;
+  outline: none;
+}
