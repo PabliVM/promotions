@@ -2731,7 +2731,8 @@ function buildCard(eq){
     const uylBtn=mk('button','modo-btn uyl'+(esUYL(_diaUYL)&&!_esPartidoJA?' active':''));
     uylBtn.textContent='YL';
     uylBtn.title = _esPartidoJA ? 'No disponible en modo partido' : (esUYL(_diaUYL) ? 'Youth League activa — clic para desactivar' : 'Activar Youth League');
-    uylBtn.style.opacity = _esPartidoJA ? '0.3' : '';
+    uylBtn.style.opacity = _esPartidoJA ? '0.6' : '';
+    if(_esPartidoJA) uylBtn.classList.add('uyl-disabled');
     uylBtn.style.cursor  = _esPartidoJA ? 'default' : '';
     uylBtn.onclick=(e)=>{e.stopPropagation();toggleUYL(_diaUYL);};
     right.appendChild(uylBtn);
