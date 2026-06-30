@@ -333,11 +333,13 @@ function capturarCampo(eq, card, diaParam){
   if(shieldEl) shieldEl.style.visibility = 'hidden';
   // Resaltar porteros en el campo con borde amarillo grueso temporal
   const _chipsPortero = [];
+  const _chipsPorteroOriginal = [];
   cWrap.querySelectorAll('.chip[data-nombre]').forEach(chipEl => {
     const nombreChip = chipEl.dataset.nombre;
     if(porteros.includes(nombreChip)){
-      chipEl.style.outline = '3px solid #facc15';
-      chipEl.style.outlineOffset = '1px';
+      _chipsPorteroOriginal.push({el: chipEl, border: chipEl.style.border, shadow: chipEl.style.boxShadow});
+      chipEl.style.border = '3px solid #facc15';
+      chipEl.style.boxSizing = 'border-box';
       _chipsPortero.push(chipEl);
     }
   });
@@ -347,7 +349,7 @@ function capturarCampo(eq, card, diaParam){
   }).then(fieldCanvas=>{
     // Restaurar escudo y bordes de porteros en la UI
     if(shieldEl) shieldEl.style.visibility = '';
-    _chipsPortero.forEach(c => { c.style.outline=''; c.style.outlineOffset=''; });
+    _chipsPorteroOriginal.forEach(({el, border, shadow}) => { el.style.border = border; el.style.boxShadow = shadow; });
     // Dimensiones del canvas — respeta la proporción real del campo capturado
     const W       = 800;
     const HEADER_H = 80;
@@ -4058,19 +4060,20 @@ function endChip(e){
       drag=null; autoGuardar(); render(); return;
     }
     // ── PROMOCIÓN AUTOMÁTICA ──
-    // Si el jugador viene de disponibles de su equipo propio y va al campo de otro equipo
+    // Si el jugador viene de disponibles O campo de su equipo propio y va al campo de otro equipo
     const _nombre2 = drag.nombre;
     const _fromEq2 = drag.eq;
     const _fromZona2 = drag.zona;
     const _eqPropio2 = origen[_nombre2] || _fromEq2;
+    const _zonasOrigenValidas = ['disponibles','campo'];
     const esPromocionAuto = (
-      toEq !== _eqPropio2 &&              // va a un equipo distinto al suyo
-      _fromZona2 === 'disponibles' &&      // viene de disponibles
-      _fromEq2 === _eqPropio2              // de su propio equipo
+      toEq !== _eqPropio2 &&                       // va a un equipo distinto al suyo
+      _zonasOrigenValidas.includes(_fromZona2) &&  // viene de disponibles o campo
+      _fromEq2 === _eqPropio2                       // de su propio equipo
     );
     if(esPromocionAuto){
-      // Quitar de disponibles del equipo origen
-      const srcArr = data[dia][_fromEq2]?.disponibles;
+      // Quitar de la zona origen del equipo origen
+      const srcArr = data[dia][_fromEq2]?.[_fromZona2];
       if(srcArr){ const si=srcArr.indexOf(_nombre2); if(si>=0) srcArr.splice(si,1); }
       // Añadir al campo del equipo destino (ya guardamos pos arriba)
       data[dia][toEq].campo.push(_nombre2);
