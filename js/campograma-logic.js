@@ -2347,6 +2347,63 @@ function esVistaLista(eq, d){
   return _vistaListaGlobal || _vistaListaCards.has(eq+'_'+(d||dia));
 }
 
+function renombrarJugadorGlobal(nombreViejo, nombreNuevo){
+  nombreNuevo = nombreNuevo.trim().toUpperCase();
+  if(!nombreNuevo || nombreNuevo === nombreViejo) return false;
+
+  // Reemplazar en data: todas las zonas, todos los días, todos los equipos
+  DIAS.forEach(d => {
+    EQUIPOS.forEach(eq => {
+      const eqData = data[d]?.[eq];
+      if(!eqData) return;
+      ['campo','banquillo','disponibles','promovidos_1er','lesionados','otros','extra'].forEach(zona => {
+        const arr = eqData[zona];
+        if(!Array.isArray(arr)) return;
+        const idx = arr.indexOf(nombreViejo);
+        if(idx >= 0) arr[idx] = nombreNuevo;
+      });
+    });
+  });
+
+  // Reemplazar en origen
+  if(origen[nombreViejo] !== undefined){
+    origen[nombreNuevo] = origen[nombreViejo];
+    delete origen[nombreViejo];
+  }
+
+  // Reemplazar en porteros
+  const pIdx = porteros.indexOf(nombreViejo);
+  if(pIdx >= 0) porteros[pIdx] = nombreNuevo;
+
+  // Reemplazar en listaUYL
+  const uIdx = listaUYL.indexOf(nombreViejo);
+  if(uIdx >= 0) listaUYL[uIdx] = nombreNuevo;
+
+  // Reemplazar en plantillas
+  Object.keys(plantillas).forEach(eq => {
+    const arr = plantillas[eq];
+    if(!Array.isArray(arr)) return;
+    const idx = arr.indexOf(nombreViejo);
+    if(idx >= 0) arr[idx] = nombreNuevo;
+  });
+
+  // Reemplazar en promInfo (destinos de promoción)
+  DIAS.forEach(d => {
+    EQUIPOS.forEach(eq => {
+      const pi = promInfo[d]?.[eq];
+      if(pi && pi[nombreViejo] !== undefined){
+        pi[nombreNuevo] = pi[nombreViejo];
+        delete pi[nombreViejo];
+      }
+    });
+  });
+
+  autoGuardar();
+  renderCards();
+  toast('✓ Renombrado a ' + nombreNuevo);
+  return true;
+}
+
 function buildListaView(eq, d){
   const diaKey = d || dia;
   const eqData = data[diaKey][eq] || {};
@@ -2409,7 +2466,48 @@ function buildListaView(eq, d){
 
     jugadores.forEach(nombre => {
       const row = mk('div','card-lista-row');
-      row.textContent = nombre;
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.justifyContent = 'space-between';
+      row.style.gap = '6px';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = nombre;
+      nameSpan.style.flex = '1';
+      row.appendChild(nameSpan);
+
+      const editBtn = document.createElement('button');
+      editBtn.innerHTML = '✏️';
+      editBtn.className = 'card-lista-edit-btn';
+      editBtn.title = 'Editar nombre';
+      editBtn.onclick = (e) => {
+        e.stopPropagation();
+        // Convertir en input editable
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = nombre;
+        input.className = 'card-lista-edit-input';
+        row.innerHTML = '';
+        row.appendChild(input);
+        input.focus();
+        input.select();
+        const guardar = () => {
+          const nuevo = input.value.trim().toUpperCase();
+          if(nuevo && nuevo !== nombre){
+            renombrarJugadorGlobal(nombre, nuevo);
+          } else {
+            renderCards(); // restaurar vista si no cambió
+          }
+        };
+        input.onblur = guardar;
+        input.onkeydown = (ev) => {
+          ev.stopPropagation();
+          if(ev.key === 'Enter') input.blur();
+          if(ev.key === 'Escape'){ input.onblur = null; renderCards(); }
+        };
+      };
+      row.appendChild(editBtn);
+
       seccion.appendChild(row);
     });
 
