@@ -2356,15 +2356,6 @@ function buildListaView(eq, d){
     navigator.clipboard.writeText(texto).then(()=>toast('✓ Copiado al portapapeles')).catch(()=>toast('❌ Error al copiar'));
   };
   acciones.appendChild(btnCopiar);
-
-  // Botón foto/imprimir
-  const btnFoto = mk('button','card-lista-btn');
-  btnFoto.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Foto';
-  btnFoto.onclick = (e) => {
-    e.stopPropagation();
-    capturarLista(eq, diaKey, zonas, eqData);
-  };
-  acciones.appendChild(btnFoto);
   wrap.appendChild(acciones);
 
   // Zonas
