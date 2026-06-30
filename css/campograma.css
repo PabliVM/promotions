@@ -2229,3 +2229,17 @@ body.dark #login-email, body.dark #login-pass {
 .cards-grid.view-semana {
   scrollbar-width: none;
 }
+
+/* YL deshabilitado (modo partido) — azul claro en vez de gris */
+.modo-btn.uyl.uyl-disabled {
+  background: rgba(37,99,235,.06);
+  border-color: rgba(37,99,235,.2);
+  color: #93c5fd;
+}
+
+/* YL activo + header de hoy: mismo azul oscuro consistente */
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn.uyl.active {
+  background: #1e3a8a;
+  border-color: #1e3a8a;
+  color: #fff;
+}
