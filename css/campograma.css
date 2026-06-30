@@ -615,8 +615,8 @@ body:has(.cards-grid.view-semana) #app-wrap {
   color:#5a6170;
 }
 .modo-btn.uyl.active{
-  background:#1e3a8a;
-  border-color:#1e3a8a;
+  background:#2563eb;
+  border-color:#2563eb;
   color:#fff;
 }
 /* Modal UYL */
