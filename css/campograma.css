@@ -1435,8 +1435,22 @@ body.dark .app-footer-maestro{
   overflow-x: auto;
   overflow-y: auto;
   padding: 8px;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 160px);
   -webkit-overflow-scrolling: touch;
+}
+
+/* Barra de scroll horizontal SEPARADA, siempre visible abajo */
+#scroll-sync-bar {
+  height: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: sticky;
+  bottom: 0;
+  background: #f0f4fa;
+  border-top: 1px solid #dfe1e6;
+}
+#scroll-sync-inner {
+  height: 1px;
 }
 
 /* Tabla semana */
@@ -2176,4 +2190,19 @@ body.dark #login-email, body.dark #login-pass {
   background: rgba(255,255,255,.1);
   border-color: rgba(255,255,255,.3);
   color: #fff;
+}
+
+/* Scrollbar visible en vista semana */
+.cards-grid.view-semana::-webkit-scrollbar {
+  height: 10px;
+}
+.cards-grid.view-semana::-webkit-scrollbar-track {
+  background: #f0f4fa;
+}
+.cards-grid.view-semana::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 6px;
+}
+.cards-grid.view-semana::-webkit-scrollbar-thumb:hover {
+  background: #1d4ed8;
 }
