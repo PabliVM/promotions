@@ -3329,14 +3329,19 @@ function toggleDescanso(eq, diaParam){
   // Si activa descanso, desactivar partido y VACIAR el campo
   if(modoDescanso[diaT][eq]){
     if(modoPartido[diaT]?.[eq]) modoPartido[diaT][eq]=false;
-    // BUG 3: mover jugadores del campo y banquillo → disponibles
+    // Mover jugadores del campo y banquillo → disponibles DE SU EQUIPO DE ORIGEN
     const dd = data[diaT]?.[eq];
     if(dd){
-      if(!Array.isArray(dd.disponibles)) dd.disponibles = [];
       const mover = (arr)=>{
         if(!Array.isArray(arr)) return;
-        arr.forEach(n=>{
-          if(!dd.disponibles.includes(n)) dd.disponibles.push(n);
+        // Copia porque vamos a vaciar el array original
+        [...arr].forEach(n=>{
+          const eqOrigen = origen[n] || eq; // equipo propietario real del jugador
+          const dOrigen = data[diaT]?.[eqOrigen];
+          if(dOrigen){
+            if(!Array.isArray(dOrigen.disponibles)) dOrigen.disponibles = [];
+            if(!dOrigen.disponibles.includes(n)) dOrigen.disponibles.push(n);
+          }
         });
         arr.length = 0;
       };
