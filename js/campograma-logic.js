@@ -411,6 +411,15 @@ function capturarCampo(eq, card, diaParam){
       const cW = Math.floor(W / colDefs.length);
       colDefs.forEach((col, ci)=>{
         const cx = ci * cW;
+        // Línea de separación vertical entre columnas (excepto la primera)
+        if(ci > 0){
+          ctx.strokeStyle = '#dfe1e6';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx, colY);
+          ctx.lineTo(cx, H - 10);
+          ctx.stroke();
+        }
         // Cabecera columna con color de zona
         ctx.fillStyle = '#f8fafd';
         ctx.fillRect(cx+2, colY, cW-4, 30);
