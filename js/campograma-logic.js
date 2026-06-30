@@ -37,7 +37,7 @@ for(const d of DIAS) for(const e of EQUIPOS){
 let dia  = "LUNES";
 let eqF  = "TODOS";
 let pos  = {};   // "dia|eq|nombre" → [top,left]
-// Nombres editables de columnas por equipo: colNames[eq] = ['PROMOCIÓN','LESIÓN','OTROS']
+// Nombres editables de columnas por equipo: colNames[eq] = ['PROMOCIONADOS','LESIONADOS','OTROS']
 let colNames = {};
 // Info de promoción: promInfo[dia][eqOrigen][nombre] = 'CASTILLA' (equipo destino)
 let promInfo = {};
@@ -69,7 +69,7 @@ function initTiposConfig(){
 let calendarioPartidos = {}; // calendarioPartidos[eq] = [{fecha:'YYYY-MM-DD', rival:'...'}]
 function initPromInfo(){ DIAS.forEach(d=>{ promInfo[d]={}; EQUIPOS.forEach(eq=>{ promInfo[d][eq]={}; }); }); }
 initPromInfo();
-EQUIPOS.forEach(eq=> colNames[eq]=['PROMOCIÓN','LESIÓN','OTROS']);
+EQUIPOS.forEach(eq=> colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS']);
 // Zonas extra (4ª columna) por equipo: extraZonas[eq] = bool
 let extraZonas = {};
 EQUIPOS.forEach(eq=> extraZonas[eq]=false);
@@ -299,7 +299,7 @@ function capturarCampo(eq, card, diaParam){
   // Primer Equipo: recoger jugadores de todos los equipos promocionados
   let proms=[], lesion=[], otros=[], extra=[], banquillo=[];
   let esCas = false;
-  let colN = ['PROMOCIÓN','LESIÓN','OTROS'];
+  let colN = ['PROMOCIONADOS','LESIONADOS','OTROS'];
   let promoInfoEq = {};
   const esPartidoHoy = esPartido(eq);
   if(eq === '1ER EQUIPO'){
@@ -314,7 +314,7 @@ function capturarCampo(eq, card, diaParam){
   } else {
     const d = data[dia][eq];
     esCas  = eq === 'CASTILLA';
-    colN   = colNames[eq] || ['PROMOCIÓN','LESIÓN','OTROS'];
+    colN   = colNames[eq] || ['PROMOCIONADOS','LESIONADOS','OTROS'];
     proms  = d.promovidos_1er || [];
     lesion = d.lesionados     || [];
     otros  = d.otros          || [];
@@ -663,7 +663,7 @@ async function fbCargar(nombre){
   DIAS.forEach(d=>{ if(!promInfo[d]) promInfo[d]={}; EQUIPOS.forEach(eq=>{ if(!promInfo[d][eq]) promInfo[d][eq]={}; }); });
   // Asegurar colNames
   EQUIPOS.forEach(eq=>{
-    if(!colNames[eq]) colNames[eq]=['PROMOCIÓN','LESIÓN','OTROS'];
+    if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
     
   });
   // Sincronizar plantillas → disponibles (exacto igual que cargarGuardado)
@@ -1896,8 +1896,8 @@ function cargarGuardado(){
     DIAS.forEach(d=>{ if(!promInfo[d]) promInfo[d]={}; EQUIPOS.forEach(eq=>{ if(!promInfo[d][eq]) promInfo[d][eq]={}; }); });
     // Asegurar que todos los equipos tienen sus colNames
     EQUIPOS.forEach(eq=>{
-      if(!colNames[eq]) colNames[eq]=['PROMOCIÓN','LESIÓN','OTROS'];
-      if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIÓN'; // normalizar datos viejos
+      if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
+      if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIONADOS'; // normalizar datos viejos
     });
     // Asegurar zonas banquillo
     for(const d of DIAS) for(const e of EQUIPOS){
@@ -1947,7 +1947,7 @@ function exportarEquipoDia(eq, d){
     equipoData.lesionados.length,
     equipoData.otros.length
   );
-  rows.push(['CAMPO ('+equipoData.campo.length+')','','BANQUILLO','','DISPONIBLES','','PROMOVIDO','LESIÓN','OTROS']);
+  rows.push(['CAMPO ('+equipoData.campo.length+')','','BANQUILLO','','DISPONIBLES','','PROMOVIDO','LESIONADOS','OTROS']);
   rows.push(['---','','---','','---','','---','---','---']);
   for(let i=0;i<Math.max(maxLen,1);i++){
     rows.push([
@@ -2044,7 +2044,7 @@ function generarFotoLista(eq){
   const lesion     = d.lesionados || [];
   const otros      = d.otros      || [];
   const promoInfoEq = promInfo[dia]?.[eq] || {};
-  const colN       = colNames[eq] || ['PROMOCIÓN','LESIÓN','OTROS','EXTRA'];
+  const colN       = colNames[eq] || ['PROMOCIONADOS','LESIONADOS','OTROS','EXTRA'];
   const esCas      = eq === 'CASTILLA';
   const esPartidoHoy = esPartido(eq);
   const countTxt   = campo.length ? countLabel(eq, campo) : '0';
@@ -2062,10 +2062,10 @@ function generarFotoLista(eq){
     secciones.push({ label: '🔄 BANQUILLO', items: banquillo, color: '#f59e0b' });
   }
   if(proms.length){
-    secciones.push({ label: esCas ? '1ER EQUIPO' : (colN[0]||'PROMOCIÓN'), items: proms, color: '#a78bfa', destinos: promoInfoEq });
+    secciones.push({ label: esCas ? '1ER EQUIPO' : (colN[0]||'PROMOCIONADOS'), items: proms, color: '#a78bfa', destinos: promoInfoEq });
   }
   if(lesion.length){
-    secciones.push({ label: colN[1]||'LESIÓN', items: lesion, color: '#f87171' });
+    secciones.push({ label: colN[1]||'LESIONADOS', items: lesion, color: '#f87171' });
   }
   if(otros.length){
     secciones.push({ label: colN[2]||'OTROS', items: otros, color: '#94a3b8' });
@@ -2522,8 +2522,8 @@ function buildListaView(eq, d){
   const zonas = [
     { key:'campo',          label:'LISTADO DE JUGADORES',  color:'#2563eb' },
     { key:'banquillo',      label:'BANQUILLO',     color:'#d97706' },
-    { key:'promovidos_1er', label: colNames[eq]?.[0]||'PROMOCIÓN', color:'#d97706' },
-    { key:'lesionados',     label: colNames[eq]?.[1]||'LESIÓN',    color:'#dc2626' },
+    { key:'promovidos_1er', label: colNames[eq]?.[0]||'PROMOCIONADOS', color:'#d97706' },
+    { key:'lesionados',     label: colNames[eq]?.[1]||'LESIONADOS',    color:'#dc2626' },
     { key:'otros',          label: colNames[eq]?.[2]||'OTROS',     color:'#6b7280' },
     { key:'extra',          label: colNames[eq]?.[3]||'EXTRA',     color:'#7c3aed' },
   ];
@@ -3129,9 +3129,9 @@ function buildCard(eq){
   zDisp.appendChild(buildAddInput(eq,'disponibles'));
   card.appendChild(zDisp);
   // Columnas estado
-  if(!colNames[eq]) colNames[eq]=['PROMOCIÓN','LESIÓN','OTROS'];
+  if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
   // Columnas estado
-  if(!colNames[eq]) colNames[eq]=['PROMOCIÓN','LESIÓN','OTROS'];
+  if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
   const promoInfo = promInfo[dia]?.[eq] || {};
   const esCas = eq==='CASTILLA';
   const eqsShort = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
@@ -3155,7 +3155,7 @@ function buildCard(eq){
     lbl.value = colNames[eq][idx] || (zona==='extra'?'EXTRA':zona.toUpperCase());
     lbl.title='Pulsa para editar el nombre';
     lbl.onchange=()=>{
-      if(!colNames[eq]) colNames[eq]=['PROMOCIÓN','LESIÓN','OTROS'];
+      if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
       colNames[eq][idx]=lbl.value.trim().toUpperCase()||colNames[eq][idx];
       lbl.value=colNames[eq][idx];
       autoGuardar();
@@ -4509,8 +4509,8 @@ async function arrancarDesdeFirebase(){
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
       // Normalizar colNames
       EQUIPOS.forEach(eq=>{
-        if(!colNames[eq]) colNames[eq]=['PROMOCIÓN','LESIÓN','OTROS'];
-        if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIÓN';
+        if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
+        if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIONADOS';
       });
       // Asegurar estructura completa
       for(const d of DIAS) for(const e of EQUIPOS){
