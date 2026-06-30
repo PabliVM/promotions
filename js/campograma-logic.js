@@ -2550,7 +2550,13 @@ function buildListaView(eq, d){
         labelOut += ' (' + numCampo + (numPorteros>0 ? '+'+numPorteros : '') + ')';
       }
       texto += '\n*' + labelOut + ':*\n';
-      jugs.forEach(n => {
+      // Porteros primero, luego el resto, manteniendo orden relativo dentro de cada grupo
+      const jugsOrdenados = [...jugs].sort((a, b) => {
+        const aPor = porteros.includes(a) ? 0 : 1;
+        const bPor = porteros.includes(b) ? 0 : 1;
+        return aPor - bPor;
+      });
+      jugsOrdenados.forEach(n => {
         const esPor = porteros.includes(n);
         let linea = '  - ' + n + (esPor ? ' (POR)' : '');
         if(key === 'promovidos_1er'){
