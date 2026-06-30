@@ -288,9 +288,11 @@ function buildAddInput(eq, zona){
 // ══════════════════════════════════════════════════
 // CAPTURA DE CAMPO
 // ══════════════════════════════════════════════════
-function capturarCampo(eq, card){
+function capturarCampo(eq, card, diaParam){
   if(typeof html2canvas === 'undefined'){ toast('❌ html2canvas no cargado'); return; }
   toast('Generando imagen…');
+  const _diaOriginal = dia;
+  if(diaParam) dia = diaParam; // usar el día de la card que disparó la captura
   const fecha  = FECHAS[dia] || '';
   const isIOS  = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   // Primer Equipo: recoger jugadores de todos los equipos promocionados
@@ -484,13 +486,13 @@ function capturarCampo(eq, card){
           const instruccion=isIOS?'📥 Mantén pulsada la imagen → <b>Añadir a Fotos</b>':'📥 Mantén pulsada la imagen para guardarla';
           const imgEl=document.createElement('img');
           imgEl.src=blobUrl;
-          imgEl.style.cssText='max-width:100%;max-height:70vh;border-radius:8px;border:2px solid #ffd700;display:block;';
+          imgEl.style.cssText='max-width:100%;max-height:70vh;border-radius:8px;border:2px solid #2563eb;display:block;';
           const p=document.createElement('p');
           p.innerHTML=instruccion;
-          p.style.cssText='color:#ffd700;font-family:sans-serif;font-size:16px;text-align:center;margin:0;font-weight:700;';
+          p.style.cssText='color:#fff;font-family:Segoe UI,sans-serif;font-size:15px;text-align:center;margin:0;font-weight:600;';
           const btnC=document.createElement('button');
           btnC.textContent='Cerrar';
-          btnC.style.cssText='padding:14px 36px;background:#ffd700;border:none;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;min-height:48px;';
+          btnC.style.cssText='padding:12px 32px;background:#2563eb;color:#fff;border:none;border-radius:20px;font-weight:600;font-size:14px;cursor:pointer;min-height:44px;font-family:Segoe UI,sans-serif;';
           btnC.onclick=()=>{ov.remove();URL.revokeObjectURL(blobUrl);};
           ov.appendChild(p);ov.appendChild(imgEl);ov.appendChild(btnC);
           document.body.appendChild(ov);
@@ -499,9 +501,11 @@ function capturarCampo(eq, card){
     }
     // Sin escudo en la foto (más fiable en iOS)
     finalizarYExportar();
+    dia = _diaOriginal; // restaurar
   }).catch(err=>{
     if(shieldEl) shieldEl.style.visibility = '';
     toast('❌ Error: '+err.message);
+    dia = _diaOriginal; // restaurar
   });
 }
 // ══════════════════════════════════════════════════
@@ -2739,7 +2743,8 @@ function buildCard(eq){
   camBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>';
   camBtn.title='Capturar imagen del campo';
   camBtn.style.cssText='padding:4px 6px;display:flex;align-items:center;justify-content:center;';
-  camBtn.onclick=(e)=>{e.stopPropagation();capturarCampo(eq,card);};
+  const _diaFoto = dia;
+  camBtn.onclick=(e)=>{e.stopPropagation();capturarCampo(eq,card,_diaFoto);};
   right.appendChild(camBtn);
   hdr.appendChild(right);
   card.appendChild(hdr);
