@@ -2206,3 +2206,12 @@ body.dark #login-email, body.dark #login-pass {
 .cards-grid.view-semana::-webkit-scrollbar-thumb:hover {
   background: #1d4ed8;
 }
+
+/* Ocultar scrollbar nativa del grid — usamos la barra sincronizada */
+.cards-grid.view-semana::-webkit-scrollbar {
+  height: 0 !important;
+  display: none;
+}
+.cards-grid.view-semana {
+  scrollbar-width: none;
+}
