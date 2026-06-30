@@ -2156,3 +2156,24 @@ body.dark #login-title { color: #e6edf3; }
 body.dark #login-email, body.dark #login-pass {
   background: #0d1117; border-color: #30363d; color: #e6edf3;
 }
+
+/* Header completo azul cuando es el día de hoy */
+.semana-td-card .card-hdr.card-hdr-hoy {
+  background: #2563eb;
+}
+.semana-td-card .card-hdr.card-hdr-hoy .card-hdr-nombre-txt {
+  color: #fff;
+}
+.semana-td-card .card-hdr.card-hdr-hoy .card-hdr-fecha-hoy {
+  background: rgba(255,255,255,.2);
+  color: #fff;
+}
+.semana-td-card .card-hdr.card-hdr-hoy .top-act-btn {
+  border-color: rgba(255,255,255,.3);
+  color: #fff;
+}
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.3);
+  color: #fff;
+}
