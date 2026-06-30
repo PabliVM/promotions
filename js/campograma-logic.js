@@ -2632,15 +2632,16 @@ function buildCard(eq){
   hdr.appendChild(nm);
   const right=mk('div','card-hdr-right');
   // Botón descanso
-  const descBtn=mk('button','modo-btn'+(esDescanso(eq)?' descanso':''));
-  descBtn.textContent=esDescanso(eq)?'💤 DESCANSA':'💤';
+  const _diaModo = dia; // capturar el día de ESTA card en el closure
+  const descBtn=mk('button','modo-btn'+(esDescanso(eq,_diaModo)?' descanso':''));
+  descBtn.textContent=esDescanso(eq,_diaModo)?'💤 DESCANSA':'💤';
   descBtn.title='Marcar día de descanso';
-  descBtn.onclick=(e)=>{ e.stopPropagation(); toggleDescanso(eq); };
+  descBtn.onclick=(e)=>{ e.stopPropagation(); toggleDescanso(eq,_diaModo); };
   right.appendChild(descBtn);
-  const modoB=mk('button','modo-btn'+(esPartido(eq)?' partido':'')+(esDescanso(eq)?' hidden-btn':''));
-  modoB.textContent=esPartido(eq)?'⚽ PARTIDO':'🏋️ ENTRENO';
-  modoB.style.display = esDescanso(eq) ? 'none' : '';
-  modoB.onclick=(e)=>{e.stopPropagation();togglePartido(eq);};
+  const modoB=mk('button','modo-btn'+(esPartido(eq,_diaModo)?' partido':'')+(esDescanso(eq,_diaModo)?' hidden-btn':''));
+  modoB.textContent=esPartido(eq,_diaModo)?'⚽ PARTIDO':'🏋️ ENTRENO';
+  modoB.style.display = esDescanso(eq,_diaModo) ? 'none' : '';
+  modoB.onclick=(e)=>{e.stopPropagation();togglePartido(eq,_diaModo);};
   right.appendChild(modoB);
   // Botón YL — solo Juvenil A: activa/desactiva modo Youth League en disponibles
   if(eq==='JUVENIL A'){
@@ -3217,42 +3218,47 @@ function resetearSoloCampo(eq){
   toast(`⬜ Campo de ${eq} reseteado — ${enCampo.length} jugadores a disponibles`);
 }
 // ── Toggle modo partido/entrenamiento
-function togglePartido(eq){
-  if(!modoPartido[dia]) modoPartido[dia]={};
-  modoPartido[dia][eq] = !modoPartido[dia][eq];
+function togglePartido(eq, diaParam){
+  const d = diaParam || dia;
+  if(!modoPartido[d]) modoPartido[d]={};
+  modoPartido[d][eq] = !modoPartido[d][eq];
   autoGuardar();
   renderCards();
   if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
 }
-function esPartido(eq){
-  return !!(modoPartido[dia]?.[eq]);
+function esPartido(eq, diaParam){
+  const d = diaParam || dia;
+  return !!(modoPartido[d]?.[eq]);
 }
-function esDescanso(eq){
-  return !!(modoDescanso[dia]?.[eq]);
+function esDescanso(eq, diaParam){
+  const d = diaParam || dia;
+  return !!(modoDescanso[d]?.[eq]);
 }
-function toggleDescanso(eq){
-  if(!modoDescanso[dia]) modoDescanso[dia]={};
-  const estabaEnDescanso = !!modoDescanso[dia][eq];
-  modoDescanso[dia][eq] = !estabaEnDescanso;
+function toggleDescanso(eq, diaParam){
+  const diaT = diaParam || dia;
+  if(!modoDescanso[diaT]) modoDescanso[diaT]={};
+  const estabaEnDescanso = !!modoDescanso[diaT][eq];
+  modoDescanso[diaT][eq] = !estabaEnDescanso;
   // Si activa descanso, desactivar partido y VACIAR el campo
-  if(modoDescanso[dia][eq]){
-    if(modoPartido[dia]?.[eq]) modoPartido[dia][eq]=false;
+  if(modoDescanso[diaT][eq]){
+    if(modoPartido[diaT]?.[eq]) modoPartido[diaT][eq]=false;
     // BUG 3: mover jugadores del campo y banquillo → disponibles
-    const d = data[dia]?.[eq];
-    if(d){
-      if(!Array.isArray(d.disponibles)) d.disponibles = [];
+    const dd = data[diaT]?.[eq];
+    if(dd){
+      if(!Array.isArray(dd.disponibles)) dd.disponibles = [];
       const mover = (arr)=>{
         if(!Array.isArray(arr)) return;
         arr.forEach(n=>{
-          if(!d.disponibles.includes(n)) d.disponibles.push(n);
+          if(!dd.disponibles.includes(n)) dd.disponibles.push(n);
         });
         arr.length = 0;
       };
-      mover(d.campo);
-      mover(d.banquillo);
+      mover(dd.campo);
+      mover(dd.banquillo);
     }
   }
   autoGuardar(); renderCards();
+  if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
 }
 // ══════════════════════════════════════════════════
 // CONFIG TIPOS DE PARTIDO
