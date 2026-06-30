@@ -2345,15 +2345,12 @@ body.dark #login-email, body.dark #login-pass {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 12px;
-  opacity: .4;
-  padding: 2px 4px;
+  font-size: 13px;
+  opacity: .8;
+  padding: 4px 6px;
   flex-shrink: 0;
-  transition: opacity .15s;
 }
-.card-lista-row:hover .card-lista-edit-btn {
-  opacity: .9;
-}
+.card-lista-edit-btn:hover { opacity: 1; }
 .card-lista-edit-input {
   width: 100%;
   padding: 4px 8px;
@@ -2365,4 +2362,20 @@ body.dark #login-email, body.dark #login-pass {
   text-transform: uppercase;
   color: #1a1d23;
   outline: none;
+}
+
+/* Drag para reordenar listado */
+.card-lista-drag-handle {
+  cursor: grab;
+  color: #9ca3af;
+  font-size: 14px;
+  flex-shrink: 0;
+  padding: 0 2px;
+  user-select: none;
+}
+.card-lista-row.dragging-row {
+  opacity: .4;
+}
+.card-lista-row.drag-over-row {
+  border-top: 2px solid #2563eb;
 }
