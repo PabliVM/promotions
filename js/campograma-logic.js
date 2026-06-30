@@ -2576,73 +2576,7 @@ function buildListaView(eq, d){
 
     jugadores.forEach(nombre => {
       const row = mk('div','card-lista-row');
-      row.style.display = 'flex';
-      row.style.alignItems = 'center';
-      row.style.justifyContent = 'space-between';
-      row.style.gap = '6px';
-      row.draggable = true;
-      row.dataset.nombre = nombre;
-
-      // Drag para reordenar dentro de la misma zona
-      row.ondragstart = (e) => {
-        e.dataTransfer.setData('text/plain', nombre);
-        e.dataTransfer.effectAllowed = 'move';
-        row.classList.add('dragging-row');
-      };
-      row.ondragend = () => row.classList.remove('dragging-row');
-      row.ondragover = (e) => { e.preventDefault(); row.classList.add('drag-over-row'); };
-      row.ondragleave = () => row.classList.remove('drag-over-row');
-      row.ondrop = (e) => {
-        e.preventDefault();
-        row.classList.remove('drag-over-row');
-        const nombreMovido = e.dataTransfer.getData('text/plain');
-        if(nombreMovido && nombreMovido !== nombre){
-          reordenarEnZona(eq, diaKey, key, nombreMovido, nombre);
-        }
-      };
-
-      const dragHandle = document.createElement('span');
-      dragHandle.textContent = '⠿';
-      dragHandle.className = 'card-lista-drag-handle';
-      row.appendChild(dragHandle);
-
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = nombre;
-      nameSpan.style.flex = '1';
-      row.appendChild(nameSpan);
-
-      const editBtn = document.createElement('button');
-      editBtn.innerHTML = '✏️';
-      editBtn.className = 'card-lista-edit-btn';
-      editBtn.title = 'Editar nombre';
-      editBtn.onclick = (e) => {
-        e.stopPropagation();
-        // Convertir en input editable
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = nombre;
-        input.className = 'card-lista-edit-input';
-        row.innerHTML = '';
-        row.appendChild(input);
-        input.focus();
-        input.select();
-        const guardar = () => {
-          const nuevo = input.value.trim().toUpperCase();
-          if(nuevo && nuevo !== nombre){
-            renombrarJugadorGlobal(nombre, nuevo);
-          } else {
-            renderCards(); // restaurar vista si no cambió
-          }
-        };
-        input.onblur = guardar;
-        input.onkeydown = (ev) => {
-          ev.stopPropagation();
-          if(ev.key === 'Enter') input.blur();
-          if(ev.key === 'Escape'){ input.onblur = null; renderCards(); }
-        };
-      };
-      row.appendChild(editBtn);
-
+      row.textContent = nombre;
       seccion.appendChild(row);
     });
 
