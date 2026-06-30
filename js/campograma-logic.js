@@ -2347,6 +2347,19 @@ function esVistaLista(eq, d){
   return _vistaListaGlobal || _vistaListaCards.has(eq+'_'+(d||dia));
 }
 
+function reordenarEnZona(eq, d, zona, nombreMovido, nombreDestino){
+  const arr = data[d]?.[eq]?.[zona];
+  if(!Array.isArray(arr)) return;
+  const fromIdx = arr.indexOf(nombreMovido);
+  const toIdx = arr.indexOf(nombreDestino);
+  if(fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+  arr.splice(fromIdx, 1);
+  const newToIdx = arr.indexOf(nombreDestino);
+  arr.splice(newToIdx, 0, nombreMovido);
+  autoGuardar();
+  renderCards();
+}
+
 function renombrarJugadorGlobal(nombreViejo, nombreNuevo){
   nombreNuevo = nombreNuevo.trim().toUpperCase();
   if(!nombreNuevo || nombreNuevo === nombreViejo) return false;
@@ -2470,6 +2483,31 @@ function buildListaView(eq, d){
       row.style.alignItems = 'center';
       row.style.justifyContent = 'space-between';
       row.style.gap = '6px';
+      row.draggable = true;
+      row.dataset.nombre = nombre;
+
+      // Drag para reordenar dentro de la misma zona
+      row.ondragstart = (e) => {
+        e.dataTransfer.setData('text/plain', nombre);
+        e.dataTransfer.effectAllowed = 'move';
+        row.classList.add('dragging-row');
+      };
+      row.ondragend = () => row.classList.remove('dragging-row');
+      row.ondragover = (e) => { e.preventDefault(); row.classList.add('drag-over-row'); };
+      row.ondragleave = () => row.classList.remove('drag-over-row');
+      row.ondrop = (e) => {
+        e.preventDefault();
+        row.classList.remove('drag-over-row');
+        const nombreMovido = e.dataTransfer.getData('text/plain');
+        if(nombreMovido && nombreMovido !== nombre){
+          reordenarEnZona(eq, diaKey, key, nombreMovido, nombre);
+        }
+      };
+
+      const dragHandle = document.createElement('span');
+      dragHandle.textContent = '⠿';
+      dragHandle.className = 'card-lista-drag-handle';
+      row.appendChild(dragHandle);
 
       const nameSpan = document.createElement('span');
       nameSpan.textContent = nombre;
