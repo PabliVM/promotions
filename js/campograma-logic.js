@@ -2552,7 +2552,12 @@ function buildListaView(eq, d){
       texto += '\n*' + labelOut + ':*\n';
       jugs.forEach(n => {
         const esPor = porteros.includes(n);
-        texto += '  - ' + n + (esPor ? ' (POR)' : '') + '\n';
+        let linea = '  - ' + n + (esPor ? ' (POR)' : '');
+        if(key === 'promovidos_1er'){
+          const destino = promInfo[diaKey]?.[eq]?.[n];
+          if(destino) linea += '  → ' + (destino === '1ER EQUIPO' ? '1ER EQUIPO' : destino);
+        }
+        texto += linea + '\n';
       });
     });
     navigator.clipboard.writeText(texto).then(()=>toast('✓ Copiado al portapapeles')).catch(()=>toast('❌ Error al copiar'));
