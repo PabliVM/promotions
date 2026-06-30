@@ -14,8 +14,38 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 window._db = db;
-window._fbReady = true;
+window._auth = auth;
+window._fbReady = false; // se activa tras login correcto
+
+// ── LOGIN ──
+window.fbLogin = async function(email, password){
+  try{
+    await auth.signInWithEmailAndPassword(email, password);
+    return { ok:true };
+  }catch(e){
+    console.error('fbLogin error:', e);
+    let msg = 'Email o contraseña incorrectos.';
+    if(e.code === 'auth/too-many-requests') msg = 'Demasiados intentos. Espera unos minutos.';
+    return { ok:false, message: msg };
+  }
+};
+window.fbLogout = function(){
+  return auth.signOut();
+};
+
+// Escuchar cambios de sesión
+auth.onAuthStateChanged(user => {
+  if(user){
+    window._fbReady = true;
+    window.dispatchEvent(new Event('firebase-ready'));
+    document.dispatchEvent(new Event('auth-ready'));
+  } else {
+    window._fbReady = false;
+    document.dispatchEvent(new Event('auth-logout'));
+  }
+});
 function fbErrorMsg(e){
   if(!e) return 'Error desconocido';
   return e.message || String(e);
@@ -68,5 +98,4 @@ window.fbEliminarSesion = async function(nombre){
     return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
   }
 };
-// Señalizar que Firebase está listo
-window.dispatchEvent(new Event('firebase-ready'));
+// (firebase-ready ahora se dispara desde onAuthStateChanged tras login)
