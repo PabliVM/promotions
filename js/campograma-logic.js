@@ -22,6 +22,7 @@ function calcFechasSemana(lunesBase){
 }
 let FECHAS = calcFechasSemana();
 const origen = {};
+let movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
 let porteros = []; // array de nombres marcados como portero
 // ══════════════════════════════════════════════════
 // ESTADO
@@ -377,6 +378,7 @@ async function fbCargar(nombre){
   if(payload.origen)                origen = { ...origen, ...payload.origen };
   if(payload.colNames)              colNames = payload.colNames;
   if(payload.porteros)               porteros = payload.porteros;
+  if(payload.movimientos)            movimientos = payload.movimientos;
   if(payload.extraZonas)            extraZonas = payload.extraZonas;
   if(payload.promInfo)              promInfo = payload.promInfo;
   if(payload.multiEq)               multiEq = payload.multiEq;
@@ -1049,6 +1051,7 @@ function cargarFicheroImport(ev){
       if(payload.origen)     Object.assign(origen, payload.origen);
       if(payload.colNames)   colNames   = payload.colNames;
       if(payload.porteros)    porteros   = payload.porteros;
+      if(payload.movimientos) movimientos = payload.movimientos;
       if(payload.extraZonas) extraZonas = payload.extraZonas;
       if(payload.promInfo)   promInfo   = payload.promInfo;
     if(payload.multiEq)    multiEq    = payload.multiEq;
@@ -1408,6 +1411,7 @@ async function arrancarDesdeFirebase(){
       if(payload.origen      && typeof payload.origen==='object')      Object.assign(origen, payload.origen);
       if(payload.colNames    && typeof payload.colNames==='object')    colNames    = payload.colNames;
       if(payload.porteros    && Array.isArray(payload.porteros))           porteros    = payload.porteros;
+      if(payload.movimientos  && typeof payload.movimientos==='object')    movimientos = payload.movimientos;
       if(payload.extraZonas  && typeof payload.extraZonas==='object')  extraZonas  = payload.extraZonas;
       if(payload.promInfo    && typeof payload.promInfo==='object')    promInfo    = payload.promInfo;
       if(payload.tiposConfig && typeof payload.tiposConfig==='object') tiposConfig = payload.tiposConfig;
