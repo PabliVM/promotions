@@ -48,5 +48,3 @@ const EQ_DOT_COLORS = {
 const LS_KEY     = 'rm_cantera_v2';
 const LS_SEASONS = 'rm_cantera_seasons';
 const LS_CUR     = 'rm_cantera_current';
-
-let dia = "LUNES"; // día activo global
