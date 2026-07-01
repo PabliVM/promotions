@@ -1,0 +1,271 @@
+// ── campograma-plantillas.js — Gestión de plantillas de jugadores ──
+// ══════════════════════════════════════════════════
+// RENDER PRINCIPAL
+// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// PLANTILLAS — fuente de verdad de jugadores por equipo
+// ══════════════════════════════════════════════════
+// Construir plantillas iniciales desde RAW (primer día, disponibles)
+function buildPlantillasIniciales(){
+  const p = {};
+  EQUIPOS.forEach(eq=>{
+    // Unir todos los jugadores que aparecen en ese equipo en RAW
+    const set = new Set();
+    DIAS.forEach(d=> ZONAS.forEach(z=> (RAW[d]?.[eq]?.[z]||[]).forEach(n=>set.add(n))));
+    // Además los del origen
+    Object.entries(origen).forEach(([n,e])=>{ if(e===eq) set.add(n); });
+    p[eq] = [...set].sort((a,b)=>a.localeCompare(b,'es'));
+  });
+  return p;
+}
+let plantillas = buildPlantillasIniciales();
+let plantEqActivo = EQUIPOS[0];
+function openPlant(){
+  document.getElementById('plant-overlay').classList.add('show');
+  renderPlantTabs();
+  renderPlantBody();
+  actualizarPlantInput();
+}
+function actualizarPlantInput(){
+  const inp = document.getElementById('plant-add-input');
+  if(plantEqActivo==='JA_YOUTH'){
+    inp.placeholder = 'Buscar jugador de otro equipo…';
+    inp.oninput = filtrarUYLDrop;
+    inp.onfocus = filtrarUYLDrop;
+    inp.onblur  = ()=>setTimeout(cerrarUYLDrop,200);
+  } else {
+    inp.placeholder = 'Nombre del jugador…';
+    inp.oninput = null;
+    inp.onfocus = null;
+    inp.onblur  = null;
+    inp.onkeydown = (e)=>{ if(e.key==='Enter') plantAñadir(); };
+    cerrarUYLDrop();
+  }
+}
+function closePlant(){
+  document.getElementById('plant-overlay').classList.remove('show');
+}
+function renderPlantTabs(){
+  const wrap = document.getElementById('plant-eq-tabs');
+  wrap.innerHTML = '';
+  EQUIPOS.forEach(eq=>{
+    const btn = mk('button','plant-eq-tab'+(eq===plantEqActivo?' active':''));
+    btn.textContent = eq + ' ('+(plantillas[eq]?.length||0)+')';
+    btn.onclick = ()=>{ plantEqActivo=eq; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
+    wrap.appendChild(btn);
+  });
+  // Pestaña especial JA Youth
+  const uylN = getPlantillaUYL().length;
+  const btnUYL = mk('button','plant-eq-tab uyl-tab'+('JA_YOUTH'===plantEqActivo?' active':''));
+  btnUYL.innerHTML = 'JA Youth <span style="font-size:9px;opacity:.7">('+uylN+')</span>';
+  btnUYL.onclick = ()=>{ plantEqActivo='JA_YOUTH'; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
+  wrap.appendChild(btnUYL);
+}
+function renderPlantBody(){
+  const list = document.getElementById('plant-list');
+  list.innerHTML = '';
+  document.getElementById('plant-add-input').value = '';
+  if(plantEqActivo === 'JA_YOUTH'){
+    document.getElementById('plant-eq-title').textContent = 'JA Youth League';
+    // Inicializar con JA si está vacía
+    if(listaUYL.length === 0){
+      listaUYL = Object.keys(origen).filter(n=>origen[n]==='JUVENIL A').sort();
+      autoGuardar();
+    }
+    document.getElementById('plant-count').textContent = listaUYL.length + ' jugadores';
+    // Botón para re-sincronizar con JA actual
+    const syncBtn = mk('button','');
+    syncBtn.textContent = '↺ Sincronizar con JA actual';
+    syncBtn.style.cssText = 'margin:0 0 10px;padding:6px 12px;border-radius:8px;border:1px solid rgba(96,180,255,.3);background:rgba(96,180,255,.08);color:#60b4ff;font-size:12px;cursor:pointer;font-family:"Barlow Condensed",sans-serif;font-weight:700;';
+    syncBtn.title = 'Añade los jugadores de JA que falten (no elimina los que ya están)';
+    syncBtn.onclick = ()=>{
+      const jaActual = Object.keys(origen).filter(n=>origen[n]==='JUVENIL A');
+      let añadidos = 0;
+      jaActual.forEach(n=>{ if(!listaUYL.includes(n)){ listaUYL.push(n); añadidos++; } });
+      listaUYL.sort((a,b)=>a.localeCompare(b,'es'));
+      renderPlantTabs(); renderPlantBody(); autoGuardar();
+      if(añadidos) toast('↺ '+añadidos+' jugadores de JA añadidos');
+      else toast('✓ Ya estaba sincronizado con JA');
+    };
+    list.appendChild(syncBtn);
+    // Lista de jugadores Youth
+    listaUYL.forEach((nombre, i)=>{
+      const eqO = origen[nombre] || 'JA';
+      const row = mk('div','plant-row');
+      const num = mk('span','plant-num'); num.textContent = (i+1);
+      const nm  = mk('span','plant-name');
+      nm.innerHTML = nombre + (eqO !== 'JUVENIL A' ? '<span class="plant-uyl-origin" style="color:#60b4ff">'+eqO+'</span>' : '');
+      const del = mk('button','plant-del'); del.textContent = '×';
+      del.title = 'Quitar de JA Youth';
+      del.onclick = ()=>{
+        const idx = listaUYL.indexOf(nombre);
+        if(idx>=0) listaUYL.splice(idx,1);
+        renderPlantTabs(); renderPlantBody(); autoGuardar();
+      };
+      row.appendChild(num); row.appendChild(nm); row.appendChild(del);
+      list.appendChild(row);
+    });
+    return;
+  }
+  // ── Vista normal de equipo ──
+  const jugadores = plantillas[plantEqActivo] || [];
+  document.getElementById('plant-eq-title').textContent = plantEqActivo;
+  document.getElementById('plant-count').textContent = jugadores.length + ' jugadores';
+  jugadores.forEach((nombre, i)=>{
+    const row = mk('div','plant-row');
+    row.draggable = true;
+    row.dataset.nombre = nombre;
+
+    // Drag para reordenar
+    row.ondragstart = (e) => {
+      e.dataTransfer.setData('text/plain', nombre);
+      e.dataTransfer.effectAllowed = 'move';
+      row.classList.add('dragging-row');
+    };
+    row.ondragend = () => row.classList.remove('dragging-row');
+    row.ondragover = (e) => { e.preventDefault(); row.classList.add('drag-over-row'); };
+    row.ondragleave = () => row.classList.remove('drag-over-row');
+    row.ondrop = (e) => {
+      e.preventDefault();
+      row.classList.remove('drag-over-row');
+      const nombreMovido = e.dataTransfer.getData('text/plain');
+      if(nombreMovido && nombreMovido !== nombre){
+        const arr = plantillas[plantEqActivo];
+        const fromIdx = arr.indexOf(nombreMovido);
+        const toIdx = arr.indexOf(nombre);
+        if(fromIdx >= 0 && toIdx >= 0){
+          arr.splice(fromIdx, 1);
+          const newToIdx = arr.indexOf(nombre);
+          arr.splice(newToIdx, 0, nombreMovido);
+          autoGuardar();
+          renderPlantBody();
+        }
+      }
+    };
+
+    const dragHandle = mk('span','plant-drag-handle'); dragHandle.textContent = '⠿';
+    const num = mk('span','plant-num'); num.textContent = (i+1);
+    const nm  = mk('span','plant-name'); nm.textContent = nombre;
+
+    // Botón editar nombre
+    const editBtn = mk('button','plant-edit-btn'); editBtn.innerHTML = '✏️';
+    editBtn.title = 'Editar nombre';
+    editBtn.onclick = () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = nombre;
+      input.className = 'plant-edit-input';
+      row.innerHTML = '';
+      row.appendChild(input);
+      input.focus();
+      input.select();
+      const guardarEdit = () => {
+        const nuevo = input.value.trim().toUpperCase();
+        if(nuevo && nuevo !== nombre){
+          const arr = plantillas[plantEqActivo];
+          const idx = arr.indexOf(nombre);
+          if(idx >= 0) arr[idx] = nuevo;
+          renombrarJugadorGlobal(nombre, nuevo);
+          renderPlantBody();
+        } else {
+          renderPlantBody();
+        }
+      };
+      input.onblur = guardarEdit;
+      input.onkeydown = (ev) => {
+        ev.stopPropagation();
+        if(ev.key === 'Enter') input.blur();
+        if(ev.key === 'Escape'){ input.onblur = null; renderPlantBody(); }
+      };
+    };
+
+    // Checkbox portero
+    const porLabel = mk('label','plant-portero-chk');
+    const porInput = mk('input','');
+    porInput.type = 'checkbox';
+    porInput.checked = porteros.includes(nombre);
+    porInput.title = 'Marcar como portero';
+    porInput.onchange = ()=>{
+      if(porInput.checked){
+        if(!porteros.includes(nombre)) porteros.push(nombre);
+      } else {
+        const idx = porteros.indexOf(nombre);
+        if(idx>=0) porteros.splice(idx,1);
+      }
+      autoGuardar();
+    };
+    const porTxt = document.createElement('span');
+    porTxt.textContent = 'POR';
+    porLabel.appendChild(porInput);
+    porLabel.appendChild(porTxt);
+
+    const del = mk('button','plant-del'); del.textContent = '×';
+    del.title = 'Eliminar '+nombre;
+    del.onclick = ()=> plantEliminar(nombre);
+
+    row.appendChild(dragHandle); row.appendChild(num); row.appendChild(nm);
+    row.appendChild(editBtn); row.appendChild(porLabel); row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+function plantAñadir(){
+  const input = document.getElementById('plant-add-input');
+  const nombre = input.value.trim().toUpperCase();
+  if(!nombre){ input.focus(); return; }
+  // ── JA Youth: añadir cualquier jugador ──
+  if(plantEqActivo === 'JA_YOUTH'){
+    if(listaUYL.includes(nombre)){
+      toast('⚠️ '+nombre+' ya está en JA Youth');
+      input.value=''; return;
+    }
+    if(!origen[nombre]){
+      toast('⚠️ '+nombre+' no existe en ninguna plantilla');
+      input.value=''; return;
+    }
+    listaUYL.push(nombre);
+    listaUYL.sort((a,b)=>a.localeCompare(b,'es'));
+    input.value=''; input.focus();
+    renderPlantTabs(); renderPlantBody();
+    autoGuardar();
+    toast('✅ '+nombre+' añadido a JA Youth');
+    return;
+  }
+  // ── Equipo normal ──
+  if(!plantillas[plantEqActivo]) plantillas[plantEqActivo]=[];
+  if(plantillas[plantEqActivo].includes(nombre)){
+    toast('⚠️ '+nombre+' ya está en '+plantEqActivo);
+    return;
+  }
+  plantillas[plantEqActivo].push(nombre);
+  plantillas[plantEqActivo].sort((a,b)=>a.localeCompare(b,'es'));
+  origen[nombre] = plantEqActivo;
+  DIAS.forEach(d=>{
+    if(!data[d][plantEqActivo].disponibles.includes(nombre) &&
+       !ZONAS.some(z=>data[d][plantEqActivo][z].includes(nombre))){
+      data[d][plantEqActivo].disponibles.push(nombre);
+    }
+  });
+  input.value=''; input.focus();
+  renderPlantTabs(); renderPlantBody();
+  autoGuardar(); render();
+  toast('✅ '+nombre+' añadido a '+plantEqActivo);
+}
+function plantEliminar(nombre){
+  if(!plantillas[plantEqActivo]) return;
+  const idx = plantillas[plantEqActivo].indexOf(nombre);
+  if(idx<0) return;
+  plantillas[plantEqActivo].splice(idx,1);
+  // Quitar de origen si era de este equipo
+  if(origen[nombre]===plantEqActivo) delete origen[nombre];
+  // Quitar de data en todos los días
+  DIAS.forEach(d=>{
+    ZONAS.forEach(z=>{
+      const i=(data[d][plantEqActivo][z]||[]).indexOf(nombre);
+      if(i>=0) data[d][plantEqActivo][z].splice(i,1);
+    });
+  });
+  renderPlantTabs();
+  renderPlantBody();
+  render();
+  toast('🗑️ '+nombre+' eliminado de '+plantEqActivo);
+}
