@@ -39,10 +39,12 @@ window.fbLogout = function(){
 auth.onAuthStateChanged(user => {
   if(user){
     window._fbReady = true;
+    window._fbUser = user;
     window.dispatchEvent(new Event('firebase-ready'));
     document.dispatchEvent(new Event('auth-ready'));
   } else {
     window._fbReady = false;
+    window._fbUser = null;
     document.dispatchEvent(new Event('auth-logout'));
   }
 });
