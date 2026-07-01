@@ -1388,7 +1388,6 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 // ── ARRANQUE: cargar sesión principal desde Firebase ──
 // Firebase es la fuente de verdad. localStorage solo como fallback mientras carga.
 initTiposConfig();
-if(cargado) render(); // render provisional con datos locales
 async function arrancarDesdeFirebase(){
   try{
     // Esperar Firebase listo (máx 6s)
