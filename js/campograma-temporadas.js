@@ -87,7 +87,7 @@ function cargarTemporadas(){
 function guardarTemporadas(){
   // localStorage desactivado
 }
-// Calcular nombre siguiente temporada: "2025-26" → "2026-27"
+// Calcular nombre siguiente temporada: "2025-2026" → "2026-2027"
 function siguienteNombreTemporada(actual){
   const m = actual.match(/(\d{4})[-–](\d{2,4})/);
   if(!m) return actual;
@@ -97,7 +97,7 @@ function siguienteNombreTemporada(actual){
 function actualizarBadgeTemporada(){
   const t = temporadas.find(t=>t.id===temporadaActual);
   const lbl = document.getElementById('season-label');
-  if(lbl) lbl.textContent = t ? t.nombre : '2026-27';
+  if(lbl) lbl.textContent = t ? t.nombre : '2026-2027';
 }
 // ── Modal de selección ──
 function abrirSeasonModal(){
@@ -160,7 +160,7 @@ function nuevaTemporada(){
   document.getElementById('season-modal').classList.remove('open');
   // Calcular nombre sugerido
   const actual = temporadas.find(t=>t.id===temporadaActual);
-  const nombreActual = actual ? actual.nombre : '2026-27';
+  const nombreActual = actual ? actual.nombre : '2026-2027';
   const nombreNuevo  = siguienteNombreTemporada(nombreActual);
   // Construir vista previa de ascenso
   const ascensoVista = JERARQUIA.map(eq=>{
@@ -264,8 +264,8 @@ function confirmarAscenso(){
 cargarTemporadas();
 if(!temporadaActual && temporadas.length===0){
   // Primera vez: crear temporada 2026-27 automáticamente
-  temporadaActual = '2026_27';
-  temporadas = [{ id:'2026_27', nombre:'2026-27', payload:{}, ts:Date.now() }];
+  temporadaActual = '2026_2027';
+  temporadas = [{ id:'2026_2027', nombre:'2026-2027', payload:{}, ts:Date.now() }];
   guardarTemporadas();
 }
 actualizarBadgeTemporada();
