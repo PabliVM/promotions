@@ -1,0 +1,645 @@
+/* ══════════════════════════════════════════════════
+   VISTA SEMANA — scroll horizontal, columnas por día
+   ══════════════════════════════════════════════════ */
+.cards-grid.view-semana {
+  display: block;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 8px;
+  height: calc(100vh - 160px);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Barra de scroll horizontal SEPARADA, siempre visible abajo */
+#scroll-sync-bar {
+  height: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: sticky;
+  bottom: 0;
+  background: #f0f4fa;
+  border-top: 1px solid #dfe1e6;
+}
+#scroll-sync-inner {
+  height: 1px;
+}
+
+/* Tabla semana */
+.semana-table {
+  border-collapse: separate;
+  border-spacing: 20px 0;
+  min-width: max-content;
+  table-layout: fixed;
+}
+
+/* Sin thead azul — info en card-hdr */
+.semana-th-dia { display: none; }
+.semana-th-nombre { display: none; }
+.semana-th-fecha { display: none; }
+
+/* Celdas de cards — mismo ancho que el th */
+.semana-td-card {
+  vertical-align: top;
+  padding: 0;
+  width: 640px;
+  min-width: 640px;
+  max-width: 640px;
+  box-sizing: border-box;
+}
+.semana-td-card .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+/* Campo: altura fija proporcional, no crece */
+.semana-td-card .campo-wrap {
+  flex-shrink: 0;
+}
+/* Disponibles: crece para llenar el espacio */
+.semana-td-card .zona-disponibles {
+  flex: 1 1 auto;
+  min-height: 60px;
+}
+/* cols-estado: tamaño fijo */
+.semana-td-card .cols-estado {
+  flex-shrink: 0;
+}
+.semana-tr-eq { vertical-align: top; }
+.semana-tr-eq + .semana-tr-eq {
+  border-top: 3px solid #2563eb;
+}
+.semana-tr-eq + .semana-tr-eq .semana-td-card {
+  padding-top: 12px;
+}
+
+.semana-col { display: none; }
+
+.semana-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.10);
+}
+
+.semana-col-hdr { display: none; }
+
+/* Vista semana — campo proporcional al ancho */
+.semana-td-card .campo-wrap {
+  padding-bottom: 118% !important;
+  height: auto !important;
+}
+
+/* Zonas visibles en vista semana pero más compactas */
+.cards-grid.view-semana .zona-disponibles {
+  padding: 6px 8px;
+  min-height: 80px;
+  flex: 1;
+  overflow: visible;
+}
+/* Banquillo visible en vista semana */
+.cards-grid.view-semana .zona-banquillo {
+  padding: 5px 8px;
+  min-height: 32px;
+  flex-shrink: 0;
+}
+.cards-grid.view-semana .cols-estado .col {
+  padding: 4px 6px;
+  min-height: 80px;
+  height: auto;
+  overflow: visible;
+}
+.cards-grid.view-semana .col .chip {
+  font-size: 9px;
+  padding: 2px 5px;
+}
+
+/* Cards compactas */
+.cards-grid.view-semana .card-eq,
+.semana-td-card .card {
+  width: 100%;
+  box-sizing: border-box;
+}
+.semana-td-card .card-hdr {
+  background: #ffffff;
+  border-bottom: 2px solid #2563eb;
+  min-height: 50px;
+  align-items: flex-start;
+  padding: 8px 12px;
+}
+.semana-td-card .card-hdr-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.semana-td-card .card-hdr-nombre-txt {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.semana-td-card .card-hdr-fecha {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #5a6170;
+  letter-spacing: 0;
+  display: block;
+}
+.semana-td-card .card-hdr-count {
+  color: #2563eb;
+  background: rgba(37,99,235,.1);
+  border: 1px solid rgba(37,99,235,.2);
+}
+body.dark .semana-td-card .card-hdr {
+  background: #161b22;
+  border-bottom-color: #3b82f6;
+}
+body.dark .semana-td-card .card-hdr-nombre-txt { color: #e6edf3; }
+body.dark .semana-td-card .card-hdr-fecha { color: #8b949e; }
+/* En vista semana: mostrar modo-btn, ocultar snap y reset */
+.cards-grid.view-semana .snap-btn,
+.cards-grid.view-semana .reset-btn {
+  display: none;
+}
+.semana-td-card .modo-btn {
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1.5px solid #dfe1e6;
+  background: #fff;
+  color: #5a6170;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Segoe UI', sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.semana-td-card .modo-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+.semana-td-card .modo-btn.partido {
+  background: rgba(37,99,235,.1);
+  color: #2563eb;
+  border-color: #2563eb;
+}
+.semana-td-card .modo-btn.descanso {
+  background: rgba(100,116,139,.1);
+  color: #64748b;
+  border-color: #64748b;
+}
+
+.cards-grid.view-semana .cf {
+  font-size: 11px;
+  padding: 3px 7px;
+}
+.cards-grid.view-semana .pof .chip {
+  font-size: 11px !important;
+  padding: 3px 6px !important;
+}
+
+@media (max-width: 767px) {
+  .cards-grid.view-semana {
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow-x: hidden;
+  }
+  .semana-col { width: 100%; }
+  .cards-grid.view-semana .campo-wrap { padding-bottom: 118% !important; }
+}
+
+/* ── Ocultar barras no necesarias en vista semana ── */
+#semana-nav { display: none !important; }
+#eq-strip   { display: none !important; }
+#view-bar   { display: none !important; }
+
+/* Fecha en card-hdr vista semana */
+.card-hdr-fecha {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: #5a6170;
+  margin-top: 0;
+  letter-spacing: .01em;
+  line-height: 1.2;
+}
+
+/* card-hdr en vista semana: más espacio para botones */
+.cards-grid.view-semana .card-hdr {
+  flex-wrap: nowrap;
+  min-height: 44px;
+  align-items: center;
+}
+.cards-grid.view-semana .card-hdr-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Leyenda en sub-header */
+#sub-leyenda {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  padding-left: 16px;
+  border-left: 1px solid #e2e8f0;
+}
+.sub-ley {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5a6170;
+}
+.sub-ley-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Leyenda inline en sub-header */
+#sub-leyenda {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.sub-ley {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5a6170;
+  white-space: nowrap;
+}
+.sub-ley-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Dark mode — barra blanca secundaria */
+body.dark #sub-header {
+  background: #161b22;
+  border-bottom-color: #30363d;
+}
+body.dark .hdr-action-btn {
+  background: #161b22;
+  border-color: #30363d;
+  color: #8b949e;
+}
+body.dark .hdr-action-btn:hover {
+  background: #1c2333;
+  border-color: #8b949e;
+  color: #e6edf3;
+}
+body.dark .sub-ley { color: #8b949e; }
+body.dark #sub-header > div[style*="background:#dfe1e6"] {
+  background: #30363d !important;
+}
+
+/* Nombre equipo como bloque para que fecha baje */
+.cards-grid.view-semana .card-hdr-nombre-txt,
+.cards-grid.view-semana .card-hdr-name > *:first-child {
+  display: block;
+}
+
+/* ── BLOQUE DE NOTAS ── */
+.card-notas-wrap {
+  padding: 6px 8px 8px;
+  border-top: 1px solid #e8eef8;
+  background: #fff;
+}
+.card-notas-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid #e8eef8;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 11px;
+  color: #374151;
+  background: #f8fafd;
+  outline: none;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.card-notas-input:focus {
+  border-color: #2563eb;
+  background: #fff;
+}
+.card-notas-input::placeholder {
+  color: #9ca3af;
+}
+body.dark .card-notas-wrap { background: #161b22; border-top-color: #30363d; }
+body.dark .card-notas-input { background: #0d1117; border-color: #30363d; color: #e6edf3; }
+
+/* ══════════════════════════════════════════════════
+   MODALES — Estilo unificado
+   ══════════════════════════════════════════════════ */
+
+/* Overlay común */
+.modal-overlay-base {
+  position: fixed;
+  inset: 0;
+  z-index: 10100;
+  background: rgba(0,0,0,.4);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px;
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+.modal-overlay-base.open { display: flex; }
+
+/* Caja modal común */
+.modal-box-base {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.15);
+  overflow: hidden;
+}
+
+/* Header común */
+.modal-hdr-base {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: #2563eb;
+}
+.modal-hdr-base span,
+.modal-hdr-base h2 {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0;
+}
+.modal-hdr-base button {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.8);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+  border-radius: 4px;
+}
+.modal-hdr-base button:hover { color: #fff; background: rgba(255,255,255,.15); }
+
+/* ── Overrides unificados ── */
+
+/* Stats */
+#reg-overlay { align-items: flex-start; padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px; }
+#reg-box { max-width: 560px; border-radius: 12px; }
+#reg-header { padding: 14px 20px; }
+#reg-header h2 { font-size: 15px; font-weight: 700; }
+
+/* Plantillas */
+#plant-overlay { align-items: flex-start; padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px; }
+#plant-box { max-width: 560px; border-radius: 12px; }
+#plant-hdr { padding: 14px 16px; border-radius: 0; }
+#plant-hdr h2 { font-size: 15px; font-weight: 700; letter-spacing: 0; }
+
+/* Control */
+#control-overlay { align-items: flex-start; padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px; }
+#control-box { max-width: 560px; border-radius: 12px; max-height: calc(100vh - 60px); }
+#control-hdr { padding: 14px 20px; border-radius: 0; }
+#control-hdr h2 { font-size: 15px; font-weight: 700; letter-spacing: 0; }
+
+/* Copiar */
+#copy-modal-overlay { align-items: flex-start; padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px; border-radius: 0; }
+#copy-modal { max-width: 560px; border-radius: 12px; border-top: none; }
+#copy-modal-hdr span { font-size: 15px; }
+
+/* Temporadas */
+#season-modal { align-items: flex-start; padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px; }
+#season-box { max-width: 560px; border-radius: 12px; }
+#season-box-hdr { border-radius: 0; }
+
+/* Firebase panel */
+#fb-overlay { align-items: flex-start; padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); }
+#fb-box { max-width: 560px; width: 100%; background: #fff; border-radius: 12px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,.15); padding: 0; overflow: hidden; }
+#fb-box h3 { background: #2563eb; color: #fff; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 15px; font-weight: 700; margin: 0; padding: 14px 20px; letter-spacing: 0; }
+.fb-sesion-row { background: #f8fafd; border-radius: 8px; border: 1px solid #e8eef8; }
+.fb-sesion-nombre { color: #1a1d23; font-family: 'Segoe UI',-apple-system,sans-serif; }
+.fb-sesion-ts { color: #9ca3af; }
+.fb-btn.cargar { background: #2563eb; color: #fff; border-radius: 8px; }
+.fb-btn.borrar { background: #ef4444; color: #fff; border-radius: 8px; }
+#fb-nueva-inp { border: 1px solid #dfe1e6; background: #f8fafd; color: #1a1d23; border-radius: 8px; font-family: 'Segoe UI',-apple-system,sans-serif; }
+#fb-nueva-inp::placeholder { color: #9ca3af; }
+#fb-box .fb-sesion-row, #fb-box h3, #fb-nueva-row { padding-left: 20px; padding-right: 20px; }
+
+/* Vista semana: banner partido y tipos flotan sobre el campo */
+.semana-td-card .partido-banner {
+  position: relative;
+  z-index: 5;
+  margin-bottom: -1px;
+}
+.semana-td-card .tipo-partido-sel {
+  position: relative;
+  z-index: 5;
+  margin-bottom: -1px;
+}
+
+/* Fondo blanco en card de vista semana para que el margin-top no sea negro */
+.semana-td-card .card {
+  background: #fff;
+}
+
+/* ══════════════════════════════════════════════════
+   VISTA LISTA — alternativa al campo
+   ══════════════════════════════════════════════════ */
+.card-lista-wrap {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 200px;
+  background: #fff;
+  flex: 1;
+}
+
+.card-lista-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.card-lista-lbl {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  text-decoration: underline;
+  padding: 2px 0 4px 8px;
+  border-left: 3px solid currentColor;
+  margin-bottom: 2px;
+}
+
+.card-lista-row {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1d23;
+  padding: 4px 8px;
+  background: #f8fafd;
+  border-radius: 6px;
+  border: 1px solid #e8eef8;
+  text-transform: uppercase;
+  letter-spacing: .2px;
+}
+
+.card-lista-empty {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 32px 0;
+}
+
+body.dark .card-lista-wrap { background: #161b22; }
+body.dark .card-lista-row { background: #0d1117; border-color: #30363d; color: #e6edf3; }
+
+/* Acciones del listado */
+.card-lista-acciones {
+  display: flex;
+  gap: 6px;
+  padding: 6px 0 8px;
+  border-bottom: 1px solid #e8eef8;
+  margin-bottom: 8px;
+}
+.card-lista-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1.5px solid #dfe1e6;
+  background: #fff;
+  color: #5a6170;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.card-lista-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* ── Barra de filtros vista semana: días y equipos ── */
+#filtros-semana-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e8eef8;
+}
+#filtro-dias-row, #filtro-eqs-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.filtros-sep {
+  width: 1px;
+  height: 18px;
+  background: #dfe1e6;
+  flex-shrink: 0;
+}
+.filtro-dia-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid #dfe1e6;
+  background: #fff;
+  color: #9ca3af;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filtro-dia-btn.activo {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.filtro-eq-btn {
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1.5px solid #dfe1e6;
+  background: #fff;
+  color: #9ca3af;
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.filtro-eq-btn.activo {
+  background: rgba(37,99,235,.08);
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* Dark mode — barra de filtros días/equipos */
+body.dark #filtros-semana-bar {
+  background: #161b22;
+  border-bottom-color: #30363d;
+}
+body.dark .filtros-sep { background: #30363d; }
+body.dark .filtro-dia-btn,
+body.dark .filtro-eq-btn {
+  background: #0d1117;
+  border-color: #30363d;
+  color: #8b949e;
+}
+body.dark .filtro-dia-btn.activo {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+body.dark .filtro-eq-btn.activo {
+  background: rgba(59,130,246,.15);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+/* Fecha de HOY destacada */
+.card-hdr-fecha-hoy {
+  font-weight: 700 !important;
+  color: #fff !important;
+  background: #2563eb;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block !important;
+}
