@@ -311,7 +311,13 @@ function endChip(e){
       return;
     }
     // ── Destino: cualquier otra zona
+    // Registrar movimiento
+    const _mv = drag.nombre, _mvEq = toEq, _mvDia = dia;
     move(drag.eq,drag.zona,toEq,toZona,drag.nombre);
+    if(!movimientos[_mvDia]) movimientos[_mvDia]={};
+    if(!movimientos[_mvDia][_mvEq]) movimientos[_mvDia][_mvEq]={};
+    const _user = window._fbUser?.email || window._fbUser?.displayName || 'Desconocido';
+    movimientos[_mvDia][_mvEq][_mv] = { ts: Date.now(), user: _user };
     drag=null; render();
   } finally {
     dia = _diaOrigDrop;
