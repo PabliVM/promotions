@@ -1,0 +1,453 @@
+:root{
+  /* === Sistema MAESTRO Corporativo RM === */
+  --bg:#f0f2f5;
+  --surface:#ffffff;
+  --surface-alt:#fafbfc;
+  --border:#dfe1e6;
+  --border-light:#eaecf0;
+  --text:#1a1d23;
+  --text-sec:#5a6170;
+  --text-mut:#8b919e;
+  --text-faint:#b4b9c4;
+  --rm-blue:#2563eb;
+  --rm-blue-lt:#3b7cf5;
+  --rm-blue-bg:#edf1fc;
+  --green:#16a34a;
+  --orange:#ea580c;
+  --red:#dc2626;
+  --sh-sm:0 1px 3px rgba(0,0,0,.06);
+  --sh-md:0 2px 8px rgba(0,0,0,.08);
+  --sh-lg:0 4px 16px rgba(0,0,0,.12);
+  --r:8px;--rs:5px;--rl:12px;
+  --font:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+  --tr:.2s ease;
+  /* === Variables heredadas del Campograma (conservadas para no romper JS/CSS internos) === */
+  --verde:#77ED85;--verde-dk:#003300;--verde-bd:#4ade80;
+  --naranja:#FF8C00;--naranja-bd:#e07800;
+  --rojo:#e53e3e;--rojo-bd:#c53030;
+  --azul:#3b82f6;--azul-bd:#2563eb;
+  --gris-bg:#e5e7eb;--gris-color:#374151;
+  --rm-dark:#0a0f1e;--rm-gold:#c8a800;
+}
+
+/* === DARK MODE MAESTRO (toggle por body.dark) === */
+body.dark{
+  --bg:#1a1d23;
+  --surface:#23272f;
+  --surface-alt:#2a2e36;
+  --border:#3a3f4a;
+  --border-light:#32363e;
+  --text:#e4e6ea;
+  --text-sec:#a0a5b0;
+  --text-mut:#707580;
+  --text-faint:#505560;
+  --rm-blue-bg:#1e2a4a;
+  --sh-sm:0 1px 3px rgba(0,0,0,.2);
+  --sh-md:0 2px 8px rgba(0,0,0,.3);
+  --sh-lg:0 4px 16px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.45;font-size:13px;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh;overflow-x:hidden;transition:background var(--tr),color var(--tr);}
+/* ── Wrapper responsive ── */
+#app-wrap{
+  max-width:520px;
+  margin:0 auto;
+  position:relative;
+  background:var(--surface);
+  min-height:100vh;min-height:100dvh;
+  box-shadow:var(--sh-lg);
+  overflow-x:hidden;
+  padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  padding-left:env(safe-area-inset-left,0);
+  padding-right:env(safe-area-inset-right,0);
+  transition:background var(--tr);
+}
+/* Vista semana: permitir scroll horizontal */
+body:has(.cards-grid.view-semana) #app-wrap {
+  overflow-x: visible;
+}
+/* ── Tablet (≥768px): 2 cols fijo, botones vista ocultos ── */
+@media(min-width:768px){
+  #app-wrap{ max-width:900px; }
+  .cards-grid{ grid-template-columns:repeat(2,1fr)!important; gap:12px; padding:12px; }
+  #bottom-nav{ max-width:900px; }
+  #season-box,#cfg-tipos-box,#uyl-box,#reg-box,#plant-box,#fb-box{ max-width:600px; }
+  #view-bar{ display:none; }
+  /* multi-eq-bar gestionada por setView */
+}
+/* ── Desktop (≥1200px): 3 cols fijo, botones vista ocultos ── */
+@media(min-width:1200px){
+  body{ background:var(--bg); }
+  #app-wrap{ max-width:100%; box-shadow:none; }
+  .cards-grid{ grid-template-columns:repeat(3,1fr)!important; gap:14px; padding:14px; }
+  #bottom-nav{ max-width:1400px; }
+  #season-box,#cfg-tipos-box,#uyl-box{ max-width:680px; }
+}
+/* HEADER */
+/* ══ ENCABEZADO ══ */
+#app-header{
+  background:var(--rm-blue);
+  padding:10px 20px;
+  padding-top:calc(10px + env(safe-area-inset-top,0px));
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;
+  border-bottom:none;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+/* Ocultar botones del header azul principal */
+#hdr-actions { display: none; }
+
+/* Barra blanca secundaria */
+#sub-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 56px;
+  z-index: 190;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.hdr-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #dfe1e6;
+  background: #fff;
+  color: #5a6170;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s ease;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.hdr-action-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+.hdr-action-btn svg { flex-shrink: 0; stroke: currentColor; }
+
+/* Colores activos por botón */
+.hdr-action-btn.btn-plantillas:hover { border-color: #7c3aed; color: #7c3aed; }
+.hdr-action-btn.btn-stats:hover      { border-color: #0891b2; color: #0891b2; }
+.hdr-action-btn.btn-control:hover    { border-color: #16a34a; color: #16a34a; }
+.hdr-action-btn.btn-copiar:hover     { border-color: #d97706; color: #d97706; }
+#hdr-identity{display:flex;align-items:center;gap:12px;}
+#hdr-escudo{
+  width:42px;height:42px;flex-shrink:0;
+  background:#fff;
+  border-radius:50%;
+  padding:3px;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+#hdr-escudo img{
+  width:100%;height:100%;
+  object-fit:contain;
+  display:block;
+}
+#hdr-titles{display:flex;flex-direction:column;gap:1px;}
+#hdr-club{
+  font-family:var(--font);
+  font-size:17px;font-weight:700;
+  color:#fff;letter-spacing:-.3px;
+  line-height:1.2;
+}
+#hdr-sub{
+  font-family:var(--font);
+  font-size:11px;font-weight:500;
+  color:rgba(255,255,255,.72);letter-spacing:0;
+}
+#hdr-right{display:flex;align-items:center;gap:6px;}
+#season-badge{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 11px;border-radius:20px;
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.08);
+  font-family:var(--font);
+  font-size:12px;font-weight:600;
+  color:rgba(255,255,255,.9);
+  letter-spacing:.1px;cursor:pointer;
+  transition:background .15s;
+  white-space:nowrap;
+}
+#season-badge:hover{background:rgba(255,255,255,.14);}
+#season-badge svg{opacity:.6;}
+/* Modal temporada */
+#season-modal{
+  position:fixed;inset:0;z-index:10100;
+  background:rgba(0,0,0,.4);
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+  padding:20px;
+}
+#season-modal.open{display:flex;}
+#season-box{
+  width:100%;max-width:400px;
+  background:#fff;
+  border-radius:16px;
+  border:none;
+  padding:0;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);
+  overflow:hidden;
+}
+#season-box-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px 12px;
+  background:#2563eb;
+}
+#season-box-title{
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:15px;font-weight:700;
+  color:#fff;letter-spacing:0;
+}
+#season-box-close{
+  background:none;border:none;cursor:pointer;
+  color:rgba(255,255,255,.8);font-size:20px;line-height:1;padding:4px;
+}
+#season-box-close:hover{color:#fff;}
+.season-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;
+  border-bottom:1px solid #f0f4fa;
+  cursor:pointer;transition:background .12s;
+}
+.season-row:hover{background:#f8fafd;}
+.season-row.active{background:rgba(37,99,235,.06);}
+.season-row-name{
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:14px;font-weight:600;
+  color:#1a1d23;letter-spacing:0;
+}
+.season-row-meta{
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:11px;font-weight:400;
+  color:#9ca3af;
+}
+.season-row-badge{
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:10px;font-weight:700;
+  color:#2563eb;
+  background:rgba(37,99,235,.08);
+  padding:2px 10px;border-radius:20px;
+  border:1px solid rgba(37,99,235,.2);
+}
+#season-new-btn{
+  margin:12px 18px;width:calc(100% - 36px);
+  padding:10px;border-radius:20px;border:none;cursor:pointer;
+  background:#2563eb;color:#fff;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:13px;font-weight:600;
+  transition:background .15s;
+}
+#season-new-btn:hover{background:#1d4ed8;}
+
+/* Confirmación ascenso */
+#ascenso-modal{
+  position:fixed;inset:0;z-index:10200;
+  background:rgba(0,0,0,.4);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(4px);
+}
+#ascenso-modal.open{display:flex;}
+#ascenso-box{
+  background:#fff;border-radius:16px;
+  border:none;
+  width:100%;max-width:360px;padding:20px;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);
+}
+#ascenso-title{
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:16px;font-weight:700;
+  color:#1a1d23;margin-bottom:8px;
+}
+#ascenso-body{
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:13px;color:#5a6170;
+  line-height:1.5;margin-bottom:16px;
+}
+.ascenso-equipo-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:8px;
+  background:#f8fafd;border:1px solid #e8eef8;
+  margin-bottom:6px;
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:12px;font-weight:600;
+  color:#374151;
+}
+.ascenso-arrow{color:#2563eb;font-size:14px;}
+.ascenso-btns{display:flex;gap:8px;margin-top:16px;}
+.ascenso-btn{
+  flex:1;padding:10px;border-radius:20px;border:none;cursor:pointer;
+  font-family:'Segoe UI',-apple-system,sans-serif;font-size:12px;font-weight:700;
+  transition:all .15s;
+}
+.ascenso-btn.cancel{background:#f0f4fa;color:#5a6170;border:1px solid #dfe1e6;}
+.ascenso-btn.cancel:hover{background:#e2e8f0;}
+.ascenso-btn.confirm{background:#2563eb;color:#fff;}
+.ascenso-btn.confirm:hover{background:#1d4ed8;}
+
+  width:36px;height:36px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.7);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.hdr-icon-btn svg{width:16px;height:16px;}
+.hdr-icon-btn:active{background:rgba(200,168,0,.2);color:#C8A800;}
+/* ══ LEYENDA FINA ══ */
+#leyenda-strip { display: none !important; }
+.ley2{display:flex;align-items:center;gap:4px;}
+.ley2-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ley2 span:last-child{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:9px;font-weight:700;
+  color:rgba(255,255,255,.4);
+  letter-spacing:.5px;text-transform:uppercase;
+}
+/* ══ SEMANA NAV ══ */
+#semana-nav{
+  display:flex;align-items:stretch;
+  background:#1e3a8a;
+  border-bottom:2px solid rgba(255,255,255,.15);
+}
+#btn-semana-cal{
+  display:flex;align-items:center;gap:6px;
+  padding:0 11px;
+  border:none;border-right:1px solid rgba(255,255,255,.08);
+  background:transparent;
+  color:rgba(255,255,255,.55);
+  cursor:pointer;
+  transition:color .15s;
+  flex-shrink:0;
+}
+#btn-semana-cal:active{color:#C8A800;}
+#btn-semana-cal svg{flex-shrink:0;opacity:.7;}
+#semana-fechas{
+  display:flex;flex-direction:column;gap:0px;
+  text-align:left;line-height:1.15;
+}
+#semana-fecha-ini,#semana-fecha-fin{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:10px;font-weight:700;
+  letter-spacing:.3px;text-transform:uppercase;
+  color:rgba(255,255,255,.55);
+}
+#semana-fecha-ini{color:rgba(255,255,255,.7);}
+#top-semana-lbl{display:none;}
+/* ── días strip  */
+#dias-strip{
+  display:flex;flex:1;overflow-x:auto;scrollbar-width:none;
+}
+#dias-strip::-webkit-scrollbar{display:none;}
+.dia-tab{
+  flex:1;min-width:42px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:6px 3px 5px;
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .15s;gap:1px;
+}
+.dia-tab.active{border-bottom-color:#fff;}
+.dia-tab-nombre{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:9px;font-weight:700;
+  color:rgba(255,255,255,.5);
+  letter-spacing:.8px;text-transform:uppercase;
+}
+.dia-tab.active .dia-tab-nombre{color:#fff;}
+.dia-tab-fecha{
+  font-size:17px;font-weight:700;
+  color:rgba(255,255,255,.6);
+  font-family:'Barlow Condensed',sans-serif;line-height:1;
+}
+.dia-tab.active .dia-tab-fecha{color:#fff;}
+.dia-tab-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:#fff;opacity:0;transition:opacity .15s;
+}
+.dia-tab.tiene-datos .dia-tab-dot{opacity:1;}
+.dia-tab.es-partido .dia-tab-nombre::after{content:'⚽';font-size:7px;margin-left:1px;}
+/* ── eq strip */
+#eq-strip{
+  display:flex;overflow-x:auto;scrollbar-width:none;
+  background:#040c18;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+#eq-strip::-webkit-scrollbar{display:none;}
+.eq-tab{
+  padding:8px 16px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:12px;font-weight:700;
+  color:rgba(255,255,255,.35);
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  white-space:nowrap;letter-spacing:.5px;
+  transition:all .15s;
+}
+.eq-tab.active{color:#fff;border-bottom-color:#C8A800;}
+/* ══ NAVEGACIÓN INFERIOR ══ */
+#bottom-nav{
+  position:fixed;
+  bottom:0;
+  /* Alineado con #app-wrap — se calcula desde JS o con anclas CSS */
+  left:50%;
+  transform:translateX(-50%);
+  width:100%;
+  max-width:520px;   /* igual que app-wrap móvil */
+  background:#030b17;
+  border-top:1px solid rgba(200,168,0,.2);
+  display:flex;align-items:stretch;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  z-index:200;
+  box-sizing:border-box;
+}
+.bnav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;background:none;border:none;cursor:pointer;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+  color:rgba(255,255,255,.35);transition:color .15s;padding:4px 0;
+}
+.bnav-btn svg{width:20px;height:20px;stroke:currentColor;}
+.bnav-btn:active{color:#C8A800;}
+.bnav-btn.active{color:#C8A800;}
+.header-title h1{color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;letter-spacing:1px;}
+.header-title p{color:var(--rm-gold);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+.header-actions{margin-left:auto;display:flex;gap:6px;}
+.hdr-btn{padding:5px 10px;border-radius:8px;border:1px solid rgba(200,168,0,.4);background:rgba(200,168,0,.1);color:var(--rm-gold);font-size:9px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;white-space:nowrap;}
+.hdr-btn:hover{background:var(--rm-gold);color:#000;}
+/* TABS */
+.tabs-scroll{overflow-x:auto;padding:7px 12px 4px;display:flex;gap:5px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;}
+.tabs-scroll::-webkit-scrollbar{display:none;}
+.tab-dia{flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.2px;text-transform:uppercase;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);transition:all .15s;}
+.tab-dia.active{background:#fff;color:var(--rm-dark);}
+.tab-n{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;font-size:8px;font-weight:700;margin-left:3px;background:var(--verde);color:var(--verde-dk);}
+.tab-dia.active .tab-n{background:var(--rm-blue);color:#fff;}
+.tab-eq{flex-shrink:0;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.45);font-size:10px;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;}
+.tab-eq.active{background:var(--verde);color:var(--verde-dk);border-color:var(--verde);}
+/* LEYENDA */
+.leyenda{display:flex;gap:8px;flex-wrap:wrap;padding:4px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05);}
+.ley-item{display:flex;align-items:center;gap:4px;}
+.ley-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.ley-txt{color:rgba(255,255,255,.45);font-size:9px;}
+/* SAVE BAR */
+/* ── TOP BAR ── */
+#top-bar{background:#0a1220;border-bottom:1px solid rgba(200,168,0,.2);padding:0;}
+#top-row1{display:flex;align-items:center;gap:10px;padding:8px 12px 6px;min-height:44px;}
+#btn-semana-cal{display:flex;align-items:center;gap:6px;background:rgba(200,168,0,.12);border:1px solid rgba(200,168,0,.3);color:#C8A800;border-radius:10px;padding:6px 12px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;white-space:nowrap;transition:background .15s;}
+#btn-semana-cal:active{background:rgba(200,168,0,.25);}
+/* semana-lbl deprecated */
+#top-actions{display:flex;gap:4px;margin-left:auto;}
+.top-act-btn{width:34px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.top-act-btn:active{background:rgba(255,255,255,.15);color:#fff;}
