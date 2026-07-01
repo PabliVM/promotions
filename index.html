@@ -456,6 +456,12 @@
 <script src="js/campograma-drag.js"></script>
 <script src="js/campograma-copiar.js"></script>
 <script src="js/campograma-stats.js"></script>
+<script>
+// Arranque — después de todos los módulos cargados
+const cargado = cargarGuardado();
+initTiposConfig();
+if(cargado) render();
+</script>
 <!-- ═══════════════════════════════
      NAVEGACIÓN INFERIOR APP MÓVIL
 ════════════════════════════════ -->
