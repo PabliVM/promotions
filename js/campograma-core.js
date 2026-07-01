@@ -35,7 +35,7 @@ for(const d of DIAS) for(const e of EQUIPOS){
   // migrar disponibles antiguo si no tiene banquillo
   if(data[d][e].banquillo === undefined) data[d][e].banquillo = [];
 }
-let dia  = "LUNES";
+// dia declarada en campograma-constants.js
 let eqF  = "TODOS";
 let pos  = {};   // "dia|eq|nombre" → [top,left]
 // Nombres editables de columnas por equipo: colNames[eq] = ['PROMOCIONADOS','LESIONADOS','OTROS']
