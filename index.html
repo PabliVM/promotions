@@ -498,13 +498,16 @@ if(cargado) render();
 </div>
 
 <script>
-// Des-registrar Service Worker y limpiar caché
+// Matar Service Worker y toda la caché, luego recargar UNA vez
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(r => r.unregister());
-  });
-  caches.keys().then(keys => {
-    keys.forEach(k => caches.delete(k));
+  Promise.all([
+    navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(r => r.unregister()))),
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+  ]).then(() => {
+    if(!sessionStorage.getItem('sw_cleared')){
+      sessionStorage.setItem('sw_cleared','1');
+      location.reload(true);
+    }
   });
 }
 </script>
