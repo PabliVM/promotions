@@ -50,7 +50,10 @@ function renderPlantTabs(){
   wrap.innerHTML = '';
   EQUIPOS.forEach(eq=>{
     const btn = mk('button','plant-eq-tab'+(eq===plantEqActivo?' active':''));
-    btn.textContent = eq + ' ('+(plantillas[eq]?.length||0)+')';
+    const _jj = plantillas[eq] || [];
+    const _pp = _jj.filter(n => porteros.includes(n)).length;
+    const _nn = _jj.length - _pp;
+    btn.textContent = eq + ' (' + (_pp > 0 ? _nn+'+'+_pp : _jj.length) + ')';
     btn.onclick = ()=>{ plantEqActivo=eq; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
     wrap.appendChild(btn);
   });
