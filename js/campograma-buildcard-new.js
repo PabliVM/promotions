@@ -480,14 +480,6 @@ function chip(nombre,eq,zona,color,type){
   else if(prestado) c.title='Viene de '+eqO;
   return c;
 }
-const EQ_COLORS={
-  'CASTILLA':'c-prestado-CASTILLA',
-  'RMC':'c-prestado-RMC',
-  'JUVENIL A':'c-prestado-JUVENIL_A',
-  'JUVENIL B':'c-prestado-JUVENIL_B',
-  'JUVENIL C':'c-prestado-JUVENIL_C',
-  'CADETE A':'c-prestado-CADETE_A'
-};
 function mk(tag,cls=''){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
 // ── Auto-promoción: mover jugador al equipo destino y registrar en origen
 function autoPromocionar(nombre, eqOrigen, eqDestino){
