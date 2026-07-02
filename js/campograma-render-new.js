@@ -352,7 +352,8 @@ function buildListaView(eq, d){
         let linea = '  - ' + n + (esPor ? ' (POR)' : '');
         if(key === 'promovidos_1er'){
           const destino = promInfo[diaKey]?.[eq]?.[n];
-          if(destino) linea += '  → ' + (destino === '1ER EQUIPO' ? '1ER' : destino);
+          const siglas = {'CASTILLA':'CAST','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
+          if(destino) linea += '  → ' + (destino === '1ER EQUIPO' ? '1ER' : (siglas[destino]||destino));
         }
         texto += linea + '\n';
       });
