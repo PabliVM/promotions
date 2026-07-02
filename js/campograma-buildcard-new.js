@@ -274,6 +274,16 @@ function buildCard(eq){
     const lista = buildListaView(eq, dia);
     card.appendChild(lista);
   } else {
+    const _colapsado = _dispColapsado.has(eq);
+    if(_colapsado){
+      // Label encima del campo
+      const _lblCol = document.createElement('div');
+      _lblCol.className = 'zona-lbl zona-disp-collapsed';
+      _lblCol.style.cursor = 'pointer';
+      _lblCol.textContent = '▶ DISPONIBLES — clic para expandir';
+      _lblCol.onclick = ()=>{ _dispColapsado.delete(eq); renderCards(); };
+      card.appendChild(_lblCol);
+    }
     card.appendChild(cWrap);
   }
   const _colapsado = _dispColapsado.has(eq);
