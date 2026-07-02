@@ -276,6 +276,7 @@ function buildCard(eq){
   } else {
     card.appendChild(cWrap);
   }
+  const _colapsado = _dispColapsado.has(eq);
   if(!esVistaLista(eq, dia) && !_colapsado){
   // Banquillo (solo en modo partido, justo debajo del campo)
   if(esPartido(eq)){
@@ -292,7 +293,6 @@ function buildCard(eq){
   // Disponibles
   const zDisp=mk('div','zona-disponibles dz');
   zDisp.dataset.eq=eq; zDisp.dataset.zona='disponibles'; zDisp.dataset.dia=dia;
-  const _colapsado = _dispColapsado.has(eq);
   const lblD=mk('div','zona-lbl');
   lblD.style.cursor='pointer';
   lblD.style.userSelect='none';
