@@ -20,6 +20,7 @@ function calcFechasSemana(lunesBase){
   });
   return fechas;
 }
+let dia   = "LUNES";          // día activo global
 let FECHAS = calcFechasSemana();
 const origen = {};
 let movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
