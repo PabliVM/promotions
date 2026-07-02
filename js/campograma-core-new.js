@@ -760,34 +760,38 @@ function renderControl(){
         const nombre = jugs[i];
         const {estado, multi} = getEstadoJugador(nombre, eq);
         tdJ.textContent = nombre;
+        const isPor = porteros.includes(nombre);
         if(multi){
           tdJ.classList.add('td-multi');
           tdE.classList.add('td-multi');
           const eqsActivos = EQUIPOS
             .filter(e=>ZONAS_ACTIVAS.some(z=>(data[dia][e]?.[z]||[]).includes(nombre)))
             .map(e=>eqsShort[e]||e).join('+');
-          tdE.textContent = '🔴 '+eqsActivos;
+          tdE.innerHTML = `<span class="ctrl-badge ctrl-multi">⚡ ${eqsActivos}</span>`;
         } else if(estado==='disponible'){
           tdJ.classList.add('td-disponible');
           tdE.classList.add('td-disponible');
-          tdE.textContent = '—';
+          tdE.innerHTML = '<span class="ctrl-badge ctrl-disp">Disp.</span>';
         } else if(estado==='vacio'){
-          tdJ.style.color='rgba(255,255,255,.1)';
+          tdJ.style.opacity='.15';
           tdE.classList.add('td-vacio');
           tdE.textContent = '';
         } else {
           tdE.classList.add('td-'+estado);
-          const labels = {
-            campo:'⬤ Campo',banquillo:'⬤ Banco',
-            lesion:'⬤ Lesión',promo:'⬤ Promoc.',otros:'⬤ Otros'
+          const badges = {
+            campo:    '<span class="ctrl-badge ctrl-campo">Campo</span>',
+            banquillo:'<span class="ctrl-badge ctrl-banco">Banco</span>',
+            lesion:   '<span class="ctrl-badge ctrl-lesion">Lesión</span>',
+            promo:    '<span class="ctrl-badge ctrl-promo">↑ PROMO</span>',
+            otros:    '<span class="ctrl-badge ctrl-otros">Otros</span>'
           };
-          // Si promoción, añadir destino
-          let lbl = labels[estado]||estado;
+          let lbl = badges[estado] || estado;
           if(estado==='promo' && promInfo[dia]?.[eq]?.[nombre]){
             const dest=promInfo[dia][eq][nombre];
-            lbl += ' →'+(dest==='1ER EQUIPO'?'1ER':eqsShort[dest]||dest);
+            const destCorto = dest==='1ER EQUIPO'?'1ER':(eqsShort[dest]||dest);
+            lbl = `<span class="ctrl-badge ctrl-promo">↑ ${destCorto}</span>`;
           }
-          tdE.textContent = lbl;
+          tdE.innerHTML = lbl;
         }
       }
       tr.appendChild(tdJ);
