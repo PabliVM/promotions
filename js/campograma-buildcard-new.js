@@ -276,7 +276,7 @@ function buildCard(eq){
   } else {
     card.appendChild(cWrap);
   }
-  if(!esVistaLista(eq, dia)){
+  if(!esVistaLista(eq, dia) && !_colapsado){
   // Banquillo (solo en modo partido, justo debajo del campo)
   if(esPartido(eq)){
     const zBanq=mk('div','zona-banquillo dz');
@@ -443,7 +443,7 @@ function buildCard(eq){
   };
   notasTA.onkeydown = e => e.stopPropagation();
   notasWrap.appendChild(notasTA);
-  card.appendChild(notasWrap);
+  if(!_colapsado) card.appendChild(notasWrap);
 
   return card;
 }
