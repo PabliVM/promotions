@@ -275,14 +275,9 @@ function buildCard(eq){
     const lista = buildListaView(eq, dia);
     card.appendChild(lista);
   } else {
-    const _colapsado = _dispColapsado.has(eq);
-    if(_colapsado){
-      // Label encima del campo
-    }
     card.appendChild(cWrap);
   }
-  const _colapsado = _dispColapsado.has(eq);
-  if(!esVistaLista(eq, dia) && !_colapsado){
+  if(!esVistaLista(eq, dia)){
   // Banquillo (solo en modo partido, justo debajo del campo)
   if(esPartido(eq)){
     const zBanq=mk('div','zona-banquillo dz');
@@ -299,16 +294,12 @@ function buildCard(eq){
   const zDisp=mk('div','zona-disponibles dz');
   zDisp.dataset.eq=eq; zDisp.dataset.zona='disponibles'; zDisp.dataset.dia=dia;
   const lblD=mk('div','zona-lbl');
-  lblD.style.cursor='pointer';
-  lblD.style.userSelect='none';
-  const _toggleDisp = ()=>{
     if(_dispColapsado.has(eq)) _dispColapsado.delete(eq);
     else _dispColapsado.add(eq);
     renderCards();
   };
-  lblD.onclick = _toggleDisp;
   zDisp.appendChild(lblD);
-  lblD.textContent=(_colapsado?'▶':'▼')+' DISPONIBLES ('+(d.disponibles||[]).length+')';
+  lblD.textContent='DISPONIBLES ('+(d.disponibles||[]).length+')';
   const cwD=mk('div','chips-wrap');
   // En modo UYL (JA): mostrar SOLO la plantilla Youth League como disponibles
   if(eq==='JUVENIL A' && esUYL()){
@@ -316,7 +307,7 @@ function buildCard(eq){
     // Contar los que no están en cancha en ningún equipo hoy
     const enCanchaTotal=new Set();
     EQUIPOS.forEach(eqX=>{ (data[dia][eqX].campo||[]).forEach(n=>enCanchaTotal.add(n)); (data[dia][eqX].banquillo||[]).forEach(n=>enCanchaTotal.add(n)); });
-    lblD.textContent=(_colapsado?'▶':'▼')+' PLANTILLA JA YOUTH ('+getPlantillaUYL().filter(n=>!enCanchaTotal.has(n)).length+')';
+    lblD.textContent='PLANTILLA JA YOUTH ('+getPlantillaUYL().filter(n=>!enCanchaTotal.has(n)).length+')';
     lblD.style.color='#60b4ff';
     // Jugadores UYL no ya en campo/banquillo
     // Excluir los que ya están en campo/banquillo de cualquier equipo
@@ -447,7 +438,7 @@ function buildCard(eq){
   };
   notasTA.onkeydown = e => e.stopPropagation();
   notasWrap.appendChild(notasTA);
-  if(!_colapsado) card.appendChild(notasWrap);
+  card.appendChild(notasWrap);
 
   return card;
 }
@@ -569,5 +560,4 @@ function resetearEquipo(eq){
   autoGuardar();
   render();
   toast(`↺ ${eq} reseteado — ${propios.length} jugadores en disponibles`);
-}
 }
