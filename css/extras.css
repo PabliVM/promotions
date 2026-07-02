@@ -1,0 +1,10 @@
+/* Label disponibles siempre visible aunque esté colapsado */
+.zona-disponibles .zona-lbl {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 2;
+  padding: 6px 10px;
+  border-top: 1px solid #e8eef8;
+  cursor: pointer;
+}
