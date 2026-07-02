@@ -438,12 +438,7 @@ function buildCard(eq){
 // Formatea nombre en 2 líneas para chips de campo (cf)
 // Nombre propio arriba, apellido(s) abajo, mismo ancho
 function chipHTML(nombre, isCampo){
-  if(!isCampo) return nombre; // zona: texto simple
-  const partes = nombre.trim().split(/\s+/);
-  if(partes.length < 2) return `<span class="chip-n1 chip-solo">${nombre}</span>`;
-  const n1 = partes[0];
-  const n2 = partes.slice(1).join(' ');
-  return `<span class="chip-n1">${n1}</span><span class="chip-n2">${n2}</span>`;
+  return nombre; // texto plano siempre
 }
 function chip(nombre,eq,zona,color,type){
   const eqO=origen[nombre];
@@ -453,7 +448,7 @@ function chip(nombre,eq,zona,color,type){
   const multi = esMulti(nombre);
   const isCampo = type === 'cf';
   const esPort = porteros.includes(nombre);
-  const c=mk('div',`chip ${cf} ${multi?'c-multi':''} ${type}${isCampo?' chip-2l':''}${esPort?' chip-portero':''}`);
+  const c=mk('div',`chip ${cf} ${multi?'c-multi':''} ${type}${esPort?' chip-portero':''}`);
   c.innerHTML=chipHTML(nombre, isCampo);
   c.dataset.eq=eq; c.dataset.zona=zona; c.dataset.nombre=nombre; c.dataset.dia=dia;
   // Tooltip: último movimiento registrado
