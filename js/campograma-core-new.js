@@ -24,6 +24,7 @@ let dia   = "LUNES";          // día activo global
 let FECHAS = calcFechasSemana();
 const origen = {};
 let movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
+const _dispColapsado = new Set(); // equipos con zona disponibles colapsada
 let porteros = []; // array de nombres marcados como portero
 // ══════════════════════════════════════════════════
 // ESTADO
