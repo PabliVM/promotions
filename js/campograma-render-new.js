@@ -209,7 +209,15 @@ function toggleVistaListaGlobal(){
     btn.style.color = _vistaListaGlobal ? '#2563eb' : '';
   }
   renderCards();
-  if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+  if(vistaActual==='semana') requestAnimationFrame(()=>{
+    igualarZonasSemana(document.getElementById('grid'));
+    // Scroll al día de hoy
+    const hoyEl = document.querySelector('.card-hdr-hoy');
+    if(hoyEl){
+      const td = hoyEl.closest('.semana-td-card');
+      if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+    }
+  });
 }
 
 function toggleVistaListaCard(eq, d){
