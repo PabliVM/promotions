@@ -135,7 +135,4 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 .card.en-descanso .zona-disponibles,
 .card.en-descanso .cols-estado {
   display: block !important;
-  opacity: .45;
-  pointer-events: none;
-  filter: grayscale(1);
 }
