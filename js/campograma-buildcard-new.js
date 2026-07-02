@@ -110,6 +110,7 @@ function renderCardsSemana(grid){
   grid.appendChild(table);
 }
 function buildCard(eq){
+  if(!data[dia] || !data[dia][eq]) return mk('div','card');
   const d=data[dia][eq];
   const card=mk('div','card');
   card.dataset.eqCard=eq;
