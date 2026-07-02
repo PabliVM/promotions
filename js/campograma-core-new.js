@@ -20,7 +20,7 @@ function calcFechasSemana(lunesBase){
   });
   return fechas;
 }
-let dia   = "LUNES";          // día activo global
+let dia   = sessionStorage.getItem("rm_dia") || "LUNES"; // día activo global
 let FECHAS = calcFechasSemana();
 const origen = {};
 let movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
@@ -955,10 +955,11 @@ function buildCardPrimerEquipo(){
 // ══════════════════════════════════════════════════
 // SELECTOR DE VISTA
 // ══════════════════════════════════════════════════
-let vistaActual = 'semana';
+let vistaActual = sessionStorage.getItem('rm_vista') || 'semana';
 let eqsMultiSel = new Set(EQUIPOS);
 function setView(n){
   vistaActual = n;
+  sessionStorage.setItem('rm_vista', n);
   const grid = document.getElementById('grid');
   if(grid) grid.className = 'cards-grid view-'+n;
   // Botones activos
