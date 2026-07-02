@@ -32,7 +32,7 @@ function renderDias(){
       <span class="dia-tab-nombre">${d.slice(0,3)}</span>
       <span class="dia-tab-fecha">${numDia||''}</span>
       <span class="dia-tab-dot"></span>`;
-    tab.onclick=()=>{dia=d;renderDias();renderCards();};
+    tab.onclick=()=>{dia=d;sessionStorage.setItem('rm_dia',d);renderDias();renderCards();};
     strip.appendChild(tab);
   });
 }
