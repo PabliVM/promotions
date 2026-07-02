@@ -294,10 +294,6 @@ function buildCard(eq){
   const zDisp=mk('div','zona-disponibles dz');
   zDisp.dataset.eq=eq; zDisp.dataset.zona='disponibles'; zDisp.dataset.dia=dia;
   const lblD=mk('div','zona-lbl');
-    if(_dispColapsado.has(eq)) _dispColapsado.delete(eq);
-    else _dispColapsado.add(eq);
-    renderCards();
-  };
   zDisp.appendChild(lblD);
   lblD.textContent='DISPONIBLES ('+(d.disponibles||[]).length+')';
   const cwD=mk('div','chips-wrap');
@@ -333,10 +329,9 @@ function buildCard(eq){
     // Modo normal: disponibles propios del equipo
     d.disponibles.forEach(n=>cwD.appendChild(chip(n,eq,'disponibles','c-verde','cz')));
   }
-  if(!_colapsado){
-    zDisp.appendChild(cwD);
-    zDisp.appendChild(buildAddInput(eq,'disponibles'));
-    card.appendChild(zDisp);
+  zDisp.appendChild(cwD);
+  zDisp.appendChild(buildAddInput(eq,'disponibles'));
+  card.appendChild(zDisp);
   // Columnas estado
   if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
   // Columnas estado
