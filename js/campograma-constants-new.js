@@ -48,3 +48,5 @@ const EQ_DOT_COLORS = {
 const LS_KEY     = 'rm_cantera_v2';
 const LS_SEASONS = 'rm_cantera_seasons';
 const LS_CUR     = 'rm_cantera_current';
+
+function mk(tag,cls=''){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
