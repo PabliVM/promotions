@@ -292,8 +292,18 @@ function buildCard(eq){
   // Disponibles
   const zDisp=mk('div','zona-disponibles dz');
   zDisp.dataset.eq=eq; zDisp.dataset.zona='disponibles'; zDisp.dataset.dia=dia;
-  const lblD=mk('div','zona-lbl'); lblD.textContent='DISPONIBLES ('+(d.disponibles||[]).length+')';
+  const _colapsado = _dispColapsado.has(eq);
+  const lblD=mk('div','zona-lbl');
+  lblD.style.cursor='pointer';
+  lblD.style.userSelect='none';
+  const _toggleDisp = ()=>{
+    if(_dispColapsado.has(eq)) _dispColapsado.delete(eq);
+    else _dispColapsado.add(eq);
+    renderCards();
+  };
+  lblD.onclick = _toggleDisp;
   zDisp.appendChild(lblD);
+  lblD.textContent=(_colapsado?'▶':'▼')+' DISPONIBLES ('+(d.disponibles||[]).length+')';
   const cwD=mk('div','chips-wrap');
   // En modo UYL (JA): mostrar SOLO la plantilla Youth League como disponibles
   if(eq==='JUVENIL A' && esUYL()){
@@ -301,7 +311,7 @@ function buildCard(eq){
     // Contar los que no están en cancha en ningún equipo hoy
     const enCanchaTotal=new Set();
     EQUIPOS.forEach(eqX=>{ (data[dia][eqX].campo||[]).forEach(n=>enCanchaTotal.add(n)); (data[dia][eqX].banquillo||[]).forEach(n=>enCanchaTotal.add(n)); });
-    lblD.textContent='PLANTILLA JA YOUTH ('+getPlantillaUYL().filter(n=>!enCanchaTotal.has(n)).length+')';
+    lblD.textContent=(_colapsado?'▶':'▼')+' PLANTILLA JA YOUTH ('+getPlantillaUYL().filter(n=>!enCanchaTotal.has(n)).length+')';
     lblD.style.color='#60b4ff';
     // Jugadores UYL no ya en campo/banquillo
     // Excluir los que ya están en campo/banquillo de cualquier equipo
@@ -327,8 +337,10 @@ function buildCard(eq){
     // Modo normal: disponibles propios del equipo
     d.disponibles.forEach(n=>cwD.appendChild(chip(n,eq,'disponibles','c-verde','cz')));
   }
-  zDisp.appendChild(cwD);
-  zDisp.appendChild(buildAddInput(eq,'disponibles'));
+  if(!_colapsado){
+    zDisp.appendChild(cwD);
+    zDisp.appendChild(buildAddInput(eq,'disponibles'));
+  }
   card.appendChild(zDisp);
   // Columnas estado
   if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
