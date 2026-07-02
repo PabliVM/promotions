@@ -277,12 +277,6 @@ function buildCard(eq){
     const _colapsado = _dispColapsado.has(eq);
     if(_colapsado){
       // Label encima del campo
-      const _lblCol = document.createElement('div');
-      _lblCol.className = 'zona-lbl zona-disp-collapsed';
-      _lblCol.style.cursor = 'pointer';
-      _lblCol.textContent = '▶ DISPONIBLES — clic para expandir';
-      _lblCol.onclick = ()=>{ _dispColapsado.delete(eq); renderCards(); };
-      card.appendChild(_lblCol);
     }
     card.appendChild(cWrap);
   }
@@ -351,9 +345,6 @@ function buildCard(eq){
     zDisp.appendChild(cwD);
     zDisp.appendChild(buildAddInput(eq,'disponibles'));
     card.appendChild(zDisp);
-  } else {
-    card.insertBefore(zDisp, cWrap);
-  }
   // Columnas estado
   if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
   // Columnas estado
@@ -586,4 +577,5 @@ function resetearEquipo(eq){
   autoGuardar();
   render();
   toast(`↺ ${eq} reseteado — ${propios.length} jugadores en disponibles`);
+}
 }
