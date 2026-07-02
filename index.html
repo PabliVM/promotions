@@ -19,6 +19,19 @@
 <link rel="stylesheet" href="css/campograma-semana.css">
 <link rel="stylesheet" href="css/campograma-extras.css">
 
+<script>
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    var n = regs.length;
+    regs.forEach(function(r){ r.unregister(); });
+    if(n > 0){ window.location.reload(true); return; }
+  });
+  caches.keys().then(function(keys){
+    keys.forEach(function(k){ caches.delete(k); });
+  });
+})();
+</script>
 <!-- html2canvas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -497,19 +510,7 @@ if(cargado) render();
 </footer>
 </div>
 
-<script>
-(function(){
-  if(!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    var n = regs.length;
-    regs.forEach(function(r){ r.unregister(); });
-    if(n > 0){ window.location.reload(true); return; }
-  });
-  caches.keys().then(function(keys){
-    keys.forEach(function(k){ caches.delete(k); });
-  });
-})();
-</script>
+
 
 <script>
 // ── LOGIN HANDLING ──
