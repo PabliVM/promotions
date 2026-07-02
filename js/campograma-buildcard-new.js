@@ -340,8 +340,10 @@ function buildCard(eq){
   if(!_colapsado){
     zDisp.appendChild(cwD);
     zDisp.appendChild(buildAddInput(eq,'disponibles'));
+    card.appendChild(zDisp);
+  } else {
+    card.insertBefore(zDisp, cWrap);
   }
-  card.appendChild(zDisp);
   // Columnas estado
   if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
   // Columnas estado
