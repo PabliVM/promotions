@@ -51,3 +51,13 @@ const LS_CUR     = 'rm_cantera_current';
 
 function mk(tag,cls=''){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
 const ZONAS_ACTIVAS = ['campo','banquillo','disponibles','lesionados','otros','extra'];
+const EQ_COLORS={
+  'CASTILLA':'c-prestado-CASTILLA',
+  'RMC':'c-prestado-RMC',
+  'JUVENIL A':'c-prestado-JUVENIL_A',
+  'JUVENIL B':'c-prestado-JUVENIL_B',
+  'JUVENIL C':'c-prestado-JUVENIL_C',
+  'CADETE A':'c-prestado-CADETE_A'
+};
+function mk(tag,cls=''){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
+const ZONAS_ACTIVAS = ['campo','banquillo','disponibles','lesionados','otros','extra'];
