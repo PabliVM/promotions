@@ -1,18 +1,123 @@
-/* Label disponibles siempre visible aunque esté colapsado */
-.zona-disponibles .zona-lbl {
-  position: sticky;
-  bottom: 0;
+/* ── PANTALLA DE LOGIN ── */
+#login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#login-box {
+  width: 100%;
+  max-width: 360px;
   background: #fff;
-  z-index: 2;
-  padding: 6px 10px;
-  border-top: 1px solid #e8eef8;
-  cursor: pointer;
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.1);
+  text-align: center;
+}
+#login-logo {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+#login-logo img { width: 100%; height: 100%; object-fit: contain; }
+#login-title { font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 22px; font-weight: 700; color: #1a1d23; margin: 0 0 2px; }
+#login-sub { font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 12px; color: #9ca3af; margin: 0 0 24px; }
+#login-form { display: flex; flex-direction: column; gap: 12px; }
+#login-email, #login-pass { padding: 11px 14px; border-radius: 8px; border: 1.5px solid #dfe1e6; background: #f8fafd; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 14px; color: #1a1d23; outline: none; transition: border-color .15s; }
+#login-email:focus, #login-pass:focus { border-color: #2563eb; background: #fff; }
+#login-btn { padding: 12px; border-radius: 8px; border: none; background: #2563eb; color: #fff; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px; transition: background .15s; }
+#login-btn:hover { background: #1d4ed8; }
+#login-btn:disabled { opacity: .6; cursor: not-allowed; }
+#login-error { font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 12px; color: #dc2626; min-height: 16px; }
+body.dark #login-overlay { background: #0d1117; }
+body.dark #login-box { background: #161b22; }
+body.dark #login-title { color: #e6edf3; }
+body.dark #login-email, body.dark #login-pass { background: #0d1117; border-color: #30363d; color: #e6edf3; }
+
+/* Header hoy */
+.semana-td-card .card-hdr.card-hdr-hoy { background: #2563eb; }
+.semana-td-card .card-hdr.card-hdr-hoy .card-hdr-nombre-txt { color: #fff; }
+.semana-td-card .card-hdr.card-hdr-hoy .card-hdr-fecha-hoy { background: rgba(255,255,255,.2); color: #fff; }
+.semana-td-card .card-hdr.card-hdr-hoy .top-act-btn { border-color: rgba(255,255,255,.3); color: #fff; }
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn { background: #fff; border-color: #fff; color: #2563eb; }
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn.partido { background: #dbeafe; border-color: #dbeafe; color: #1e3a8a; }
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn.uyl.active { background: #1e3a8a; border-color: #1e3a8a; color: #fff; }
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn.uyl:not(.active) { background: #fff; border-color: #fff; color: #5a6170; }
+
+/* Scrollbar */
+.cards-grid.view-semana::-webkit-scrollbar { height: 0 !important; display: none; }
+.cards-grid.view-semana { scrollbar-width: none; }
+
+/* YL */
+.modo-btn.uyl.uyl-disabled { background: rgba(37,99,235,.06); border-color: rgba(37,99,235,.2); color: #93c5fd; }
+.semana-td-card .card-hdr.card-hdr-hoy .modo-btn.uyl.active { background: #1e3a8a; border-color: #1e3a8a; color: #fff; }
+
+/* Móvil */
+@media (max-width: 640px) {
+  .semana-td-card { width: 100vw !important; min-width: 100vw !important; max-width: 100vw !important; scroll-snap-align: start; }
+  .semana-table { border-spacing: 0; }
+  .cards-grid.view-semana { scroll-snap-type: x mandatory; padding: 0; height: calc(100vh - 180px); }
+  .semana-tr-eq + .semana-tr-eq { border-top: none; }
+  .semana-tr-eq + .semana-tr-eq .semana-td-card { padding-top: 0; }
+  #sub-header { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #sub-header::-webkit-scrollbar { display: none; }
+  #sub-header .hdr-action-btn, #sub-header #sub-semana-btn, #sub-semana-lbl { flex-shrink: 0; }
+  #sub-leyenda { flex-shrink: 0; margin-left: 12px; }
+  #filtros-semana-bar { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #filtros-semana-bar::-webkit-scrollbar { display: none; }
+  #filtro-dias-row, #filtro-eqs-row, .filtros-sep { flex-shrink: 0; }
 }
 
-/* Label disponibles siempre visible */
-.zona-disponibles {
-  min-height: 28px;
-}
+/* Checkbox portero */
+.plant-portero-chk { display: flex; align-items: center; gap: 3px; flex-shrink: 0; cursor: pointer; padding: 2px 6px; border-radius: 10px; background: #f0f4fa; border: 1px solid #e8eef8; }
+.plant-portero-chk input[type="checkbox"] { accent-color: #2563eb; cursor: pointer; width: 13px; height: 13px; }
+.plant-portero-chk span { font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 9px; font-weight: 700; color: #5a6170; letter-spacing: .3px; }
+.plant-portero-chk:has(input:checked) { background: rgba(37,99,235,.1); border-color: #2563eb; }
+.plant-portero-chk:has(input:checked) span { color: #2563eb; }
+
+/* Edición listado */
+.card-lista-edit-btn { background: none; border: none; cursor: pointer; font-size: 13px; opacity: .8; padding: 4px 6px; flex-shrink: 0; }
+.card-lista-edit-btn:hover { opacity: 1; }
+.card-lista-edit-input { width: 100%; padding: 4px 8px; border: 1.5px solid #2563eb; border-radius: 6px; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #1a1d23; outline: none; }
+.card-lista-drag-handle { cursor: grab; color: #9ca3af; font-size: 14px; flex-shrink: 0; padding: 0 2px; user-select: none; }
+.card-lista-row.dragging-row { opacity: .4; }
+.card-lista-row.drag-over-row { border-top: 2px solid #2563eb; }
+
+/* Drag/editar Plantillas */
+.plant-drag-handle { cursor: grab; color: #9ca3af; font-size: 13px; flex-shrink: 0; padding: 0 2px; user-select: none; }
+.plant-row.dragging-row { opacity: .4; }
+.plant-row.drag-over-row { border-top: 2px solid #2563eb; }
+.plant-edit-btn { background: none; border: none; cursor: pointer; font-size: 12px; opacity: .8; padding: 2px 4px; flex-shrink: 0; }
+.plant-edit-btn:hover { opacity: 1; }
+.plant-edit-input { width: 100%; padding: 4px 8px; border: 1.5px solid #2563eb; border-radius: 6px; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #1a1d23; outline: none; }
+
+/* Chip portero */
+.chip.chip-portero { border: 2.5px solid #facc15 !important; box-shadow: 0 0 0 1px rgba(250,204,21,.3); }
+
+/* Control badges */
+.ctrl-badge { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; font-family: 'Segoe UI',sans-serif; letter-spacing: .3px; white-space: nowrap; }
+.ctrl-disp  { background: #f0f4fa; color: #9ca3af; }
+.ctrl-campo { background: #dcfce7; color: #16a34a; }
+.ctrl-banco { background: #fef9c3; color: #ca8a04; }
+.ctrl-lesion{ background: #fee2e2; color: #dc2626; }
+.ctrl-promo { background: #ede9fe; color: #7c3aed; }
+.ctrl-otros { background: #f1f5f9; color: #64748b; }
+.ctrl-multi { background: #fee2e2; color: #dc2626; }
+.td-jugador { font-size: 11px; font-weight: 600; padding: 5px 8px !important; }
+.td-estado-cel { padding: 4px 6px !important; text-align: center; }
+
+/* Label disponibles colapsable — siempre visible */
+.zona-disponibles { min-height: 28px; }
 .zona-disponibles .zona-lbl {
   display: block !important;
   min-height: 28px;
