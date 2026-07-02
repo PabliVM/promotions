@@ -110,7 +110,9 @@ function renderPlantBody(){
   // ── Vista normal de equipo ──
   const jugadores = plantillas[plantEqActivo] || [];
   document.getElementById('plant-eq-title').textContent = plantEqActivo;
-  document.getElementById('plant-count').textContent = jugadores.length + ' jugadores';
+  const _numPor = jugadores.filter(n => porteros.includes(n)).length;
+  const _numNorm = jugadores.length - _numPor;
+  document.getElementById('plant-count').textContent = (_numPor > 0 ? _numNorm + '+' + _numPor : jugadores.length) + ' jugadores';
   jugadores.forEach((nombre, i)=>{
     const row = mk('div','plant-row');
     row.draggable = true;
