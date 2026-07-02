@@ -498,18 +498,17 @@ if(cargado) render();
 </div>
 
 <script>
-// Matar Service Worker y toda la caché, luego recargar UNA vez
-if('serviceWorker' in navigator){
-  Promise.all([
-    navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(r => r.unregister()))),
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
-  ]).then(() => {
-    if(!sessionStorage.getItem('sw_cleared')){
-      sessionStorage.setItem('sw_cleared','1');
-      location.reload(true);
-    }
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    var n = regs.length;
+    regs.forEach(function(r){ r.unregister(); });
+    if(n > 0){ window.location.reload(true); return; }
   });
-}
+  caches.keys().then(function(keys){
+    keys.forEach(function(k){ caches.delete(k); });
+  });
+})();
 </script>
 
 <script>
