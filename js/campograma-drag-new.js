@@ -211,7 +211,23 @@ function endChip(e){
     const t=document.elementFromPoint(ev.clientX,ev.clientY);
     drag.c.style.visibility=_chipWasHidden||'';
     if(drag.pof) drag.pof.style.visibility='';
-    const dz=t&&t.closest('.dz');
+    let dz=t&&t.closest('.dz');
+    // Si no cae exactamente, buscar .dz más cercano en radio 30px
+    if(!dz){
+      const PADDING = 30;
+      const allDz = document.querySelectorAll('.dz');
+      let best = null, bestDist = Infinity;
+      allDz.forEach(el=>{
+        const r = el.getBoundingClientRect();
+        if(ev.clientX >= r.left-PADDING && ev.clientX <= r.right+PADDING &&
+           ev.clientY >= r.top-PADDING  && ev.clientY <= r.bottom+PADDING){
+          const cx = (r.left+r.right)/2, cy = (r.top+r.bottom)/2;
+          const dist = Math.hypot(ev.clientX-cx, ev.clientY-cy);
+          if(dist < bestDist){ bestDist=dist; best=el; }
+        }
+      });
+      dz = best;
+    }
     if(!dz){
       // Soltado fuera de todo — si era del campo volver a snap, si era de zona no hacer nada
       if(drag.esDeCampo && drag.campo){
