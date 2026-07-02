@@ -520,7 +520,6 @@ function borrarMultiEq(d, nombre, eq){
   if(multiEq[d][nombre].length<=1) delete multiEq[d][nombre];
 }
 // Zonas que cuentan como "presencia activa" en un equipo (excluye promovidos_1er)
-const ZONAS_ACTIVAS = ['campo','banquillo','disponibles','lesionados','otros','extra'];
 function eqsDeNombre(d, nombre){
   // Equipos donde el jugador tiene presencia ACTIVA hoy (no como promovido)
   return EQUIPOS.filter(eq=>
