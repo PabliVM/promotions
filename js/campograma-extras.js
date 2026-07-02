@@ -131,7 +131,7 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   color: #2563eb;
 }
 
-/* Descanso: mostrar zonas en gris en vez de ocultarlas */
+/* Descanso: mostrar zonas normales, sin bloquear */
 .card.en-descanso .zona-disponibles,
 .card.en-descanso .cols-estado {
   display: block !important;
