@@ -690,7 +690,8 @@ body.dark .zona-disponibles{background:#1c2333;border-top:1px solid #30363d;}
   padding:6px 18px;
   border-radius:4px;
 }
-
+.card.en-descanso .zona-disponibles,
+.card.en-descanso .cols-estado{ display:none; }
 /* COLUMNAS ESTADO */
 .cols-estado{display:grid;border-top:2px solid var(--border);flex:1;}
 .col-prom2 .zona-lbl-static{color:#a78bfa!important;}
