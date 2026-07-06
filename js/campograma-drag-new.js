@@ -453,27 +453,30 @@ function limpiarSeleccionCampo(){
   actualizarBtnAlinear();
 }
 function actualizarBtnAlinear(){
-  const btn = document.getElementById('btn-alinear');
-  if(!btn) return;
-  if(_campoSeleccion.length >= 2){
-    btn.textContent = '↔ Alinear ('+_campoSeleccion.length+')';
-    btn.style.display = '';
-  } else {
-    btn.style.display = 'none';
-  }
+  const wrap = document.getElementById('btn-alinear-wrap');
+  if(!wrap) return;
+  wrap.style.display = _campoSeleccion.length >= 2 ? 'flex' : 'none';
 }
-function alinearSeleccionados(){
+function alinearSeleccionados(direccion){
   if(_campoSeleccion.length < 2) return;
   const eq = _campoSeleccion[0].eq;
   const n = _campoSeleccion.length;
-  const avgTop = _campoSeleccion.reduce((acc,s)=>acc+parseFloat(s.pof.style.top||'50'),0) / n;
-  const margen = 12, ancho = 100 - margen*2;
-  _campoSeleccion.forEach((s, i)=>{
-    const left = n === 1 ? 50 : margen + (ancho * i / (n-1));
-    savePos(dia, eq, s.nombre, avgTop, left);
-  });
+  const margen = 12, rango = 100 - margen*2;
+  if(direccion === 'v'){
+    const avgLeft = _campoSeleccion.reduce((acc,s)=>acc+parseFloat(s.pof.style.left||'50'),0) / n;
+    _campoSeleccion.forEach((s, i)=>{
+      const top = n === 1 ? 50 : margen + (rango * i / (n-1));
+      savePos(dia, eq, s.nombre, top, avgLeft);
+    });
+  } else {
+    const avgTop = _campoSeleccion.reduce((acc,s)=>acc+parseFloat(s.pof.style.top||'50'),0) / n;
+    _campoSeleccion.forEach((s, i)=>{
+      const left = n === 1 ? 50 : margen + (rango * i / (n-1));
+      savePos(dia, eq, s.nombre, avgTop, left);
+    });
+  }
   limpiarSeleccionCampo();
   autoGuardar();
   render();
-  toast('↔ Jugadores alineados');
+  toast(direccion==='v' ? '↕ Jugadores alineados' : '↔ Jugadores alineados');
 }
