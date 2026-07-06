@@ -1,4 +1,4 @@
-// ================================================// ================================================
+// ================================================
 // CAMPOGRAMA-LOGIC.JS — Lógica principal (Fase 1: monolito intacto)
 // ================================================
 
@@ -702,9 +702,9 @@ function renderControlEqsRow(){
   EQUIPOS.forEach(eq=>{
     const activo = _controlEqsActivos.has(eq);
     const b = document.createElement('button');
+    b.className = 'filtro-eq-btn'+(activo?' activo':'');
     b.textContent = (EQ_LABEL[eq]||eq);
     b.onclick = ()=>toggleControlEq(eq);
-    b.style.cssText = `font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;border:1.5px solid ${EQ_DOT_COLORS[eq]||'#888'};background:${activo?(EQ_DOT_COLORS[eq]||'#888'):'#fff'};color:${activo?'#fff':(EQ_DOT_COLORS[eq]||'#888')};`;
     row.appendChild(b);
   });
 }
