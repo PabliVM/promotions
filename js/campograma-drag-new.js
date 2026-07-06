@@ -366,10 +366,9 @@ function move(fromEq,fromZona,toEq,toZona,nombre){
   arr.splice(i,1);
   data[dia][toEq][toZona].push(nombre);
   borrarMultiEq(dia, nombre, fromEq);
-  // ── Si vuelve al campo de SU equipo propio real, limpiar promoción automática
-  // (sin fallback: solo si origen[nombre] existe y coincide, para no confundir
-  //  un movimiento interno en el equipo destino de un duplicado con "volver a casa")
-  if(origen[nombre] && toEq === origen[nombre] && toZona === 'campo'){
+  // ── Si vuelve al campo de SU equipo propio real DESDE OTRO EQUIPO, limpiar promoción
+  // (fromEq!==toEq: un movimiento interno en su propio equipo NUNCA debe tocar la promoción)
+  if(origen[nombre] && toEq === origen[nombre] && toZona === 'campo' && fromEq !== toEq){
     const eqPropio = origen[nombre];
     // Quitar de promovidos_1er de su equipo propio
     const prom = data[dia][eqPropio]?.promovidos_1er;
