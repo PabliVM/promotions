@@ -753,6 +753,17 @@ function renderControl(){
     'JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'
   };
   const eqsVisibles = EQUIPOS.filter(eq=>_controlEqsActivos.has(eq));
+  // ── Colgroup: fija el ancho real (table-layout:fixed usa la 1ª fila si no hay colgroup)
+  const oldColgroup = document.getElementById('control-colgroup');
+  if(oldColgroup) oldColgroup.remove();
+  const colgroup = document.createElement('colgroup');
+  colgroup.id = 'control-colgroup';
+  eqsVisibles.forEach(()=>{
+    const colJ = document.createElement('col'); colJ.style.width='67%';
+    const colE = document.createElement('col'); colE.style.width='33%';
+    colgroup.appendChild(colJ); colgroup.appendChild(colE);
+  });
+  document.getElementById('control-table').insertBefore(colgroup, document.getElementById('control-table').firstChild);
   // ── FILA 1 cabecera: nombre equipo (colspan 2)
   const trH1 = document.createElement('tr');
   eqsVisibles.forEach(eq=>{
