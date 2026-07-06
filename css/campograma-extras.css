@@ -139,3 +139,9 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   pointer-events: none;
   filter: grayscale(1);
 }
+/* Fix scroll táctil móvil — vista semana */
+.cards-grid.view-semana {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overflow-x: scroll;
+}
