@@ -42,14 +42,12 @@ function devolverADisponibles(nombre, eq, zona){
 // dispararDobleTap recibe strings (no elemento DOM) — seguro tras re-render
 function dispararDobleTap(nombre, eq, zona){
   const eqPropio = origen[nombre] || eq;
-  // ── No se puede quitar de disponibles del propio equipo ──
-  if(zona === 'disponibles' && eq === eqPropio){
-    toast('⚠️ ' + nombre + ' siempre debe estar en disponibles de su equipo');
-    return;
-  }
+  const esPrimario = (zona === 'disponibles' && eq === eqPropio);
   // ── Mensaje ──
   let msg;
-  if(zona === 'campo'){
+  if(esPrimario){
+    msg = `${nombre} — ¿qué quieres hacer?`;
+  } else if(zona === 'campo'){
     msg = `Quitar a ${nombre} del campo → disponibles${eq !== eqPropio ? ' de ' + eqPropio : ''}`;
   } else if(zona === 'banquillo'){
     msg = `Quitar a ${nombre} del banquillo → disponibles${eq !== eqPropio ? ' de ' + eqPropio : ''}`;
@@ -59,12 +57,23 @@ function dispararDobleTap(nombre, eq, zona){
     const zonaLabel = {lesionados:'lesiones', promovidos_1er:'promoción', otros:'otros', extra:'extra'}[zona] || zona;
     msg = `Quitar a ${nombre} de ${zonaLabel} → disponibles${eq !== eqPropio ? ' de ' + eqPropio : ''}`;
   }
-  showAlert(msg, ()=>{
+  const onEliminar = ()=>{
     devolverADisponibles(nombre, eq, zona);
     autoGuardar();
     render();
     toast('↩️ ' + nombre + ' → disponibles ' + eqPropio);
-  }, 'Eliminar');
+  };
+  const onDuplicar = ()=>{
+    abrirPromoDestModal(nombre, eqPropio, (destino)=>{
+      doblarJugador(nombre, eqPropio, destino);
+    });
+  };
+  if(esPrimario){
+    // Desde disponibles de su propio equipo solo se puede duplicar, no eliminar
+    showAlert(msg, onDuplicar, 'Duplicar');
+  } else {
+    showAlert(msg, onEliminar, 'Eliminar', onDuplicar, 'Duplicar');
+  }
 }
 // Alias por compatibilidad (ya no se usa pero por si acaso)
 function onChipDoubleTap(c){ dispararDobleTap(c.dataset.nombre, c.dataset.eq, c.dataset.zona||'campo'); }
