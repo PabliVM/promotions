@@ -1376,13 +1376,22 @@ function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 function on(ev,fn,opts){document.addEventListener(ev,fn,opts);}
 function off(ev,fn){document.removeEventListener(ev,fn);}
 let alertCb=null;
-function showAlert(msg,onConfirm,okLabel='Añadir'){
+function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel=''){
   document.getElementById('alert-msg').textContent=msg;
   document.getElementById('alert-ok-btn').textContent=okLabel;
   // Estilo rojo si es destructivo
   const okBtn=document.getElementById('alert-ok-btn');
   if(okLabel==='Eliminar'){ okBtn.style.background='#ef4444'; okBtn.style.borderColor='#ef4444'; }
   else { okBtn.style.background=''; okBtn.style.borderColor=''; }
+  const extraBtn=document.getElementById('alert-extra-btn');
+  if(onExtra){
+    extraBtn.textContent=extraLabel;
+    extraBtn.style.display='';
+    extraBtn.onclick=()=>{closeAlert();onExtra();};
+  } else {
+    extraBtn.style.display='none';
+    extraBtn.onclick=null;
+  }
   document.getElementById('alert-overlay').classList.add('show');
   alertCb=onConfirm;
   okBtn.onclick=()=>{const cb=alertCb;closeAlert();if(cb)cb();};
@@ -1390,6 +1399,9 @@ function showAlert(msg,onConfirm,okLabel='Añadir'){
 function closeAlert(){
   document.getElementById('alert-overlay').classList.remove('show');
   alertCb=null;
+  const extraBtn=document.getElementById('alert-extra-btn');
+  extraBtn.style.display='none';
+  extraBtn.onclick=null;
 }
 let tT=null;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),2200);}
