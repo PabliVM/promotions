@@ -461,17 +461,22 @@ function alinearSeleccionados(direccion){
   if(_campoSeleccion.length < 2) return;
   const eq = _campoSeleccion[0].eq;
   const n = _campoSeleccion.length;
-  const margen = 12, rango = 100 - margen*2;
+  const tops = _campoSeleccion.map(s=>parseFloat(s.pof.style.top||'50'));
+  const lefts = _campoSeleccion.map(s=>parseFloat(s.pof.style.left||'50'));
+  const avgTop = tops.reduce((a,b)=>a+b,0) / n;
+  const avgLeft = lefts.reduce((a,b)=>a+b,0) / n;
   if(direccion === 'v'){
-    const avgLeft = _campoSeleccion.reduce((acc,s)=>acc+parseFloat(s.pof.style.left||'50'),0) / n;
+    let minT = Math.min(...tops), maxT = Math.max(...tops);
+    if(maxT - minT < 6){ minT = avgTop-6; maxT = avgTop+6; } // si estaban casi en la misma línea, dar algo de margen
     _campoSeleccion.forEach((s, i)=>{
-      const top = n === 1 ? 50 : margen + (rango * i / (n-1));
+      const top = n === 1 ? avgTop : minT + ((maxT-minT) * i / (n-1));
       savePos(dia, eq, s.nombre, top, avgLeft);
     });
   } else {
-    const avgTop = _campoSeleccion.reduce((acc,s)=>acc+parseFloat(s.pof.style.top||'50'),0) / n;
+    let minL = Math.min(...lefts), maxL = Math.max(...lefts);
+    if(maxL - minL < 6){ minL = avgLeft-6; maxL = avgLeft+6; }
     _campoSeleccion.forEach((s, i)=>{
-      const left = n === 1 ? 50 : margen + (rango * i / (n-1));
+      const left = n === 1 ? avgLeft : minL + ((maxL-minL) * i / (n-1));
       savePos(dia, eq, s.nombre, avgTop, left);
     });
   }
