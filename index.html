@@ -475,10 +475,11 @@ if(cargado) render();
     <div id="control-hdr">
       <div>
         <h2>✓ Tabla de control</h2>
-        <span id="control-dia-lbl"></span>
+        <select id="control-dia-sel" onchange="cambiarControlDia(this.value)" style="margin-top:4px;font-size:11px;border-radius:6px;border:none;padding:2px 6px;"></select>
       </div>
       <button id="control-close" onclick="cerrarControl()">✕</button>
     </div>
+    <div id="control-eqs-row" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 20px;border-bottom:1px solid #e8eef8;"></div>
     <div id="control-body">
       <table id="control-table">
         <thead id="control-thead"></thead>
