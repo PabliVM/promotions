@@ -131,17 +131,8 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   color: #2563eb;
 }
 
-/* Descanso: mostrar zonas en gris */
+/* Descanso: mostrar zonas normales, sin bloquear */
 .card.en-descanso .zona-disponibles,
 .card.en-descanso .cols-estado {
   display: block !important;
-  opacity: .45;
-  pointer-events: none;
-  filter: grayscale(1);
-}
-/* Fix scroll táctil móvil — vista semana */
-.cards-grid.view-semana {
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  overflow-x: scroll;
 }
