@@ -98,16 +98,40 @@ function renderPlantBody(){
       const num = mk('span','plant-num'); num.textContent = (i+1);
       const nm  = mk('span','plant-name');
       nm.innerHTML = nombre + (eqO !== 'JUVENIL A' ? '<span class="plant-uyl-origin" style="color:#60b4ff">'+eqO+'</span>' : '');
-      const del = mk('button','plant-del'); del.textContent = '×';
-      del.title = 'Quitar de JA Youth';
-      del.onclick = ()=>{
-        const idx = listaUYL.indexOf(nombre);
-        if(idx>=0) listaUYL.splice(idx,1);
-        renderPlantTabs(); renderPlantBody(); autoGuardar();
-      };
-      row.appendChild(num); row.appendChild(nm); row.appendChild(del);
-      list.appendChild(row);
+const del = mk('button','plant-del'); del.textContent = '×';
+    del.title = 'Eliminar '+nombre;
+    del.onclick = ()=> plantEliminar(nombre);
+
+    // Selector cambiar de equipo
+    const eqSel = mk('select','plant-eq-sel');
+    eqSel.title = 'Cambiar de equipo';
+    EQUIPOS.forEach(eqOpt=>{
+      const opt = document.createElement('option');
+      opt.value = eqOpt;
+      opt.textContent = EQ_LABEL[eqOpt] || eqOpt;
+      if(eqOpt === plantEqActivo) opt.selected = true;
+      eqSel.appendChild(opt);
     });
+    eqSel.onclick = (e)=> e.stopPropagation();
+    eqSel.onchange = ()=> plantCambiarEquipo(nombre, eqSel.value);
+
+    row.appendChild(dragHandle); row.appendChild(num); row.appendChild(nm);
+    row.appendChild(editBtn); row.appendChild(porLabel); row.appendChild(eqSel); row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+function plantCambiarEquipo(nombre, nuevoEq){
+  if(!nuevoEq || nuevoEq === plantEqActivo) return;
+  const arr = plantillas[plantEqActivo];
+  const idx = arr.indexOf(nombre);
+  if(idx >= 0) arr.splice(idx, 1);
+  if(!plantillas[nuevoEq]) plantillas[nuevoEq] = [];
+  if(!plantillas[nuevoEq].includes(nombre)) plantillas[nuevoEq].push(nombre);
+  origen[nombre] = nuevoEq;
+  autoGuardar();
+  renderPlantBody();
+  toast('✓ '+nombre+' movido a '+(EQ_LABEL[nuevoEq]||nuevoEq));
+}
     return;
   }
   // ── Vista normal de equipo ──
