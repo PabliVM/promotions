@@ -1437,7 +1437,7 @@ async function arrancarDesdeFirebase(){
       if(payload.modoPartido && typeof payload.modoPartido==='object') modoPartido = payload.modoPartido;
       if(payload.modoDescanso&& typeof payload.modoDescanso==='object')modoDescanso= payload.modoDescanso;
       if(payload.multiEq     && typeof payload.multiEq==='object')     multiEq     = payload.multiEq;
-      if(payload.fechas      && typeof payload.fechas==='object')      Object.assign(FECHAS, payload.fechas);
+      // FECHAS no se restaura del guardado: la app siempre abre en la semana actual
       if(Array.isArray(payload.primerEquipoJugadores)) primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
       // Normalizar colNames
