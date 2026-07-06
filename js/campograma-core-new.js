@@ -1509,6 +1509,14 @@ function doblarJugador(nombre, eqOrigen, destino){
   if(!data[dia][destino].disponibles.includes(nombre)){
     data[dia][destino].disponibles.push(nombre);
   }
+  // Marcar en PROMOCIONADOS del origen SIN quitarlo de donde está (es duplicado, no promoción real)
+  if(!data[dia][eqOrigen].promovidos_1er) data[dia][eqOrigen].promovidos_1er=[];
+  if(!data[dia][eqOrigen].promovidos_1er.includes(nombre)){
+    data[dia][eqOrigen].promovidos_1er.push(nombre);
+  }
+  if(!promInfo[dia]) promInfo[dia]={};
+  if(!promInfo[dia][eqOrigen]) promInfo[dia][eqOrigen]={};
+  promInfo[dia][eqOrigen][nombre] = destino;
   autoGuardar();
   render();
   toast('⧉ '+nombre+' doblado en '+destino);
