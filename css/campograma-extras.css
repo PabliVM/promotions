@@ -138,3 +138,15 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 .card.en-descanso .cols-estado {
   display: grid !important;
 }
+.plant-eq-sel {
+  font-family: 'Segoe UI',-apple-system,sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #5a6170;
+  border: 1px solid #dfe1e6;
+  border-radius: 6px;
+  padding: 3px 4px;
+  background: #f8fafd;
+  cursor: pointer;
+  flex-shrink: 0;
+}
