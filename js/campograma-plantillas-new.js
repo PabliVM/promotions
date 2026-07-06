@@ -131,8 +131,6 @@ function plantCambiarEquipo(nombre, nuevoEq){
   autoGuardar();
   renderPlantBody();
   toast('✓ '+nombre+' movido a '+(EQ_LABEL[nuevoEq]||nuevoEq));
-}
-    return;
   }
   // ── Vista normal de equipo ──
   const jugadores = plantillas[plantEqActivo] || [];
