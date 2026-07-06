@@ -1,1 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Promociones">
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Promociones RM</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
 
+<!-- CSS -->
+<link rel="stylesheet" href="css/campograma-base.css">
+<link rel="stylesheet" href="css/campograma-modales.css">
+<link rel="stylesheet" href="css/campograma-semana.css">
+<link rel="stylesheet" href="css/campograma-extras.css">
+
+<script>
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    var n = regs.length;
+    regs.forEach(function(r){ r.unregister(); });
+    if(n > 0){ window.location.reload(true); return; }
+  });
+  caches.keys().then(function(keys){
+    keys.forEach(function(k){ caches.delete(k); });
+  });
+})();
+</script>
+<!-- html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- Firebase compat 9.23.0 -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/campograma-firebase-init-new.js"></script>
+
+</head>
+<body>
+
+<!-- ── PANTALLA DE LOGIN ── -->
+<div id="login-overlay">
+  <div id="login-box">
+    <div id="login-logo">
+      <img src="rm.png" alt="Real Madrid"/>
+    </div>
+    <h1 id="login-title">Promociones</h1>
+    <p id="login-sub">Real Madrid · Cantera</p>
+    <form id="login-form" onsubmit="return false;">
+      <input id="login-email" type="email" placeholder="Email" autocomplete="username" required/>
+      <input id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password" required/>
+      <button id="login-btn" type="submit" onclick="handleLogin()">Entrar</button>
+      <div id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="app-wrap" style="display:none">
+<div id="ghost"></div>
+<div id="alert-overlay">
+  <div id="alert-box">
+    <div id="alert-msg"></div>
+    <div id="alert-btns">
+      <button class="alert-btn alert-cancel" onclick="closeAlert()">Cancelar</button>
+      <button class="alert-btn alert-ok" id="alert-extra-btn" style="display:none"></button>
+      <button class="alert-btn alert-ok" id="alert-ok-btn"></button>
+    </div>
+  </div>
+</div>
+<!-- MODAL REGISTRO -->
+<div id="reg-overlay">
+  <div id="reg-box">
+    <div id="reg-header">
+      <h2>📊 Stats Semanales</h2>
+      <button id="reg-close" onclick="closeReg()">✕</button>
+    </div>
+    <div id="reg-body">
+      <div id="reg-tabs">
+        <button class="reg-tab active" onclick="switchRegTab('jugadores')">👤 Por Jugador</button>
+        <button class="reg-tab" onclick="switchRegTab('equipos')">🏟️ Por Equipo</button>
+      </div>
+      <div id="reg-filters">
+        <input id="reg-search" type="text" placeholder="Buscar jugador…" oninput="renderReg()"/>
+        <select id="reg-eq-filter" onchange="renderReg()">
+          <option value="">Todos los equipos</option>
+        </select>
+      </div>
+      <div id="reg-content"></div>
+    </div>
+  </div>
+</div>
+<!-- MODAL PLANTILLAS -->
+<div id="plant-overlay">
+  <div id="plant-box">
+    <div id="plant-hdr">
+      <h2>👥 Gestión de Plantillas</h2>
+      <button id="plant-close" onclick="closePlant()">✕</button>
+    </div>
+    <div id="plant-eq-tabs" id="plant-tabs"></div>
+    <div id="plant-body">
+      <div id="plant-eq-title"></div>
+      <div id="plant-add-row">
+        <input id="plant-add-input" type="text" placeholder="Nombre del jugador…" onkeydown="if(event.key==='Enter')plantAñadir()" oninput="filtrarUYLDrop()" onfocus="filtrarUYLDrop()" onblur="setTimeout(()=>cerrarUYLDrop(),200)"/>
+        <button id="plant-add-btn" onclick="plantAñadir()">+ Añadir</button>
+        <div id="plant-uyl-dropdown"></div>
+      </div>
+      <div id="plant-count"></div>
+      <div id="plant-list"></div>
+    </div>
+  </div>
+</div>
+<!-- ── MODAL CONFIG TIPOS DE PARTIDO ── -->
+<div id="cfg-tipos-modal" onclick="cerrarConfigTipos(event)">
+  <div id="cfg-tipos-box">
+    <div id="cfg-tipos-hdr">
+      <span id="cfg-tipos-title">Tipos de partido</span>
+      <button id="cfg-tipos-close" onclick="cerrarConfigTipos()">×</button>
+    </div>
+    <div id="cfg-tipos-eq-strip"></div>
+    <div id="cfg-tipos-list"></div>
+    <div id="cfg-tipo-add-row">
+      <input id="cfg-tipo-new-label" type="text" placeholder="Nuevo tipo…" maxlength="24"/>
+      <input id="cfg-tipo-new-color" type="color" value="#3b82f6"/>
+      <button id="cfg-tipo-add-btn" onclick="addTipoConfig()">+ Añadir</button>
+    </div>
+    <div id="cfg-tipos-footer">
+      <button id="cfg-tipos-reset" onclick="resetTiposConfig()">↺ Restablecer</button>
+      <button id="cfg-tipos-save" onclick="cerrarConfigTipos()">Guardar</button>
+    </div>
+  </div>
+</div>
+<!-- ── MODAL LISTA UYL ── -->
+<div id="uyl-modal" onclick="cerrarUYL(event)">
+  <div id="uyl-box">
+    <div id="uyl-box-hdr">
+      <div id="uyl-box-title">
+        Plantilla JA Youth League <span>UYL</span>
+      </div>
+      <button id="uyl-box-close" onclick="cerrarUYL()">×</button>
+    </div>
+    <div id="uyl-search-wrap">
+      <input id="uyl-search" type="text" placeholder="Buscar jugador extra (otros equipos)…" oninput="renderUYLList()"/>
+    </div>
+    <!-- Sección JA base (siempre visible) -->
+    <div id="uyl-ja-section">
+      <div class="uyl-section-hdr">JUVENIL A — base <span id="uyl-ja-note">todos incluidos por defecto</span></div>
+      <div id="uyl-ja-list"></div>
+    </div>
+    <!-- Separador -->
+    <div class="uyl-section-hdr" style="margin-top:6px;">EXTRAS (otros equipos)</div>
+    <div id="uyl-player-list"></div>
+    <div id="uyl-footer">
+      <span id="uyl-count"></span>
+      <button id="uyl-ok" onclick="cerrarUYL()">Guardar lista</button>
+    </div>
+  </div>
+</div>
+<!-- ── MODAL RESET EQUIPO ── -->
+<!-- Modal Reset Global -->
+<div id="reset-global-overlay" onclick="cerrarResetGlobal(event)" style="position:fixed;inset:0;z-index:10200;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="width:100%;max-width:520px;background:#111827;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.1);padding:0 0 calc(20px + env(safe-area-inset-bottom,0px));">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;border-bottom:1px solid rgba(255,255,255,.08);">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#fff;">↺ Resetear equipos</span>
+      <button onclick="cerrarResetGlobal()" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);font-size:20px;line-height:1;padding:4px;">×</button>
+    </div>
+    <p style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,255,255,.4);padding:8px 20px 4px;text-transform:uppercase;letter-spacing:.5px;margin:0;">Selecciona los equipos a resetear hoy</p>
+    <div id="reset-global-checks" style="display:flex;flex-direction:column;gap:6px;padding:10px 16px;"></div>
+    <div style="display:flex;gap:8px;padding:10px 16px 0;">
+      <button onclick="resetGlobalSelAll()" style="flex:1;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Todos</button>
+      <button onclick="resetGlobalNone()" style="flex:1;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Ninguno</button>
+      <button onclick="ejecutarResetGlobal()" style="flex:2;padding:9px;border-radius:10px;border:none;background:#ef4444;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.5px;">↺ RESETEAR</button>
+    </div>
+    <button onclick="cerrarResetGlobal()" style="margin:8px 16px 0;width:calc(100% - 32px);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Cancelar</button>
+  </div>
+</div>
+<div id="reset-modal-overlay" onclick="cerrarResetModal(event)">
+  <div id="reset-modal-box">
+    <div id="reset-modal-hdr">
+      <span id="reset-modal-title">Resetear equipo</span>
+      <button onclick="cerrarResetModal()" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);font-size:20px;line-height:1;padding:4px;">×</button>
+    </div>
+    <p id="reset-modal-sub"></p>
+    <div id="reset-modal-opts">
+      <button class="reset-opt-btn reset-opt-campo" id="reset-opt-campo">
+        <span class="reset-opt-icon">⬜</span>
+        <div>
+          <div class="reset-opt-title">Solo el campo</div>
+          <div class="reset-opt-desc">Los jugadores del campo vuelven a disponibles. Lesiones, promociones y otros se mantienen.</div>
+        </div>
+      </button>
+      <button class="reset-opt-btn reset-opt-todo" id="reset-opt-todo">
+        <span class="reset-opt-icon">↺</span>
+        <div>
+          <div class="reset-opt-title">Todo el equipo</div>
+          <div class="reset-opt-desc">Todos los jugadores (campo, lesiones, promociones…) vuelven a disponibles.</div>
+        </div>
+      </button>
+    </div>
+    <button id="reset-modal-cancel" onclick="cerrarResetModal()">Cancelar</button>
+  </div>
+</div>
+<div id="toast"></div>
+<!-- ── MODAL TEMPORADA ── -->
+<div id="season-modal" onclick="cerrarSeasonModal(event)">
+  <div id="season-box">
+    <div id="season-box-hdr">
+      <span id="season-box-title">Temporada</span>
+      <button id="season-box-close" onclick="cerrarSeasonModal()">×</button>
+    </div>
+    <div id="season-list"></div>
+    <button id="season-new-btn" onclick="nuevaTemporada()">+ Nueva temporada</button>
+  </div>
+</div>
+<!-- ── MODAL CONFIRMACIÓN ASCENSO ── -->
+<div id="ascenso-modal">
+  <div id="ascenso-box">
+    <div id="ascenso-title">⬆️ Nueva temporada</div>
+    <div id="ascenso-body"></div>
+    <div id="ascenso-equipos"></div>
+    <div class="ascenso-btns">
+      <button class="ascenso-btn cancel" onclick="cancelarAscenso()">Cancelar</button>
+      <button class="ascenso-btn confirm" onclick="confirmarAscenso()">Crear temporada</button>
+    </div>
+  </div>
+</div>
+<!-- ═══════════════════════════════
+     ENCABEZADO PREMIUM
+════════════════════════════════ -->
+<header id="app-header">
+  <!-- Izquierda: logo + nombre -->
+  <div id="hdr-identity">
+    <div id="hdr-escudo">
+      <img src="https://raw.githubusercontent.com/PabliVM/Promociones/main/rm__.png" alt="Real Madrid" crossorigin="anonymous" style="width:100%;height:100%;object-fit:contain;"/>
+    </div>
+    <div id="hdr-titles">
+      <span id="hdr-club">Promociones</span>
+      <span id="hdr-sub">Real Madrid · Cantera</span>
+    </div>
+  </div>
+
+  <!-- Centro: vacío — botones se mueven a sub-header -->
+  <div id="hdr-actions"></div>
+
+  <!-- Derecha: dark mode + temporada + guardar -->
+  <div id="hdr-right">
+    <button class="btn-dark-maestro" onclick="toggleDarkMaestro()" id="darkBtnMaestro" title="Modo oscuro">☾</button>
+    <button id="season-badge" onclick="abrirSeasonModal()">
+      <span id="season-label">2026-27</span>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div id="save-area">
+<span id="save-ts"></span>
+    </div>
+    <button onclick="fbLogout()" title="Cerrar sesión" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:16px;padding:4px 6px;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.7)'">⏻</button>
+  </div>
+</header>
+<!-- Barra blanca secundaria con botones de acción -->
+<div id="sub-header">
+  <button class="hdr-action-btn btn-plantillas" onclick="openPlant()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    Plantillas
+  </button>
+  <button class="hdr-action-btn btn-stats" onclick="openReg()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+    Stats
+  </button>
+  <button class="hdr-action-btn btn-control" onclick="abrirControl()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    Control
+  </button>
+  <button class="hdr-action-btn btn-copiar" onclick="abrirCopiarModal()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    Copiar
+  </button>
+
+  <!-- Selector semana -->
+  <button class="hdr-action-btn" onclick="abrirCal()" style="margin-left:4px;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    <span id="sub-semana-lbl">Semana</span>
+  </button>
+
+  <!-- Leyenda equipos -->
+  <div id="sub-leyenda">
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#1e3a8a"></span>CAS</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#7c3aed"></span>RMC</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#eab308"></span>JA</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#16a34a"></span>JB</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#db2777"></span>JC</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#ea580c"></span>CA</span>
+  </div>
+</div>
+<!-- Filtros vista semana: días y equipos -->
+<div id="filtros-semana-bar">
+  <div id="filtro-dias-row"></div>
+  <div class="filtros-sep"></div>
+  <div id="filtro-eqs-row"></div>
+</div>
+<!-- Leyenda colores equipos — fina, integrada -->
+<div id="leyenda-strip">
+  <div class="ley2"><span class="ley2-dot" style="background:#1e3a8a"></span><span>CAS</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#7c3aed"></span><span>RMC</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#eab308"></span><span>JA</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#16a34a"></span><span>JB</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#db2777"></span><span>JC</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#ea580c"></span><span>CA</span></div>
+</div>
+<!-- Días de la semana -->
+<div id="semana-nav">
+  <button id="btn-semana-cal" onclick="abrirCal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    <div id="semana-fechas">
+      <span id="semana-fecha-ini">—</span>
+      <span id="semana-fecha-fin">—</span>
+    </div>
+    <span id="top-semana-lbl" style="display:none"></span>
+  </button>
+  <div id="dias-strip" role="tablist"></div>
+</div>
+<!-- Filtro de equipos -->
+<div id="eq-strip"></div>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="cargarFicheroImport(event)">
+<!-- Panel sesiones Firebase -->
+<div id="fb-overlay">
+  <div id="fb-box">
+    <h3>☁️ SESIONES GUARDADAS</h3>
+    <div id="fb-lista"><div class="fb-empty">Cargando...</div></div>
+    <div id="fb-nueva-row">
+      <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)">
+      <button class="fb-btn cargar" onclick="fbGuardarActual()">💾 Guardar</button>
+    </div>
+    <div style="margin-top:10px;display:flex;justify-content:flex-end;">
+      <div id="fb-sesion-activa-lbl" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#60b4ff;padding:4px 0;"></div>
+      <button class="fb-btn" style="background:rgba(255,255,255,.1);color:#fff;" onclick="cerrarFbPanel()">Cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Destino Promoción -->
+<div id="promo-dest-overlay">
+  <div id="promo-dest-modal">
+    <h3 id="promo-dest-title">¿A qué equipo va?</h3>
+    <p id="promo-dest-sub"></p>
+    <div id="promo-dest-opts"></div>
+    <button id="promo-dest-cancel" onclick="cerrarPromoDestModal()">Cancelar</button>
+  </div>
+</div>
+<!-- Modal Foto Múltiple -->
+<div id="foto-multi-overlay">
+  <div id="foto-multi-modal">
+    <h3>Foto de equipos</h3>
+    <p>Selecciona los equipos que quieres incluir</p>
+    <div id="foto-eq-checks"></div>
+    <div id="foto-multi-footer">
+      <button id="foto-multi-cancel" onclick="cerrarFotoMultiModal()">Cancelar</button>
+      <button id="foto-multi-ok" onclick="generarFotoMulti()">Generar foto</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Copiar -->
+<div id="copy-modal-overlay">
+  <div id="copy-modal">
+    <div id="copy-modal-hdr">
+      <span>Copiar campograma</span>
+      <button onclick="cerrarCopiarModal()">✕</button>
+    </div>
+
+    <!-- Equipos -->
+    <div class="copy-section-lbl">Equipos</div>
+    <div id="copy-eq-checks"></div>
+
+    <!-- Día ORIGEN -->
+    <div class="copy-section-lbl" style="margin-top:14px;">Día origen</div>
+    <div id="copy-origen-btns" class="copy-dias-row"></div>
+
+    <!-- Día(s) DESTINO -->
+    <div class="copy-section-lbl" style="margin-top:14px;">Día(s) destino</div>
+    <div id="copy-dias-btns" class="copy-dias-row"></div>
+    <div id="copy-dia-semana-lbl" style="display:none;font-size:11px;color:#2563eb;margin:4px 0 6px;font-family:'Segoe UI',sans-serif;"></div>
+    <div style="margin-top:8px;">
+      <button id="copy-dia-semana-btn" onclick="abrirCalCopiaDir()" style="font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;cursor:pointer;">
+        📅 Otra semana
+      </button>
+    </div>
+
+    <!-- Mantener compatibilidad con setCopyTipo -->
+    <div id="copy-tipo-btns" style="display:none;">
+      <button class="copy-tipo-btn active" id="ctype-dia" onclick="setCopyTipo('dia')">Día concreto</button>
+      <button class="copy-tipo-btn" id="ctype-semana" onclick="setCopyTipo('semana')">Semana completa</button>
+    </div>
+    <div id="copy-semana-sel" style="display:none;margin-top:12px;">
+      <button id="copy-semana-btn" onclick="abrirCalCopia()" style="width:100%;padding:10px 14px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span id="copy-semana-lbl">Seleccionar semana…</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      </button>
+    </div>
+
+    <div id="copy-modal-footer">
+      <button id="copy-ok-btn" onclick="ejecutarCopia()">Copiar ✓</button>
+    </div>
+  </div>
+</div>
+<!-- Calendario semana -->
+<div id="cal-overlay">
+  <div id="cal-box">
+    <div id="cal-header">
+      <span id="cal-mes"></span>
+      <div style="display:flex;gap:4px;">
+        <button class="cal-nav" id="cal-prev">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="cal-nav" id="cal-next">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="cal-grid"></div>
+    <div id="cal-footer">
+      <button id="cal-cancel" onclick="cerrarCal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;">✕</button>
+      <span id="cal-sel-txt"></span>
+      <button id="cal-ok" onclick="aplicarSemana()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+<div id="eq-strip-wrap">
+  <div id="eq-strip"></div>
+</div>
+<!-- Barra de vista -->
+<div id="view-bar" style="display:none">
+  <button class="view-btn active" id="vbtn-semana-alias" style="display:none"></button>
+  <button class="view-btn" id="vbtn-semana" onclick="setView('semana')" title="Vista semana completa">
+    <svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke-width="1.8">
+      <rect x="1" y="1" width="2" height="16" rx="1"/>
+      <rect x="4" y="1" width="2" height="16" rx="1"/>
+      <rect x="7" y="1" width="2" height="16" rx="1"/>
+      <rect x="10" y="1" width="2" height="16" rx="1"/>
+      <rect x="13" y="1" width="2" height="16" rx="1"/>
+      <rect x="16" y="1" width="2" height="16" rx="1"/>
+    </svg>
+  </button>
+
+</div>
+<div id="multi-eq-bar"></div>
+<div class="cards-grid view-1" id="grid"></div>
+<div id="scroll-sync-bar"><div id="scroll-sync-inner"></div></div>
+<script src="js/campograma-constants-new.js"></script>
+<script src="js/campograma-core-new.js"></script>
+<script src="js/campograma-plantillas-new.js"></script>
+<script src="js/campograma-temporadas-new.js"></script>
+<script src="js/campograma-buildcard-new.js"></script>
+<script src="js/campograma-render-new.js"></script>
+<script src="js/campograma-modos-new.js"></script>
+<script src="js/campograma-captura-new.js"></script>
+<script src="js/campograma-drag-new.js"></script>
+<script src="js/campograma-copiar-new.js"></script>
+<script src="js/campograma-stats-new.js"></script>
+<script>
+// Arranque — después de todos los módulos cargados
+const cargado = cargarGuardado();
+initTiposConfig();
+if(cargado) render();
+</script>
+<!-- ═══════════════════════════════
+     NAVEGACIÓN INFERIOR APP MÓVIL
+════════════════════════════════ -->
+<!-- ═══════════ TABLA CONTROL ═══════════ -->
+<div id="control-overlay">
+  <div id="control-box">
+    <div id="control-hdr">
+      <div>
+        <h2>✓ Tabla de control</h2>
+        <span id="control-dia-lbl"></span>
+      </div>
+      <button id="control-close" onclick="cerrarControl()">✕</button>
+    </div>
+    <div id="control-body">
+      <table id="control-table">
+        <thead id="control-thead"></thead>
+        <tbody id="control-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<nav id="bottom-nav" style="display:none">
+  <button class="bnav-btn" onclick="abrirCopiarModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    <span>Copiar</span>
+  </button>
+  <button class="bnav-btn" onclick="openPlant()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    <span>Plantillas</span>
+  </button>
+  <button class="bnav-btn" onclick="openReg()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+    <span>Stats</span>
+  </button>
+  <button class="bnav-btn" onclick="abrirControl()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    <span>Control</span>
+  </button>
+</nav>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="cargarFicheroImport(event)">
+<footer class="app-footer-maestro">
+  Cantera del Real Madrid CF · Promociones
+</footer>
+</div>
+
+
+
+<script>
+// ── LOGIN HANDLING ──
+function handleLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  if(!email || !pass){ errEl.textContent = 'Rellena email y contraseña.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  window.fbLogin(email, pass).then(res => {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+    if(!res.ok){
+      errEl.textContent = res.message;
+    }
+    // Si ok, onAuthStateChanged se encarga de mostrar la app
+  });
+}
+
+document.addEventListener('auth-ready', () => {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app-wrap').style.display = '';
+});
+
+document.addEventListener('auth-logout', () => {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('app-wrap').style.display = 'none';
+});
+</script>
+
+<script src="js/campograma-darkmode-new.js"></script>
+
+</body>
+</html>
