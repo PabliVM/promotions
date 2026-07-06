@@ -469,6 +469,23 @@ function chip(nombre,eq,zona,color,type){
     c.title='En varios equipos hoy: '+eqs;
   }
   else if(prestado) c.title='Viene de '+eqO;
+  // Botón doblar — solo en disponibles del equipo propio del jugador
+  if(zona==='disponibles' && (origen[nombre]||eq)===eq && origen[nombre]!=='PRUEBA'){
+    const dobBtn = document.createElement('span');
+    dobBtn.className='chip-doblar';
+    dobBtn.textContent='⧉';
+    dobBtn.title='Doblar en otro equipo';
+    dobBtn.onmousedown=(e)=>e.stopPropagation();
+    dobBtn.onclick=(e)=>{
+      e.stopPropagation();
+      abrirPromoDestModal(nombre, eq, (destino)=>{
+        showAlert('¿Doblar a '+nombre+' en '+destino+'? Seguirá en disponibles de '+eq+' y también aparecerá en '+destino+' (contará como doble equipo, borde rojo).', ()=>{
+          doblarJugador(nombre, eq, destino);
+        }, 'Doblar');
+      });
+    };
+    c.appendChild(dobBtn);
+  }
   return c;
 }
 function mk(tag,cls=''){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
