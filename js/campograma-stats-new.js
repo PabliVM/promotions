@@ -11,14 +11,37 @@ function openReg(){
 function closeReg(){
   document.getElementById('reg-overlay').classList.remove('show');
 }
+let _regEquiposActivos = new Set(EQUIPOS);
 function switchRegTab(tab){
   _regTab = tab;
   document.querySelectorAll('.reg-tab').forEach((b,i)=>b.classList.toggle('active', (i===0&&tab==='jugadores')||(i===1&&tab==='equipos')));
   const inp = document.getElementById('reg-search');
   const sel = document.getElementById('reg-eq-filter');
+  const btns = document.getElementById('reg-eq-btns');
   inp.style.display = tab==='jugadores' ? '' : 'none';
   sel.style.display = tab==='jugadores' ? '' : 'none';
+  btns.style.display = tab==='equipos' ? 'flex' : 'none';
+  if(tab==='equipos') renderRegEqBtns();
   renderReg();
+}
+function renderRegEqBtns(){
+  const wrap = document.getElementById('reg-eq-btns');
+  wrap.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 12px;';
+  wrap.innerHTML = '';
+  EQUIPOS.forEach(eq=>{
+    const activo = _regEquiposActivos.has(eq);
+    const col = EQ_COLOR[eq]||'#94a3b8';
+    const b = document.createElement('button');
+    b.textContent = eq;
+    b.style.cssText = `font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;border:1.5px solid ${col};background:${activo?col:'#fff'};color:${activo?'#fff':col};`;
+    b.onclick = ()=>{
+      if(_regEquiposActivos.has(eq)) _regEquiposActivos.delete(eq);
+      else _regEquiposActivos.add(eq);
+      renderRegEqBtns();
+      renderReg();
+    };
+    wrap.appendChild(b);
+  });
 }
 function calcStatsJugador(nombre){
   let entrenos=0, partidos=0, banco=0, eqsConEntrenamiento={};
@@ -42,24 +65,34 @@ function calcStatsEquipo(eq){
   let sesionesPartido=0, sesionesEntreno=0;
   let promosSemana=new Set();
   let jugsDias=[]; // por día: {dia, jugadores, externos, esPartido}
+  let totalJugSesion=0, totalPorterosSesion=0;
+  const conteoJugador={};
   DIAS.forEach(d=>{
     const campo = data[d][eq].campo||[];
     if(!campo.length) return;
     totalSesiones++;
     const esP = !!(modoPartido[d]?.[eq]);
     if(esP) sesionesPartido++; else sesionesEntreno++;
-    let propios=0, externos=0;
+    let propios=0, externos=0, porterosSesion=0;
     campo.forEach(n=>{
       if(origen[n]===eq) propios++; else externos++;
+      if(porteros.includes(n)) porterosSesion++;
+      conteoJugador[n]=(conteoJugador[n]||0)+1;
     });
     totalJugadoresPropios+=propios;
     totalJugadoresExteros+=externos;
+    totalJugSesion+=campo.length;
+    totalPorterosSesion+=porterosSesion;
     jugsDias.push({dia:d, total:campo.length, propios, externos, esPartido:esP});
     // Promovidos
     Object.entries(promInfo[d]?.[eq]||{}).forEach(([n,dest])=>{ if(dest) promosSemana.add(n); });
   });
   const pctExternos = totalSesiones ? Math.round(totalJugadoresExteros/(totalJugadoresPropios+totalJugadoresExteros)*100)||0 : 0;
-  return { totalSesiones, sesionesPartido, sesionesEntreno, pctExternos, promosSemana:[...promosSemana], jugsDias };
+  const avgJugadores = totalSesiones ? +(totalJugSesion/totalSesiones).toFixed(1) : 0;
+  const avgPorteros = totalSesiones ? +(totalPorterosSesion/totalSesiones).toFixed(1) : 0;
+  let topJugador=null, topN=0;
+  Object.entries(conteoJugador).forEach(([n,c])=>{ if(c>topN){ topN=c; topJugador=n; } });
+  return { totalSesiones, sesionesPartido, sesionesEntreno, pctExternos, promosSemana:[...promosSemana], jugsDias, avgJugadores, avgPorteros, topJugador, topN };
 }
 const EQ_COLOR = {
   'CASTILLA':'#C8A800','RMC':'#3b82f6','JUVENIL A':'#10b981',
@@ -99,9 +132,9 @@ function renderRegJugadores(container){
       });
       html+=`<td><span class="reg-dot ${cls}">${txt}</span></td>`;
     });
-    html+=`<td><span style="color:#4ade80;font-weight:800;font-family:'Barlow Condensed',sans-serif">${entrenos||''}</span></td>`;
-    html+=`<td><span style="color:#f59e0b;font-weight:800;font-family:'Barlow Condensed',sans-serif">${partidos||''}</span></td>`;
-    html+=`<td><span style="color:#60a5fa;font-weight:800;font-family:'Barlow Condensed',sans-serif">${banco||''}</span></td>`;
+    html+=`<td><span style="color:#4ade80;font-weight:800;">${entrenos||''}</span></td>`;
+    html+=`<td><span style="color:#f59e0b;font-weight:800;">${partidos||''}</span></td>`;
+    html+=`<td><span style="color:#60a5fa;font-weight:800;">${banco||''}</span></td>`;
     html+=`<td class="reg-total">${total||'—'}</td></tr>`;
   });
   html+='</tbody></table></div>';
@@ -110,7 +143,7 @@ function renderRegJugadores(container){
 }
 function renderRegEquipos(container){
   let html='<div id="reg-equipo-grid">';
-  EQUIPOS.forEach(eq=>{
+  EQUIPOS.filter(eq=>_regEquiposActivos.has(eq)).forEach(eq=>{
     const col=EQ_COLOR[eq]||'#94a3b8';
     const s=calcStatsEquipo(eq);
     if(!s.totalSesiones){ html+=`<div class="reg-eq-card"><div class="reg-eq-card-title" style="color:${col}">${eq}<span class="reg-eq-badge" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.3)">Sin datos</span></div></div>`; return; }
@@ -123,6 +156,11 @@ function renderRegEquipos(container){
         <div class="reg-stat-box"><div class="reg-stat-num" style="color:#4ade80">${s.sesionesEntreno}</div><div class="reg-stat-lbl">Entrenos</div></div>
         <div class="reg-stat-box"><div class="reg-stat-num" style="color:#f59e0b">${s.sesionesPartido}</div><div class="reg-stat-lbl">Partidos</div></div>
         <div class="reg-stat-box"><div class="reg-stat-num" style="color:${s.pctExternos>30?'#f87171':'#4ade80'}">${s.pctExternos}%</div><div class="reg-stat-lbl">Externos</div></div>
+      </div>
+      <div class="reg-stat-row">
+        <div class="reg-stat-box"><div class="reg-stat-num" style="color:#2563eb">${s.avgJugadores}</div><div class="reg-stat-lbl">Media jugadores</div></div>
+        <div class="reg-stat-box"><div class="reg-stat-num" style="color:#7c3aed">${s.avgPorteros}</div><div class="reg-stat-lbl">Media porteros</div></div>
+        <div class="reg-stat-box"><div class="reg-stat-num" style="font-size:13px;color:#1a1d23">${s.topJugador||'—'}</div><div class="reg-stat-lbl">Más entrena (${s.topN||0})</div></div>
       </div>
       <div class="reg-bar-row">
         <span class="reg-bar-label">Propios</span>
