@@ -129,7 +129,7 @@ function buildCard(eq){
   descBtn.title='Marcar día de descanso';
   descBtn.onclick=(e)=>{ e.stopPropagation(); toggleDescanso(eq,_diaModo); };
   right.appendChild(descBtn);
-const modoB=mk('button','modo-btn'+(esPartido(eq,_diaModo)?' partido':''));
+  const modoB=mk('button','modo-btn'+(esPartido(eq,_diaModo)?' partido':''));
   modoB.textContent=esPartido(eq,_diaModo)?'⚽ PARTIDO':'🏋️ ENTRENO';
   modoB.onclick=(e)=>{e.stopPropagation();togglePartido(eq,_diaModo);};
   right.appendChild(modoB);
@@ -325,8 +325,13 @@ const modoB=mk('button','modo-btn'+(esPartido(eq,_diaModo)?' partido':''));
       cwD.appendChild(ch);
     });
   } else {
-    // Modo normal: disponibles propios del equipo
-    d.disponibles.forEach(n=>cwD.appendChild(chip(n,eq,'disponibles','c-verde','cz')));
+    // Modo normal: disponibles propios del equipo, ordenados según Plantillas
+    const ordenPlant = plantillas[eq] || [];
+    const dispOrdenados = [...d.disponibles].sort((a,b)=>{
+      const ia = ordenPlant.indexOf(a), ib = ordenPlant.indexOf(b);
+      return (ia===-1?999:ia) - (ib===-1?999:ib);
+    });
+    dispOrdenados.forEach(n=>cwD.appendChild(chip(n,eq,'disponibles','c-verde','cz')));
   }
   zDisp.appendChild(cwD);
   zDisp.appendChild(buildAddInput(eq,'disponibles'));
