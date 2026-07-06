@@ -125,7 +125,7 @@ function buildCard(eq){
   // Botón descanso
   const _diaModo = dia; // capturar el día de ESTA card en el closure
   const descBtn=mk('button','modo-btn'+(esDescanso(eq,_diaModo)?' descanso':''));
-  descBtn.textContent=esDescanso(eq,_diaModo)?'💤 DESCANSA':'💤';
+  descBtn.textContent='💤 DESCANSA';
   descBtn.title='Marcar día de descanso';
   descBtn.onclick=(e)=>{ e.stopPropagation(); toggleDescanso(eq,_diaModo); };
   right.appendChild(descBtn);
