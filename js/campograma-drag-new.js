@@ -8,18 +8,14 @@ function devolverADisponibles(nombre, eq, zona){
       if(i >= 0) primerEquipoJugadores[dia].splice(i, 1);
     }
     delete pos[key(dia, '1ER EQUIPO', nombre)];
-    // No añadir a disponibles del equipo propio — ya estará en disponibles del 1ER EQUIPO
     autoGuardar(); render(); return;
   }
   // 1. Quitar de la zona específica donde está
   const arr = data[dia][eq]?.[zona];
-  if(arr){
-    const i = arr.indexOf(nombre);
-    if(i >= 0) arr.splice(i, 1);
-  }
+  if(arr){ const i = arr.indexOf(nombre); if(i >= 0) arr.splice(i, 1); }
   if(zona === 'campo') delete pos[key(dia, eq, nombre)];
-  // 2. Si era de otro equipo (prestado), quitar de TODAS sus zonas activas
-  //    en ese equipo prestado para no dejar rastro
+  const destino = promInfo[dia]?.[eqPropio]?.[nombre];
+  // 2. Si era la copia del equipo DESTINO (prestado/doblado), quitar de TODAS sus zonas activas ahí
   if(eq !== eqPropio){
     ZONAS_ACTIVAS.forEach(z => {
       const a = data[dia][eq]?.[z];
@@ -29,15 +25,27 @@ function devolverADisponibles(nombre, eq, zona){
     });
     delete pos[key(dia, eq, nombre)];
   }
-  // 3. Quitar de promovidos_1er en su equipo propio (si fue promovido)
+  // 3. Si había promoción/duplicado activo, deshacerla también en el equipo destino
+  if(destino && data[dia][destino]){
+    ZONAS_ACTIVAS.forEach(z=>{
+      const a = data[dia][destino][z];
+      if(!a) return;
+      const i = a.indexOf(nombre);
+      if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(dia,destino,nombre)]; }
+    });
+  }
+  // 4. Quitar de promovidos_1er en su equipo propio
   const prom = data[dia][eqPropio]?.promovidos_1er;
   if(prom){ const pi = prom.indexOf(nombre); if(pi >= 0) prom.splice(pi, 1); }
   if(promInfo[dia]?.[eqPropio]) delete promInfo[dia][eqPropio][nombre];
-  // 4. Limpiar multiEq
+  // 5. Limpiar multiEq
   borrarMultiEq(dia, nombre, eq);
-  // 5. Añadir a disponibles de su equipo propio (si no está ya)
-  const disp = data[dia][eqPropio]?.disponibles;
-  if(disp && !disp.includes(nombre)) disp.push(nombre);
+  // 6. Volver a disponibles de su equipo propio SOLO si no sigue activo en otra zona suya
+  const sigueActivo = ZONAS_ACTIVAS.some(z=>z!=='disponibles' && (data[dia][eqPropio]?.[z]||[]).includes(nombre));
+  if(!sigueActivo){
+    const disp = data[dia][eqPropio]?.disponibles;
+    if(disp && !disp.includes(nombre)) disp.push(nombre);
+  }
 }
 // dispararDobleTap recibe strings (no elemento DOM) — seguro tras re-render
 function dispararDobleTap(nombre, eq, zona){
@@ -305,6 +313,8 @@ function endChip(e){
           const promArrPrevio = data[dia][_eqPropio2]?.promovidos_1er;
           if(promArrPrevio){ const pi=promArrPrevio.indexOf(_nombre2); if(pi>=0) promArrPrevio.splice(pi,1); }
         }
+        // Evitar duplicado en destino si ya estaba doblado ahí
+        limpiarEquipoExcepto(_nombre2, toEq, 'campo');
         // Añadir al campo del equipo destino (ya guardamos pos arriba)
         data[dia][toEq].campo.push(_nombre2);
         // Registrar en promovidos_1er del equipo PROPIO con el nuevo destino
