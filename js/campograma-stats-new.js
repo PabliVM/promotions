@@ -26,12 +26,13 @@ function switchRegTab(tab){
 }
 function renderRegEqBtns(){
   const wrap = document.getElementById('reg-eq-btns');
-  wrap.className = 'reg-eq-tabs';
+  wrap.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 12px;';
   wrap.innerHTML = '';
+  const eqsShort = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
   EQUIPOS.forEach(eq=>{
     const b = document.createElement('button');
-    b.className = 'reg-eq-tab'+(eq===_regEqSel?' active':'');
-    b.textContent = eq;
+    b.className = 'filtro-eq-btn'+(eq===_regEqSel?' activo':'');
+    b.textContent = eqsShort[eq]||eq;
     b.onclick = ()=>{ _regEqSel = eq; renderRegEqBtns(); renderReg(); };
     wrap.appendChild(b);
   });
