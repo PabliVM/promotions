@@ -738,8 +738,10 @@ body.dark .col-extra{background:#1a1625;}
 .col .chip{font-size:9px;padding:2px 5px;width:100%;text-align:center;justify-content:center;}
 .zona-banquillo .chips-wrap{gap:3px;}
 /* MODAL REGISTRO */
-#reg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10001;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);}
+#reg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10001;display:none;align-items:center;justify-content:center;overflow-y:auto;padding:24px 16px;backdrop-filter:blur(4px);}
 #reg-overlay.show{display:flex;}
+#reg-overlay #reg-box{transform:scale(.92);opacity:0;transition:transform .18s ease,opacity .18s ease;}
+#reg-overlay.show #reg-box{transform:scale(1);opacity:1;}
 #reg-box{background:#fff;border:1px solid #dfe1e6;border-radius:12px;padding:0;max-width:98vw;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.12);overflow:hidden;}
 #reg-header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:#2563eb;}
 #reg-header h2{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;font-weight:700;color:#fff;margin:0;}
@@ -769,7 +771,10 @@ body.dark .col-extra{background:#1a1625;}
 .reg-dot.empty{background:#f0f4fa;color:#d1d9e6;}
 .reg-total{background:rgba(37,99,235,.08)!important;color:#2563eb!important;font-weight:700!important;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif!important;}
 /* Vista equipo */
-#reg-equipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+#reg-equipo-grid{display:grid;grid-template-columns:1fr;gap:12px;max-width:520px;margin:0 auto;}
+.reg-eq-tabs{display:flex;gap:14px;flex-wrap:wrap;padding:0 20px 12px;border-bottom:1px solid #e8eef8;}
+.reg-eq-tab{background:none;border:none;border-bottom:2px solid transparent;padding:6px 2px;font-family:'Segoe UI',-apple-system,sans-serif;font-size:12px;font-weight:700;color:#9ca3af;cursor:pointer;letter-spacing:.3px;}
+.reg-eq-tab.active{color:#2563eb;border-bottom-color:#2563eb;}
 @media(max-width:500px){#reg-equipo-grid{grid-template-columns:1fr;}}
 .reg-eq-card{background:#f8fafd;border:1px solid #dfe1e6;border-radius:12px;padding:14px;}
 .reg-eq-card-title{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;font-weight:700;color:#1a1d23;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
