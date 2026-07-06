@@ -238,7 +238,15 @@ function buildAddInput(eq, zona){
     render();
   }
   function elegir(nombre){
-    // Sin bloqueo por duplicados — libertad total
+    // Evitar duplicado dentro del MISMO equipo: quitarlo de cualquier otra zona suya en este equipo
+    ZONAS_ACTIVAS.forEach(z=>{
+      if(z===zona) return;
+      const arr = data[dia][eq]?.[z];
+      if(arr){
+        const i = arr.indexOf(nombre);
+        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(dia,eq,nombre)]; }
+      }
+    });
     if(zona==='campo'){
       // Buscar slot libre sin solapar con los ya colocados
       const ocupadas = posOcupadas(eq, nombre);
