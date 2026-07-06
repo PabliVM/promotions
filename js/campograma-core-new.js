@@ -853,6 +853,7 @@ function ejecutarPromocion(nombre, eqOrigen, destino){
   // Si va a otro equipo cantera → añadir a disponibles de ese equipo
   if(destino!=='1ER EQUIPO'){
     if(!data[dia][destino]) data[dia][destino]={campo:[],disponibles:[],promovidos_1er:[],lesionados:[],otros:[]};
+    limpiarEquipoExcepto(nombre, destino, 'disponibles');
     if(!data[dia][destino].disponibles.includes(nombre)){
       data[dia][destino].disponibles.push(nombre);
     }
@@ -1514,6 +1515,7 @@ async function arrancarDesdeFirebase(){
 arrancarDesdeFirebase();
 function doblarJugador(nombre, eqOrigen, destino){
   if(destino==='1ER EQUIPO' || !data[dia][destino]) { toast('❌ No se puede doblar ahí'); return; }
+  limpiarEquipoExcepto(nombre, destino, 'disponibles'); // evitar duplicado en destino
   if(!data[dia][destino].disponibles.includes(nombre)){
     data[dia][destino].disponibles.push(nombre);
   }
@@ -1528,4 +1530,15 @@ function doblarJugador(nombre, eqOrigen, destino){
   autoGuardar();
   render();
   toast('⧉ '+nombre+' doblado en '+destino);
+}
+// Asegura que un jugador solo esté en UNA zona activa por equipo (evita duplicados internos)
+function limpiarEquipoExcepto(nombre, eq, zonaMantener){
+  ZONAS_ACTIVAS.forEach(z=>{
+    if(z===zonaMantener) return;
+    const arr = data[dia][eq]?.[z];
+    if(arr){
+      const i = arr.indexOf(nombre);
+      if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(dia,eq,nombre)]; }
+    }
+  });
 }
