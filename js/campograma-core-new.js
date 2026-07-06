@@ -1,4 +1,4 @@
-// ================================================
+// ================================================// ================================================
 // CAMPOGRAMA-LOGIC.JS — Lógica principal (Fase 1: monolito intacto)
 // ================================================
 
@@ -673,21 +673,53 @@ async function generarFotoMulti(){
 // ══════════════════════════════════════════════════
 // TABLA DE CONTROL
 // ══════════════════════════════════════════════════
+let _controlDia = null;
+let _controlEqsActivos = new Set(EQUIPOS);
 function abrirControl(){
   document.getElementById('control-overlay').classList.add('open');
+  _controlDia = dia;
+  _controlEqsActivos = new Set(EQUIPOS);
+  const sel = document.getElementById('control-dia-sel');
+  sel.innerHTML = '';
+  DIAS.forEach(d=>{
+    const o=document.createElement('option'); o.value=d; o.textContent=d+(FECHAS[d]?' · '+FECHAS[d]:'');
+    if(d===_controlDia) o.selected=true;
+    sel.appendChild(o);
+  });
+  renderControlEqsRow();
   renderControl();
+}
+function cambiarControlDia(d){ _controlDia = d; renderControl(); }
+function toggleControlEq(eq){
+  if(_controlEqsActivos.has(eq)) _controlEqsActivos.delete(eq);
+  else _controlEqsActivos.add(eq);
+  renderControlEqsRow();
+  renderControl();
+}
+function renderControlEqsRow(){
+  const row = document.getElementById('control-eqs-row');
+  row.innerHTML = '';
+  EQUIPOS.forEach(eq=>{
+    const activo = _controlEqsActivos.has(eq);
+    const b = document.createElement('button');
+    b.textContent = (EQ_LABEL[eq]||eq);
+    b.onclick = ()=>toggleControlEq(eq);
+    b.style.cssText = `font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;border:1.5px solid ${EQ_DOT_COLORS[eq]||'#888'};background:${activo?(EQ_DOT_COLORS[eq]||'#888'):'#fff'};color:${activo?'#fff':(EQ_DOT_COLORS[eq]||'#888')};`;
+    row.appendChild(b);
+  });
 }
 function cerrarControl(){
   document.getElementById('control-overlay').classList.remove('open');
 }
-function getEstadoJugador(nombre, eq){
+function getEstadoJugador(nombre, eq, diaP){
+  const diaC = diaP || dia;
   // Devuelve {estado, multi} donde estado es dónde está en su equipo
-  const d = data[dia][eq];
+  const d = data[diaC][eq];
   if(!d) return {estado:'vacio', multi:false};
   // ¿Está en otro equipo además del suyo?
   const eqsActivos = EQUIPOS.filter(e=>
     ['campo','banquillo','disponibles','lesionados','otros','extra','promovidos_1er']
-      .some(z=>(data[dia][e]?.[z]||[]).includes(nombre))
+      .some(z=>(data[diaC][e]?.[z]||[]).includes(nombre))
   );
   const multi = eqsActivos.length > 1;
   // Estado en su propio equipo
@@ -712,8 +744,7 @@ function estadoLabel(estado){
   }
 }
 function renderControl(){
-  const fecha = FECHAS[dia]||'';
-  document.getElementById('control-dia-lbl').textContent = dia+(fecha?'  '+fecha:'');
+  const diaC = _controlDia || dia;
   const thead = document.getElementById('control-thead');
   const tbody = document.getElementById('control-tbody');
   thead.innerHTML=''; tbody.innerHTML='';
@@ -721,18 +752,19 @@ function renderControl(){
     'CASTILLA':'CAS','RMC':'RMC',
     'JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'
   };
+  const eqsVisibles = EQUIPOS.filter(eq=>_controlEqsActivos.has(eq));
   // ── FILA 1 cabecera: nombre equipo (colspan 2)
   const trH1 = document.createElement('tr');
-  EQUIPOS.forEach(eq=>{
+  eqsVisibles.forEach(eq=>{
     const color = EQ_DOT_COLORS[eq]||'#888';
     const th = document.createElement('th');
     th.className = 'th-eq-grupo';
     th.colSpan = 2;
     // Contar jugadores: propios en campo + los que están en alguna zona activa
     const totalJugs = (plantillas[eq]||[]).length;
-    const enCampo = (data[dia][eq]?.campo||[]).length;
+    const enCampo = (data[diaC][eq]?.campo||[]).length;
     const prestados = EQUIPOS.filter(e=>e!==eq).reduce((acc,e)=>
-      acc + (data[dia][e]?.campo||[]).filter(n=>origen[n]===eq).length, 0);
+      acc + (data[diaC][e]?.campo||[]).filter(n=>origen[n]===eq).length, 0);
     const countStr = enCampo > 0
       ? `${enCampo}${prestados>0?'+'+prestados:''}`
       : `${totalJugs}`;
@@ -742,7 +774,7 @@ function renderControl(){
   thead.appendChild(trH1);
   // ── FILA 2 cabecera: Jugador | Estado por cada equipo
   const trH2 = document.createElement('tr');
-  EQUIPOS.forEach(eq=>{
+  eqsVisibles.forEach(eq=>{
     const thJ = document.createElement('th');
     thJ.className = 'th-sub th-sub-jugador';
     thJ.textContent = 'Jugador';
@@ -754,10 +786,10 @@ function renderControl(){
   });
   thead.appendChild(trH2);
   // ── FILAS de datos
-  const maxJug = Math.max(...EQUIPOS.map(eq=>(plantillas[eq]||[]).length), 0);
+  const maxJug = Math.max(...eqsVisibles.map(eq=>(plantillas[eq]||[]).length), 0);
   for(let i=0; i<maxJug; i++){
     const tr = document.createElement('tr');
-    EQUIPOS.forEach(eq=>{
+    eqsVisibles.forEach(eq=>{
       const jugs = plantillas[eq]||[];
       const tdJ = document.createElement('td');
       tdJ.className = 'td-jugador';
@@ -765,14 +797,14 @@ function renderControl(){
       tdE.className = 'td-estado-cel';
       if(i < jugs.length){
         const nombre = jugs[i];
-        const {estado, multi} = getEstadoJugador(nombre, eq);
+        const {estado, multi} = getEstadoJugador(nombre, eq, diaC);
         tdJ.textContent = nombre;
         const isPor = porteros.includes(nombre);
         if(multi){
           tdJ.classList.add('td-multi');
           tdE.classList.add('td-multi');
           const eqsActivos = EQUIPOS
-            .filter(e=>ZONAS_ACTIVAS.some(z=>(data[dia][e]?.[z]||[]).includes(nombre)))
+            .filter(e=>ZONAS_ACTIVAS.some(z=>(data[diaC][e]?.[z]||[]).includes(nombre)))
             .map(e=>eqsShort[e]||e).join('+');
           tdE.innerHTML = `<span class="ctrl-badge ctrl-multi">⚡ ${eqsActivos}</span>`;
         } else if(estado==='disponible'){
@@ -793,8 +825,8 @@ function renderControl(){
             otros:    '<span class="ctrl-badge ctrl-otros">Otros</span>'
           };
           let lbl = badges[estado] || estado;
-          if(estado==='promo' && promInfo[dia]?.[eq]?.[nombre]){
-            const dest=promInfo[dia][eq][nombre];
+          if(estado==='promo' && promInfo[diaC]?.[eq]?.[nombre]){
+            const dest=promInfo[diaC][eq][nombre];
             const destCorto = dest==='1ER EQUIPO'?'1ER':(eqsShort[dest]||dest);
             lbl = `<span class="ctrl-badge ctrl-promo">↑ ${destCorto}</span>`;
           }
