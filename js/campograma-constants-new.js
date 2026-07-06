@@ -41,8 +41,8 @@ const EQUIPO_SUPERIOR = {
 };
 
 const EQ_DOT_COLORS = {
-  'CASTILLA':'#f59e0b','RMC':'#3b82f6','JUVENIL A':'#10b981',
-  'JUVENIL B':'#8b5cf6','JUVENIL C':'#ef4444','CADETE A':'#ec4899',
+  'CASTILLA':'#1e3a8a','RMC':'#7c3aed','JUVENIL A':'#eab308',
+  'JUVENIL B':'#16a34a','JUVENIL C':'#db2777','CADETE A':'#ea580c',
 };
 
 const LS_KEY     = 'rm_cantera_v2';
