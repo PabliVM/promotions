@@ -471,7 +471,7 @@ if(cargado) render();
      NAVEGACIÓN INFERIOR APP MÓVIL
 ════════════════════════════════ -->
 <!-- ═══════════ TABLA CONTROL ═══════════ -->
-<div id="control-overlay">
+<div id="control-overlay" onclick="if(event.target===this) cerrarControl()">
   <div id="control-box">
     <div id="control-hdr">
       <div>
