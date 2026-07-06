@@ -129,9 +129,8 @@ function buildCard(eq){
   descBtn.title='Marcar día de descanso';
   descBtn.onclick=(e)=>{ e.stopPropagation(); toggleDescanso(eq,_diaModo); };
   right.appendChild(descBtn);
-  const modoB=mk('button','modo-btn'+(esPartido(eq,_diaModo)?' partido':'')+(esDescanso(eq,_diaModo)?' hidden-btn':''));
+const modoB=mk('button','modo-btn'+(esPartido(eq,_diaModo)?' partido':''));
   modoB.textContent=esPartido(eq,_diaModo)?'⚽ PARTIDO':'🏋️ ENTRENO';
-  modoB.style.display = esDescanso(eq,_diaModo) ? 'none' : '';
   modoB.onclick=(e)=>{e.stopPropagation();togglePartido(eq,_diaModo);};
   right.appendChild(modoB);
   // Botón YL — solo Juvenil A: activa/desactiva modo Youth League en disponibles
