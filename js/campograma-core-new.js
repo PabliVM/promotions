@@ -1492,3 +1492,12 @@ async function arrancarDesdeFirebase(){
   }
 }
 arrancarDesdeFirebase();
+function doblarJugador(nombre, eqOrigen, destino){
+  if(destino==='1ER EQUIPO' || !data[dia][destino]) { toast('❌ No se puede doblar ahí'); return; }
+  if(!data[dia][destino].disponibles.includes(nombre)){
+    data[dia][destino].disponibles.push(nombre);
+  }
+  autoGuardar();
+  render();
+  toast('⧉ '+nombre+' doblado en '+destino);
+}
