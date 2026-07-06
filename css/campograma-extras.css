@@ -132,7 +132,9 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 }
 
 /* Descanso: mostrar zonas normales, sin bloquear */
-.card.en-descanso .zona-disponibles,
-.card.en-descanso .cols-estado {
+.card.en-descanso .zona-disponibles {
   display: block !important;
+}
+.card.en-descanso .cols-estado {
+  display: grid !important;
 }
