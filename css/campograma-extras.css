@@ -150,3 +150,11 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   cursor: pointer;
   flex-shrink: 0;
 }
+.chip-doblar {
+  margin-left: 4px;
+  font-size: 11px;
+  color: #2563eb;
+  cursor: pointer;
+  opacity: .6;
+}
+.chip-doblar:hover { opacity: 1; }
