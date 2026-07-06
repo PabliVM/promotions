@@ -152,3 +152,9 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   cursor: pointer;
   flex-shrink: 0;
 }
+
+.chip.chip-seleccionado {
+  outline: 3px solid #2563eb !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.25) !important;
+}
