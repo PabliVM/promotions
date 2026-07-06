@@ -114,6 +114,7 @@ function equalizarCards(){
   }
 }
 function initDrag(){
+  initSeleccionCampo();
   document.querySelectorAll('.cf,.cz').forEach(c=>{
     // Capturar datos del chip AHORA (el elemento puede re-renderizarse)
     const nombre = c.dataset.nombre;
@@ -387,3 +388,92 @@ function move(fromEq,fromZona,toEq,toZona,nombre){
 // ══════════════════════════════════════════════════
 // MODAL COPIAR
 // ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// SELECCIÓN MÚLTIPLE EN EL CAMPO (rectángulo) + ALINEAR
+// ══════════════════════════════════════════════════
+let _selCampoWrap = null;      // campo-wrap donde se está seleccionando
+let _selRectEl = null;
+let _selStart = null;
+let _campoSeleccion = [];      // [{nombre,eq,pofEl}]
+
+function initSeleccionCampo(){
+  document.querySelectorAll('.campo-wrap').forEach(cWrap=>{
+    cWrap.addEventListener('mousedown', (e)=>{
+      if(e.target.closest('.pof') || e.target.closest('.chip')) return; // sobre un jugador: dejar el drag normal
+      if(e.button !== 0) return;
+      limpiarSeleccionCampo();
+      _selCampoWrap = cWrap;
+      const r = cWrap.getBoundingClientRect();
+      _selStart = { x: e.clientX - r.left, y: e.clientY - r.top, rectTop: r.top, rectLeft: r.left };
+      _selRectEl = document.createElement('div');
+      _selRectEl.style.cssText = 'position:absolute;border:1.5px dashed #2563eb;background:rgba(37,99,235,.12);pointer-events:none;z-index:50;';
+      cWrap.appendChild(_selRectEl);
+      e.preventDefault();
+      on('mousemove', moveSeleccionCampo);
+      on('mouseup', endSeleccionCampo);
+    });
+  });
+}
+function moveSeleccionCampo(e){
+  if(!_selRectEl || !_selCampoWrap) return;
+  const r = _selCampoWrap.getBoundingClientRect();
+  const curX = e.clientX - r.left, curY = e.clientY - r.top;
+  const left = Math.min(_selStart.x, curX), top = Math.min(_selStart.y, curY);
+  const w = Math.abs(curX - _selStart.x), h = Math.abs(curY - _selStart.y);
+  _selRectEl.style.left = left+'px'; _selRectEl.style.top = top+'px';
+  _selRectEl.style.width = w+'px'; _selRectEl.style.height = h+'px';
+}
+function endSeleccionCampo(e){
+  off('mousemove', moveSeleccionCampo);
+  off('mouseup', endSeleccionCampo);
+  if(!_selRectEl || !_selCampoWrap){ return; }
+  const rectBox = _selRectEl.getBoundingClientRect();
+  _selRectEl.remove(); _selRectEl = null;
+  // Si el rectángulo es minúsculo (clic simple), no seleccionar nada
+  if(rectBox.width < 6 || rectBox.height < 6){ _selCampoWrap = null; return; }
+  const eq = _selCampoWrap.dataset.eq;
+  _campoSeleccion = [];
+  _selCampoWrap.querySelectorAll('.pof').forEach(pof=>{
+    const pr = pof.getBoundingClientRect();
+    const intersecta = !(pr.right < rectBox.left || pr.left > rectBox.right || pr.bottom < rectBox.top || pr.top > rectBox.bottom);
+    if(intersecta){
+      const chip = pof.querySelector('.chip');
+      if(chip){
+        chip.classList.add('chip-seleccionado');
+        _campoSeleccion.push({ nombre: chip.dataset.nombre, eq: chip.dataset.eq, pof });
+      }
+    }
+  });
+  _selCampoWrap = null;
+  actualizarBtnAlinear();
+}
+function limpiarSeleccionCampo(){
+  _campoSeleccion.forEach(s=> s.pof.querySelector('.chip')?.classList.remove('chip-seleccionado'));
+  _campoSeleccion = [];
+  actualizarBtnAlinear();
+}
+function actualizarBtnAlinear(){
+  const btn = document.getElementById('btn-alinear');
+  if(!btn) return;
+  if(_campoSeleccion.length >= 2){
+    btn.textContent = '↔ Alinear ('+_campoSeleccion.length+')';
+    btn.style.display = '';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+function alinearSeleccionados(){
+  if(_campoSeleccion.length < 2) return;
+  const eq = _campoSeleccion[0].eq;
+  const n = _campoSeleccion.length;
+  const avgTop = _campoSeleccion.reduce((acc,s)=>acc+parseFloat(s.pof.style.top||'50'),0) / n;
+  const margen = 12, ancho = 100 - margen*2;
+  _campoSeleccion.forEach((s, i)=>{
+    const left = n === 1 ? 50 : margen + (ancho * i / (n-1));
+    savePos(dia, eq, s.nombre, avgTop, left);
+  });
+  limpiarSeleccionCampo();
+  autoGuardar();
+  render();
+  toast('↔ Jugadores alineados');
+}
