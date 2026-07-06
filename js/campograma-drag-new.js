@@ -293,6 +293,7 @@ function endChip(e){
       const _zonasOrigenValidas = ['disponibles','campo'];
       const esPromocionAuto = (
         toEq !== _eqPropio2 &&                       // destino distinto a su equipo propio
+        _fromEq2 === _eqPropio2 &&                    // viene de SU equipo propio (si no, ya estaba doblado)
         _zonasOrigenValidas.includes(_fromZona2)     // viene de disponibles o campo
       );
       if(esPromocionAuto){
