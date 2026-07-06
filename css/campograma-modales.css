@@ -761,14 +761,17 @@ body.dark .col-extra{background:#1a1625;}
 #reg-table th{background:#f0f4fa;color:#5a6170;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:8px;text-align:center;border-bottom:1px solid #dfe1e6;white-space:nowrap;}
 #reg-table th:first-child{text-align:left;min-width:130px;}
 #reg-table td{padding:5px 6px;border-bottom:1px solid #f0f4fa;text-align:center;color:#5a6170;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;}
-#reg-table td:first-child{text-align:left;color:#1a1d23;font-weight:600;font-size:12px;}
+#reg-table td:first-child{text-align:left;padding:8px 10px;}
+.reg-eq-pill{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;letter-spacing:.3px;margin-bottom:4px;}
+.reg-jug-name{font-size:13px;font-weight:700;color:#1a1d23;}
+.reg-dot{display:inline-block;width:22px;height:22px;border-radius:6px;font-size:10px;font-weight:800;line-height:22px;text-align:center;}
+.reg-dot.active{background:rgba(22,163,74,.18);color:#16a34a;border:1px solid rgba(22,163,74,.35);}
+.reg-dot.banco{background:rgba(37,99,235,.16);color:#2563eb;border:1px solid rgba(37,99,235,.35);}
+.reg-dot.partido{background:rgba(217,119,6,.18);color:#d97706;border:1px solid rgba(217,119,6,.35);}
+.reg-dot.empty{background:#f0f4fa;color:#c7cfdb;}
 #reg-table tr:hover td{background:#f8fafd;}
 #reg-table tr:nth-child(even) td{background:#fafbfc;}
-.reg-dot{display:inline-block;width:20px;height:20px;border-radius:4px;font-size:9px;font-weight:700;line-height:20px;text-align:center;}
-.reg-dot.active{background:rgba(22,163,74,.15);color:#16a34a;}
-.reg-dot.banco{background:rgba(37,99,235,.12);color:#2563eb;}
-.reg-dot.partido{background:rgba(245,158,11,.15);color:#d97706;}
-.reg-dot.empty{background:#f0f4fa;color:#d1d9e6;}
+
 .reg-total{background:rgba(37,99,235,.08)!important;color:#2563eb!important;font-weight:700!important;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif!important;}
 /* Vista equipo */
 #reg-equipo-grid{display:grid;grid-template-columns:1fr;gap:12px;max-width:520px;margin:0 auto;}
