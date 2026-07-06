@@ -191,9 +191,9 @@ body.dark .semana-td-card .card-hdr-fecha { color: #8b949e; }
   border-color: #2563eb;
 }
 .semana-td-card .modo-btn.descanso {
-  background: rgba(100,116,139,.1);
-  color: #64748b;
-  border-color: #64748b;
+  background: rgba(37,99,235,.1);
+  color: #2563eb;
+  border-color: #2563eb;
 }
 
 .cards-grid.view-semana .cf {
