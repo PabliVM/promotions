@@ -474,7 +474,8 @@ function alinearSeleccionados(direccion){
     const targetLeft = Math.max(...lefts);
     let minT = Math.min(...tops), maxT = Math.max(...tops);
     if(maxT - minT < 6){ minT = tops[0]-6; maxT = tops[0]+6; }
-    _campoSeleccion.forEach((s, i)=>{
+    const orden = [..._campoSeleccion].sort((a,b)=>parseFloat(a.pof.style.top||'50')-parseFloat(b.pof.style.top||'50'));
+    orden.forEach((s, i)=>{
       const top = n === 1 ? tops[0] : minT + ((maxT-minT) * i / (n-1));
       savePos(diaSel, eq, s.nombre, top, targetLeft);
     });
@@ -483,7 +484,8 @@ function alinearSeleccionados(direccion){
     const targetTop = Math.max(...tops);
     let minL = Math.min(...lefts), maxL = Math.max(...lefts);
     if(maxL - minL < 6){ minL = lefts[0]-6; maxL = lefts[0]+6; }
-    _campoSeleccion.forEach((s, i)=>{
+    const orden = [..._campoSeleccion].sort((a,b)=>parseFloat(a.pof.style.left||'50')-parseFloat(b.pof.style.left||'50'));
+    orden.forEach((s, i)=>{
       const left = n === 1 ? lefts[0] : minL + ((maxL-minL) * i / (n-1));
       savePos(diaSel, eq, s.nombre, targetTop, left);
     });
