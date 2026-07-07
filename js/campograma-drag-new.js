@@ -436,6 +436,7 @@ function endSeleccionCampo(e){
   // Si el rectángulo es minúsculo (clic simple), no seleccionar nada
   if(rectBox.width < 6 || rectBox.height < 6){ _selCampoWrap = null; return; }
   const eq = _selCampoWrap.dataset.eq;
+  const diaSel = _selCampoWrap.dataset.dia;
   _campoSeleccion = [];
   _selCampoWrap.querySelectorAll('.pof').forEach(pof=>{
     const pr = pof.getBoundingClientRect();
@@ -444,7 +445,7 @@ function endSeleccionCampo(e){
       const chip = pof.querySelector('.chip');
       if(chip){
         chip.classList.add('chip-seleccionado');
-        _campoSeleccion.push({ nombre: chip.dataset.nombre, eq: chip.dataset.eq, pof });
+        _campoSeleccion.push({ nombre: chip.dataset.nombre, eq: chip.dataset.eq, dia: diaSel, pof });
       }
     }
   });
@@ -464,24 +465,27 @@ function actualizarBtnAlinear(){
 function alinearSeleccionados(direccion){
   if(_campoSeleccion.length < 2) return;
   const eq = _campoSeleccion[0].eq;
+  const diaSel = _campoSeleccion[0].dia || dia;
   const n = _campoSeleccion.length;
   const tops = _campoSeleccion.map(s=>parseFloat(s.pof.style.top||'50'));
   const lefts = _campoSeleccion.map(s=>parseFloat(s.pof.style.left||'50'));
-  const avgTop = tops.reduce((a,b)=>a+b,0) / n;
-  const avgLeft = lefts.reduce((a,b)=>a+b,0) / n;
   if(direccion === 'v'){
+    // Vertical: todos a la línea del que está MÁS A LA DERECHA (left máximo)
+    const targetLeft = Math.max(...lefts);
     let minT = Math.min(...tops), maxT = Math.max(...tops);
-    if(maxT - minT < 6){ minT = avgTop-6; maxT = avgTop+6; } // si estaban casi en la misma línea, dar algo de margen
+    if(maxT - minT < 6){ minT = tops[0]-6; maxT = tops[0]+6; }
     _campoSeleccion.forEach((s, i)=>{
-      const top = n === 1 ? avgTop : minT + ((maxT-minT) * i / (n-1));
-      savePos(dia, eq, s.nombre, top, avgLeft);
+      const top = n === 1 ? tops[0] : minT + ((maxT-minT) * i / (n-1));
+      savePos(diaSel, eq, s.nombre, top, targetLeft);
     });
   } else {
+    // Horizontal: todos al nivel del que está MÁS BAJO (top máximo)
+    const targetTop = Math.max(...tops);
     let minL = Math.min(...lefts), maxL = Math.max(...lefts);
-    if(maxL - minL < 6){ minL = avgLeft-6; maxL = avgLeft+6; }
+    if(maxL - minL < 6){ minL = lefts[0]-6; maxL = lefts[0]+6; }
     _campoSeleccion.forEach((s, i)=>{
-      const left = n === 1 ? avgLeft : minL + ((maxL-minL) * i / (n-1));
-      savePos(dia, eq, s.nombre, avgTop, left);
+      const left = n === 1 ? lefts[0] : minL + ((maxL-minL) * i / (n-1));
+      savePos(diaSel, eq, s.nombre, targetTop, left);
     });
   }
   limpiarSeleccionCampo();
