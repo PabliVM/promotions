@@ -748,7 +748,7 @@ body.dark .col-extra{background:#1a1625;}
 #reg-header h2{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;font-weight:700;color:#fff;margin:0;}
 #reg-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.8);font-size:20px;padding:4px 8px;line-height:1;border-radius:6px;}
 #reg-close:hover{color:#fff;background:rgba(255,255,255,.15);}
-#reg-body{padding:16px 20px 20px;background:#fff;}
+#reg-body{padding:16px 20px 20px;background:#fff;overflow-y:auto;flex:1;}
 #reg-tabs{display:flex;gap:6px;margin-bottom:16px;}
 .reg-tab{padding:5px 14px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0;text-transform:none;}
 .reg-tab.active{background:#2563eb;border-color:#2563eb;color:#fff;}
@@ -757,9 +757,9 @@ body.dark .col-extra{background:#1a1625;}
 #reg-search::placeholder{color:#9ca3af;}
 #reg-search:focus{border-color:#2563eb;}
 #reg-eq-filter{padding:7px 10px;border-radius:8px;border:1px solid #dfe1e6;background:#f8fafd;color:#1a1d23;font-size:12px;outline:none;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;}
-#reg-table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #dfe1e6;}
+#reg-table-wrap{overflow-x:auto;overflow-y:auto;max-height:60vh;border-radius:8px;border:1px solid #dfe1e6;}
 #reg-table{width:100%;border-collapse:collapse;font-size:12px;}
-#reg-table th{background:#f0f4fa;color:#5a6170;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:8px;text-align:center;border-bottom:1px solid #dfe1e6;white-space:nowrap;}
+#reg-table th{position:sticky;top:0;z-index:2;background:#f0f4fa;color:#5a6170;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:8px;text-align:center;border-bottom:1px solid #dfe1e6;white-space:nowrap;}
 #reg-table th:first-child{text-align:left;min-width:130px;}
 #reg-table td{padding:5px 6px;border-bottom:1px solid #f0f4fa;text-align:center;color:#5a6170;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;}
 #reg-table td:first-child{text-align:left;padding:8px 10px;}
