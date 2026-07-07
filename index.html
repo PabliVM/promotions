@@ -91,10 +91,8 @@
       </div>
       <div id="reg-filters">
         <input id="reg-search" type="text" placeholder="Buscar jugador…" oninput="renderReg()"/>
-        <select id="reg-eq-filter" onchange="renderReg()">
-          <option value="">Todos los equipos</option>
-        </select>
       </div>
+      <div id="reg-jug-eq-btns" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;"></div>
       <div id="reg-eq-btns" style="display:none"></div>
       <div id="reg-content"></div>
     </div>
@@ -425,7 +423,7 @@
     </div>
     <div id="cal-grid"></div>
     <div id="cal-footer">
-      <button id="cal-cancel" onclick="cerrarCal()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;">✕</button>
+      <button id="cal-cancel" onclick="cerrarCal()" style="background:none;border:none;color:#9ca3af;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;">✕</button>
       <span id="cal-sel-txt"></span>
       <button id="cal-ok" onclick="aplicarSemana()">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
