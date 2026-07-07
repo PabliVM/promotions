@@ -759,8 +759,8 @@ function renderControl(){
   const colgroup = document.createElement('colgroup');
   colgroup.id = 'control-colgroup';
   eqsVisibles.forEach(()=>{
-    const colJ = document.createElement('col'); colJ.style.width='67%';
-    const colE = document.createElement('col'); colE.style.width='33%';
+    const colJ = document.createElement('col'); colJ.style.width='58%';
+    const colE = document.createElement('col'); colE.style.width='42%';
     colgroup.appendChild(colJ); colgroup.appendChild(colE);
   });
   document.getElementById('control-table').insertBefore(colgroup, document.getElementById('control-table').firstChild);
