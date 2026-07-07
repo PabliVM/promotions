@@ -984,3 +984,9 @@ body.dark .app-footer-maestro{
 
 /* === Footer MAESTRO (sobre el #bottom-nav, minimalista) === */
 /* No lo añadimos porque #bottom-nav ocupa el bottom fixed. */
+
+#control-dia-btns .filtro-eq-btn.activo {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
