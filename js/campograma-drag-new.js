@@ -1,54 +1,56 @@
 // ── campograma-drag.js — Drag & drop de chips ──
-function devolverADisponibles(nombre, eq, zona){
+function devolverADisponibles(nombre, eq, zona, diaP){
+  diaP = diaP || dia;
   const eqPropio = origen[nombre] || eq;
   // Caso especial: campo del Primer Equipo
   if(eq === '1ER EQUIPO' && zona === 'campo'){
-    if(primerEquipoJugadores[dia]){
-      const i = primerEquipoJugadores[dia].indexOf(nombre);
-      if(i >= 0) primerEquipoJugadores[dia].splice(i, 1);
+    if(primerEquipoJugadores[diaP]){
+      const i = primerEquipoJugadores[diaP].indexOf(nombre);
+      if(i >= 0) primerEquipoJugadores[diaP].splice(i, 1);
     }
-    delete pos[key(dia, '1ER EQUIPO', nombre)];
+    delete pos[key(diaP, '1ER EQUIPO', nombre)];
     autoGuardar(); render(); return;
   }
   // 1. Quitar de la zona específica donde está
-  const arr = data[dia][eq]?.[zona];
+  const arr = data[diaP][eq]?.[zona];
   if(arr){ const i = arr.indexOf(nombre); if(i >= 0) arr.splice(i, 1); }
-  if(zona === 'campo') delete pos[key(dia, eq, nombre)];
-  const destino = promInfo[dia]?.[eqPropio]?.[nombre];
+  if(zona === 'campo') delete pos[key(diaP, eq, nombre)];
+  const destino = promInfo[diaP]?.[eqPropio]?.[nombre];
   // 2. Si era la copia del equipo DESTINO (prestado/doblado), quitar de TODAS sus zonas activas ahí
   if(eq !== eqPropio){
     ZONAS_ACTIVAS.forEach(z => {
-      const a = data[dia][eq]?.[z];
+      const a = data[diaP][eq]?.[z];
       if(!a) return;
       const i = a.indexOf(nombre);
       if(i >= 0) a.splice(i, 1);
     });
-    delete pos[key(dia, eq, nombre)];
+    delete pos[key(diaP, eq, nombre)];
   }
   // 3. Si había promoción/duplicado activo, deshacerla también en el equipo destino
-  if(destino && data[dia][destino]){
+  if(destino && data[diaP][destino]){
     ZONAS_ACTIVAS.forEach(z=>{
-      const a = data[dia][destino][z];
+      const a = data[diaP][destino][z];
       if(!a) return;
       const i = a.indexOf(nombre);
-      if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(dia,destino,nombre)]; }
+      if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(diaP,destino,nombre)]; }
     });
   }
   // 4. Quitar de promovidos_1er en su equipo propio
-  const prom = data[dia][eqPropio]?.promovidos_1er;
+  const prom = data[diaP][eqPropio]?.promovidos_1er;
   if(prom){ const pi = prom.indexOf(nombre); if(pi >= 0) prom.splice(pi, 1); }
-  if(promInfo[dia]?.[eqPropio]) delete promInfo[dia][eqPropio][nombre];
+  if(promInfo[diaP]?.[eqPropio]) delete promInfo[diaP][eqPropio][nombre];
   // 5. Limpiar multiEq
-  borrarMultiEq(dia, nombre, eq);
+  borrarMultiEq(diaP, nombre, eq);
   // 6. Volver a disponibles de su equipo propio SOLO si no sigue activo en otra zona suya
-  const sigueActivo = ZONAS_ACTIVAS.some(z=>z!=='disponibles' && (data[dia][eqPropio]?.[z]||[]).includes(nombre));
+  const sigueActivo = ZONAS_ACTIVAS.some(z=>z!=='disponibles' && (data[diaP][eqPropio]?.[z]||[]).includes(nombre));
   if(!sigueActivo){
-    const disp = data[dia][eqPropio]?.disponibles;
+    const disp = data[diaP][eqPropio]?.disponibles;
     if(disp && !disp.includes(nombre)) disp.push(nombre);
   }
 }
 // dispararDobleTap recibe strings (no elemento DOM) — seguro tras re-render
-function dispararDobleTap(nombre, eq, zona){
+function dispararDobleTap(nombre, eq, zona, diaP){
+  diaP = diaP || dia;
   const eqPropio = origen[nombre] || eq;
   const esPrimario = (zona === 'disponibles' && eq === eqPropio);
   // ── Mensaje ──
@@ -66,14 +68,14 @@ function dispararDobleTap(nombre, eq, zona){
     msg = `Quitar a ${nombre} de ${zonaLabel} → disponibles${eq !== eqPropio ? ' de ' + eqPropio : ''}`;
   }
   const onEliminar = ()=>{
-    devolverADisponibles(nombre, eq, zona);
+    devolverADisponibles(nombre, eq, zona, diaP);
     autoGuardar();
     render();
     toast('↩️ ' + nombre + ' → disponibles ' + eqPropio);
   };
   const onDuplicar = ()=>{
     abrirPromoDestModal(nombre, eqPropio, (destino)=>{
-      doblarJugador(nombre, eqPropio, destino);
+      doblarJugador(nombre, eqPropio, destino, diaP);
     });
   };
   if(esPrimario){
@@ -84,7 +86,7 @@ function dispararDobleTap(nombre, eq, zona){
   }
 }
 // Alias por compatibilidad (ya no se usa pero por si acaso)
-function onChipDoubleTap(c){ dispararDobleTap(c.dataset.nombre, c.dataset.eq, c.dataset.zona||'campo'); }
+function onChipDoubleTap(c){ dispararDobleTap(c.dataset.nombre, c.dataset.eq, c.dataset.zona||'campo', c.dataset.dia); }
 // ── DRAG UNIFICADO — cualquier chip puede ir a cualquier zona o campo ──
 // El drag arranca tras 180ms para dejar hueco al doble clic
 const _dragDelay = new WeakMap();  // chip → timeout del drag pendiente
@@ -120,6 +122,7 @@ function initDrag(){
     const nombre = c.dataset.nombre;
     const eq     = c.dataset.eq;
     const zona   = c.dataset.zona || 'campo';
+    const diaChip = c.dataset.dia;
     // Touch
     // Touch: doble tap por clave nombre+eq+zona (no por referencia DOM)
     const _tapKey = nombre+'|'+eq+'|'+zona;
@@ -131,7 +134,7 @@ function initDrag(){
       if(now - last < 400){
         clearTimeout(_dragDelay.get(c));
         _globalLastClick.set(_tapKey, 0);
-        dispararDobleTap(nombre, eq, zona);
+        dispararDobleTap(nombre, eq, zona, diaChip);
         return;
       }
       _globalLastClick.set(_tapKey, now);
@@ -148,7 +151,7 @@ function initDrag(){
       if(now - last < 400){
         clearTimeout(_dragDelay.get(c));
         _globalLastClick.set(_tapKey, 0);
-        dispararDobleTap(nombre, eq, zona);
+        dispararDobleTap(nombre, eq, zona, diaChip);
         return;
       }
       _globalLastClick.set(_tapKey, now);
@@ -161,7 +164,7 @@ function initDrag(){
       e.preventDefault(); e.stopPropagation();
       clearTimeout(_dragDelay.get(c));
       _globalLastClick.set(_tapKey, 0);
-      dispararDobleTap(nombre, eq, zona);
+      dispararDobleTap(nombre, eq, zona, diaChip);
     });
   });
 }
@@ -331,6 +334,7 @@ function endChip(e){
     // ── Destino: promovidos_1er → preguntar a qué equipo va
     if(toZona==='promovidos_1er'){
       const _nombre=drag.nombre, _fromEq=drag.eq, _fromZona=drag.zona;
+      const _diaProm = dia; // capturar AHORA: 'dia' se resetea antes de que el usuario elija destino en el modal
       // Quitar de zona origen (puede ser campo, disponibles, etc.)
       if(_fromZona==='campo'){
         // Si viene del campo, quitar pos
@@ -343,7 +347,7 @@ function endChip(e){
       const _eqPropio = origen[_nombre] || _fromEq;
       drag=null;
       abrirPromoDestModal(_nombre, _eqPropio, (destino)=>{
-        ejecutarPromocion(_nombre, _eqPropio, destino);
+        ejecutarPromocion(_nombre, _eqPropio, destino, _diaProm);
       });
       return;
     }
