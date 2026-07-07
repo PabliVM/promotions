@@ -779,7 +779,7 @@ function renderControl(){
     const countStr = enCampo > 0
       ? `${enCampo}${prestados>0?'+'+prestados:''}`
       : `${totalJugs}`;
-    th.innerHTML = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};margin-right:6px;vertical-align:middle;"></span>${eq}<span style="margin-left:8px;color:rgba(255,255,255,.45);font-weight:700;">${countStr}</span>`;
+    th.innerHTML = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};margin-right:6px;vertical-align:middle;"></span>${eqsShort[eq]||eq}<span style="margin-left:8px;color:rgba(255,255,255,.45);font-weight:700;">${countStr}</span>`;
     trH1.appendChild(th);
   });
   thead.appendChild(trH1);
