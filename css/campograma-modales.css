@@ -435,7 +435,7 @@
 .fb-empty{color:rgba(255,255,255,.3);font-size:13px;text-align:center;padding:20px 0;font-family:'Barlow Condensed',sans-serif;}
 /* ── CALENDARIO SEMANA ── */
 #cal-overlay{
-  position:fixed;inset:0;z-index:10020;
+  position:fixed;inset:0;z-index:10250;
   background:rgba(0,0,0,.55);
   display:none;align-items:center;justify-content:center;
   padding:20px;
@@ -443,11 +443,12 @@
 }
 #cal-overlay.open{display:flex;}
 #cal-box{
-  background:#1e2535;
+  background:#fff;
+  border:1px solid #dfe1e6;
   border-radius:20px;
   padding:20px 16px 16px;
   width:320px;max-width:94vw;
-  box-shadow:0 20px 60px rgba(0,0,0,.7);
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
 }
 #cal-header{
   display:flex;align-items:center;justify-content:space-between;
@@ -456,33 +457,33 @@
 #cal-mes{
   font-family:var(--font);
   font-size:18px;font-weight:700;
-  color:#fff;letter-spacing:0;
+  color:#1a1d23;letter-spacing:0;
   display:flex;align-items:center;gap:4px;
 }
-#cal-mes::after{content:'›';color:#3b82f6;font-size:20px;font-weight:400;}
+#cal-mes::after{content:'›';color:#2563eb;font-size:20px;font-weight:400;}
 .cal-nav{
   background:none;border:none;
-  color:#3b82f6;
+  color:#2563eb;
   width:32px;height:32px;font-size:22px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;transition:background .12s;
 }
-.cal-nav:hover{background:rgba(59,130,246,.15);}
+.cal-nav:hover{background:rgba(37,99,235,.1);}
 #cal-grid{
   display:grid;grid-template-columns:repeat(7,1fr);
   gap:0;margin-bottom:16px;
 }
 .cal-dow{
   font-family:var(--font);
-  font-size:10px;font-weight:500;
-  color:rgba(255,255,255,.35);
+  font-size:10px;font-weight:600;
+  color:#9ca3af;
   text-align:center;padding:0 0 10px;
   letter-spacing:.3px;
 }
 .cal-day{
   font-family:var(--font);
   font-size:17px;font-weight:400;
-  color:#fff;text-align:center;
+  color:#1a1d23;text-align:center;
   border-radius:50%;
   cursor:pointer;transition:background .1s;
   aspect-ratio:1;
@@ -490,22 +491,22 @@
   width:calc(100% - 2px);margin:1px auto;
 }
 .cal-day.vacio{pointer-events:none;}
-.cal-day.hoy{color:#3b82f6;font-weight:700;}
-.cal-day.dia-sel{background:#3b82f6;color:#fff;border-radius:50%;font-weight:600;}
-.cal-day.semana-sel{background:rgba(59,130,246,.18);color:#fff;border-radius:0;width:100%;margin:1px 0;}
+.cal-day.hoy{color:#2563eb;font-weight:700;}
+.cal-day.dia-sel{background:#2563eb;color:#fff;border-radius:50%;font-weight:600;}
+.cal-day.semana-sel{background:rgba(37,99,235,.1);color:#1a1d23;border-radius:0;width:100%;margin:1px 0;}
 .cal-day.lunes-sel{border-radius:50% 0 0 50%;}
 .cal-day.domingo-sel{border-radius:0 50% 50% 0;}
-.cal-day:hover:not(.vacio):not(.dia-sel){background:rgba(255,255,255,.1);border-radius:50%;}
+.cal-day:hover:not(.vacio):not(.dia-sel){background:#f0f4fa;border-radius:50%;}
 #cal-footer{
   display:flex;align-items:center;justify-content:space-between;margin-top:4px;
 }
 #cal-ok{
   width:52px;height:52px;border-radius:50%;border:none;
-  background:#3b82f6;color:#fff;
+  background:#2563eb;color:#fff;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,.45);
+  cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,.35);
 }
-#cal-ok:hover{background:#2563eb;}
+#cal-ok:hover{background:#1d4ed8;}
 #cal-cancel{
   padding:10px 22px;border-radius:30px;border:none;
   background:#2a2e3a;color:#fff;
