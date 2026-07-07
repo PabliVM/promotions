@@ -166,6 +166,11 @@ function aplicarSemana(){
   renderCards();
   cerrarCal();
   toast('📅 Semana actualizada');
+  if(document.getElementById('control-overlay').classList.contains('open')){
+    _controlDia = dia;
+    renderControlDiaBtns();
+    renderControl();
+  }
 }
 // Navegación meses
 document.addEventListener('DOMContentLoaded',()=>{
