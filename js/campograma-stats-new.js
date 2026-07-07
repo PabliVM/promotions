@@ -55,8 +55,9 @@ function calcDesgloseExternos(eq){
   return { pctRMC: pct(rmc), pctJuveniles: pct(juv), pctCadete: pct(cad), total };
 }
 function calcStatsJugador(nombre){
-  let entrenos=0, partidos=0, banco=0, eqsConEntrenamiento={};
+  let entrenos=0, partidos=0, banco=0, eqsConEntrenamiento={}, dobladoCount=0;
   DIAS.forEach(d=>{
+    let eqsHoy=0;
     EQUIPOS.forEach(eq=>{
       const esP = !!(modoPartido[d]?.[eq]);
       const enCampo = (data[d][eq].campo||[]).includes(nombre);
@@ -65,11 +66,13 @@ function calcStatsJugador(nombre){
         if(esP){ partidos++; } else { entrenos++; }
         if(!eqsConEntrenamiento[eq]) eqsConEntrenamiento[eq]=0;
         eqsConEntrenamiento[eq]++;
+        eqsHoy++;
       }
       if(enBanco) banco++;
     });
+    if(eqsHoy>1) dobladoCount++;
   });
-  return { entrenos, partidos, banco, eqsConEntrenamiento };
+  return { entrenos, partidos, banco, eqsConEntrenamiento, dobladoCount };
 }
 function calcStatsEquipo(eq){
   let totalSesiones=0, totalJugadoresPropios=0, totalJugadoresExteros=0;
@@ -127,13 +130,14 @@ function renderRegJugadores(container){
   let html = '<div id="reg-table-wrap"><table id="reg-table"><thead id="reg-thead"><tr>';
   html += '<th>Jugador</th>';
   DIAS.forEach(d=>{ html+=`<th title="${d}">${d.slice(0,3)}</th>`; });
-  html += '<th title="Entrenamientos">🏋️</th><th title="Partidos">⚽</th><th title="Banco">🔄</th><th>TOTAL</th></tr></thead><tbody>';
+  html += '<th title="Entrenamientos">🏋️</th><th title="Partidos">⚽</th><th title="Banco">🔄</th><th title="Equipos con los que ha entrenado">EQUIPOS</th><th title="Días doblado (2+ equipos el mismo día)">DOBLADO</th><th>TOTAL</th></tr></thead><tbody>';
+  const eqsShort = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
   filtrados.forEach(nombre=>{
     const eqOrig=origen[nombre]||'—';
     const col=EQ_COLOR[eqOrig]||'#94a3b8';
-    const {entrenos,partidos,banco}=calcStatsJugador(nombre);
+    const {entrenos,partidos,banco,eqsConEntrenamiento,dobladoCount}=calcStatsJugador(nombre);
     const total=entrenos+partidos;
-    html+=`<tr><td><span class="reg-eq-pill" style="background:${col}1a;color:${col};border:1px solid ${col}55;">${eqOrig}</span><div class="reg-jug-name">${nombre}</div></td>`;
+    html+=`<tr><td><span class="reg-eq-pill" style="background:${col}1a;color:${col};border:1px solid ${col}55;">${eqsShort[eqOrig]||eqOrig}</span><div class="reg-jug-name">${nombre}</div></td>`;
     DIAS.forEach(d=>{
       let cls='empty', txt='·';
       EQUIPOS.forEach(eq=>{
@@ -146,6 +150,9 @@ function renderRegJugadores(container){
     html+=`<td><span style="color:#4ade80;font-weight:800;">${entrenos||''}</span></td>`;
     html+=`<td><span style="color:#f59e0b;font-weight:800;">${partidos||''}</span></td>`;
     html+=`<td><span style="color:#60a5fa;font-weight:800;">${banco||''}</span></td>`;
+    const eqsTxt = Object.entries(eqsConEntrenamiento).map(([e,c])=>(eqsShort[e]||e)+'×'+c).join(', ');
+    html+=`<td style="font-size:10px;color:#5a6170;text-align:left;padding-left:8px;white-space:nowrap;">${eqsTxt||'—'}</td>`;
+    html+=`<td>${dobladoCount ? '<span class="ctrl-badge ctrl-multi">'+dobladoCount+'</span>' : '—'}</td>`;
     html+=`<td class="reg-total">${total||'—'}</td></tr>`;
   });
   html+='</tbody></table></div>';
