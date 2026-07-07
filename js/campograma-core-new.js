@@ -679,15 +679,21 @@ function abrirControl(){
   document.getElementById('control-overlay').classList.add('open');
   _controlDia = dia;
   _controlEqsActivos = new Set(EQUIPOS);
-  const sel = document.getElementById('control-dia-sel');
-  sel.innerHTML = '';
-  DIAS.forEach(d=>{
-    const o=document.createElement('option'); o.value=d; o.textContent=d+(FECHAS[d]?' · '+FECHAS[d]:'');
-    if(d===_controlDia) o.selected=true;
-    sel.appendChild(o);
-  });
+  renderControlDiaBtns();
   renderControlEqsRow();
   renderControl();
+}
+function renderControlDiaBtns(){
+  const wrap = document.getElementById('control-dia-btns');
+  wrap.innerHTML = '';
+  const DIA_INICIAL = {'LUNES':'L','MARTES':'M','MIÉRCOLES':'X','JUEVES':'J','VIERNES':'V','SÁBADO':'S','DOMINGO':'D'};
+  DIAS.forEach(d=>{
+    const b = document.createElement('button');
+    b.className = 'filtro-eq-btn'+(d===_controlDia?' activo':'');
+    b.textContent = DIA_INICIAL[d] + (FECHAS[d] ? ' ' + FECHAS[d] : '');
+    b.onclick = ()=>{ cambiarControlDia(d); renderControlDiaBtns(); };
+    wrap.appendChild(b);
+  });
 }
 function cambiarControlDia(d){ _controlDia = d; renderControl(); }
 function toggleControlEq(eq){
