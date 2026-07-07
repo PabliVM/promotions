@@ -152,6 +152,15 @@ function aplicarSemana(){
     return;
   }
   FECHAS = calcFechasSemana(_calLunesSel);
+  // Si hoy cae dentro de esta semana, seleccionar ese día automáticamente
+  DIAS.forEach(d=>{
+    const [dd,mm] = (FECHAS[d]||'').split('/');
+    const hoy = new Date();
+    if(dd && mm && parseInt(dd)===hoy.getDate() && parseInt(mm)===(hoy.getMonth()+1)){
+      dia = d;
+      sessionStorage.setItem('rm_dia', d);
+    }
+  });
   autoGuardar();
   renderDias();
   renderCards();
