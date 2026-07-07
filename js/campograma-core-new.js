@@ -883,29 +883,30 @@ function cerrarPromoDestModal(){
   _promoCallback=null;
 }
 // Ejecutar promoción con destino elegido
-function ejecutarPromocion(nombre, eqOrigen, destino){
+function ejecutarPromocion(nombre, eqOrigen, destino, diaP){
+  diaP = diaP || dia;
   // Siempre queda en promovidos_1er del equipo origen
-  if(!data[dia][eqOrigen].promovidos_1er) data[dia][eqOrigen].promovidos_1er=[];
-  if(!data[dia][eqOrigen].promovidos_1er.includes(nombre)){
-    data[dia][eqOrigen].promovidos_1er.push(nombre);
+  if(!data[diaP][eqOrigen].promovidos_1er) data[diaP][eqOrigen].promovidos_1er=[];
+  if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
+    data[diaP][eqOrigen].promovidos_1er.push(nombre);
   }
   // Guardar destino
-  if(!promInfo[dia]) promInfo[dia]={};
-  if(!promInfo[dia][eqOrigen]) promInfo[dia][eqOrigen]={};
-  promInfo[dia][eqOrigen][nombre]=destino;
+  if(!promInfo[diaP]) promInfo[diaP]={};
+  if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
+  promInfo[diaP][eqOrigen][nombre]=destino;
   // Si va a otro equipo cantera → añadir a disponibles de ese equipo
   if(destino!=='1ER EQUIPO'){
-    if(!data[dia][destino]) data[dia][destino]={campo:[],disponibles:[],promovidos_1er:[],lesionados:[],otros:[]};
-    limpiarEquipoExcepto(nombre, destino, 'disponibles');
-    if(!data[dia][destino].disponibles.includes(nombre)){
-      data[dia][destino].disponibles.push(nombre);
+    if(!data[diaP][destino]) data[diaP][destino]={campo:[],disponibles:[],promovidos_1er:[],lesionados:[],otros:[]};
+    limpiarEquipoExcepto(nombre, destino, 'disponibles', diaP);
+    if(!data[diaP][destino].disponibles.includes(nombre)){
+      data[diaP][destino].disponibles.push(nombre);
     }
   }
   // Si va a 1ER EQUIPO → acumular en primerEquipoJugadores
   if(destino==='1ER EQUIPO'){
-    if(!primerEquipoJugadores[dia]) primerEquipoJugadores[dia]=[];
-    if(!primerEquipoJugadores[dia].includes(nombre)){
-      primerEquipoJugadores[dia].push(nombre);
+    if(!primerEquipoJugadores[diaP]) primerEquipoJugadores[diaP]=[];
+    if(!primerEquipoJugadores[diaP].includes(nombre)){
+      primerEquipoJugadores[diaP].push(nombre);
     }
   }
   autoGuardar();
@@ -1556,32 +1557,34 @@ async function arrancarDesdeFirebase(){
   }
 }
 arrancarDesdeFirebase();
-function doblarJugador(nombre, eqOrigen, destino){
-  if(destino==='1ER EQUIPO' || !data[dia][destino]) { toast('❌ No se puede doblar ahí'); return; }
-  limpiarEquipoExcepto(nombre, destino, 'disponibles'); // evitar duplicado en destino
-  if(!data[dia][destino].disponibles.includes(nombre)){
-    data[dia][destino].disponibles.push(nombre);
+function doblarJugador(nombre, eqOrigen, destino, diaP){
+  diaP = diaP || dia;
+  if(destino==='1ER EQUIPO' || !data[diaP][destino]) { toast('❌ No se puede doblar ahí'); return; }
+  limpiarEquipoExcepto(nombre, destino, 'disponibles', diaP); // evitar duplicado en destino
+  if(!data[diaP][destino].disponibles.includes(nombre)){
+    data[diaP][destino].disponibles.push(nombre);
   }
   // Marcar en PROMOCIONADOS del origen SIN quitarlo de donde está (es duplicado, no promoción real)
-  if(!data[dia][eqOrigen].promovidos_1er) data[dia][eqOrigen].promovidos_1er=[];
-  if(!data[dia][eqOrigen].promovidos_1er.includes(nombre)){
-    data[dia][eqOrigen].promovidos_1er.push(nombre);
+  if(!data[diaP][eqOrigen].promovidos_1er) data[diaP][eqOrigen].promovidos_1er=[];
+  if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
+    data[diaP][eqOrigen].promovidos_1er.push(nombre);
   }
-  if(!promInfo[dia]) promInfo[dia]={};
-  if(!promInfo[dia][eqOrigen]) promInfo[dia][eqOrigen]={};
-  promInfo[dia][eqOrigen][nombre] = destino;
+  if(!promInfo[diaP]) promInfo[diaP]={};
+  if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
+  promInfo[diaP][eqOrigen][nombre] = destino;
   autoGuardar();
   render();
   toast('⧉ '+nombre+' doblado en '+destino);
 }
 // Asegura que un jugador solo esté en UNA zona activa por equipo (evita duplicados internos)
-function limpiarEquipoExcepto(nombre, eq, zonaMantener){
+function limpiarEquipoExcepto(nombre, eq, zonaMantener, diaP){
+  diaP = diaP || dia;
   ZONAS_ACTIVAS.forEach(z=>{
     if(z===zonaMantener) return;
-    const arr = data[dia][eq]?.[z];
+    const arr = data[diaP][eq]?.[z];
     if(arr){
       const i = arr.indexOf(nombre);
-      if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(dia,eq,nombre)]; }
+      if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(diaP,eq,nombre)]; }
     }
   });
 }
