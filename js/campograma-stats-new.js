@@ -1,25 +1,40 @@
 // ── campograma-stats.js — Estadísticas de jugadores y equipos ──
 let _regTab = 'jugadores';
+let _regJugEqSel = ''; // '' = todos los equipos
 function openReg(){
   document.getElementById('reg-overlay').classList.add('show');
-  // Poblar filtro equipos
-  const sel = document.getElementById('reg-eq-filter');
-  sel.innerHTML = '<option value="">Todos los equipos</option>';
-  EQUIPOS.forEach(eq=>{ const o=document.createElement('option'); o.value=eq; o.textContent=eq; sel.appendChild(o); });
+  renderRegJugEqBtns();
   renderReg();
 }
 function closeReg(){
   document.getElementById('reg-overlay').classList.remove('show');
+}
+function renderRegJugEqBtns(){
+  const wrap = document.getElementById('reg-jug-eq-btns');
+  wrap.innerHTML = '';
+  const todos = document.createElement('button');
+  todos.className = 'filtro-eq-btn'+(_regJugEqSel===''?' activo':'');
+  todos.textContent = 'TODOS';
+  todos.onclick = ()=>{ _regJugEqSel=''; renderRegJugEqBtns(); renderReg(); };
+  wrap.appendChild(todos);
+  const eqsShort = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
+  EQUIPOS.forEach(eq=>{
+    const b = document.createElement('button');
+    b.className = 'filtro-eq-btn'+(_regJugEqSel===eq?' activo':'');
+    b.textContent = eqsShort[eq]||eq;
+    b.onclick = ()=>{ _regJugEqSel=eq; renderRegJugEqBtns(); renderReg(); };
+    wrap.appendChild(b);
+  });
 }
 let _regEqSel = EQUIPOS[0];
 function switchRegTab(tab){
   _regTab = tab;
   document.querySelectorAll('.reg-tab').forEach((b,i)=>b.classList.toggle('active', (i===0&&tab==='jugadores')||(i===1&&tab==='equipos')));
   const inp = document.getElementById('reg-search');
-  const sel = document.getElementById('reg-eq-filter');
+  const jugBtns = document.getElementById('reg-jug-eq-btns');
   const btns = document.getElementById('reg-eq-btns');
   inp.style.display = tab==='jugadores' ? '' : 'none';
-  sel.style.display = tab==='jugadores' ? '' : 'none';
+  jugBtns.style.display = tab==='jugadores' ? 'flex' : 'none';
   btns.style.display = tab==='equipos' ? 'flex' : 'none';
   if(tab==='equipos') renderRegEqBtns();
   renderReg();
@@ -56,23 +71,29 @@ function calcDesgloseExternos(eq){
 }
 function calcStatsJugador(nombre){
   let entrenos=0, partidos=0, banco=0, eqsConEntrenamiento={}, dobladoCount=0;
+  let diasLesionado=0, diasOtros=0, diasCampo=0, diasBanquillo=0;
   DIAS.forEach(d=>{
     let eqsHoy=0;
     EQUIPOS.forEach(eq=>{
       const esP = !!(modoPartido[d]?.[eq]);
       const enCampo = (data[d][eq].campo||[]).includes(nombre);
       const enBanco = (data[d][eq].banquillo||[]).includes(nombre);
+      const enLes = (data[d][eq].lesionados||[]).includes(nombre);
+      const enOtros = (data[d][eq].otros||[]).includes(nombre);
       if(enCampo){
         if(esP){ partidos++; } else { entrenos++; }
         if(!eqsConEntrenamiento[eq]) eqsConEntrenamiento[eq]=0;
         eqsConEntrenamiento[eq]++;
         eqsHoy++;
+        diasCampo++;
       }
-      if(enBanco) banco++;
+      if(enBanco){ banco++; diasBanquillo++; }
+      if(enLes) diasLesionado++;
+      if(enOtros) diasOtros++;
     });
     if(eqsHoy>1) dobladoCount++;
   });
-  return { entrenos, partidos, banco, eqsConEntrenamiento, dobladoCount };
+  return { entrenos, partidos, banco, eqsConEntrenamiento, dobladoCount, diasLesionado, diasOtros, diasCampo, diasBanquillo };
 }
 function calcStatsEquipo(eq){
   let totalSesiones=0, totalJugadoresPropios=0, totalJugadoresExteros=0;
@@ -119,41 +140,29 @@ function renderReg(){
 }
 function renderRegJugadores(container){
   const q=(document.getElementById('reg-search').value||'').toLowerCase().trim();
-  const eqF=document.getElementById('reg-eq-filter').value;
+  const eqF=_regJugEqSel;
   const todos=[...new Set([...Object.keys(origen), ...EQUIPOS.flatMap(eq=>DIAS.flatMap(d=>ZONAS.flatMap(z=>data[d][eq][z]||[])))])].sort();
   const filtrados=todos.filter(n=>{
     if(q && !n.toLowerCase().includes(q)) return false;
     if(eqF && origen[n]!==eqF) return false;
     return true;
   });
-  // Tabla
-  let html = '<div id="reg-table-wrap"><table id="reg-table"><thead id="reg-thead"><tr>';
-  html += '<th>Jugador</th>';
-  DIAS.forEach(d=>{ html+=`<th title="${d}">${d.slice(0,3)}</th>`; });
-  html += '<th title="Entrenamientos">🏋️</th><th title="Partidos">⚽</th><th title="Banco">🔄</th><th title="Equipos con los que ha entrenado">EQUIPOS</th><th title="Días doblado (2+ equipos el mismo día)">DOBLADO</th><th>TOTAL</th></tr></thead><tbody>';
   const eqsShort = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
+  // Tabla — mismo estilo visual que Tabla de control
+  let html = '<div id="reg-table-wrap"><table id="reg-table" class="control-style"><thead id="reg-thead"><tr>';
+  html += '<th>JUGADOR</th><th>CAMPO TITULAR</th><th>BANQUILLO</th><th>LESIONADO</th><th>OTROS</th><th title="Días con 2+ equipos el mismo día">DOBLADO</th><th>ENTRENOS POR EQUIPO</th></tr></thead><tbody>';
   filtrados.forEach(nombre=>{
     const eqOrig=origen[nombre]||'—';
     const col=EQ_COLOR[eqOrig]||'#94a3b8';
-    const {entrenos,partidos,banco,eqsConEntrenamiento,dobladoCount}=calcStatsJugador(nombre);
-    const total=entrenos+partidos;
-    html+=`<tr><td><span class="reg-eq-pill" style="background:${col}1a;color:${col};border:1px solid ${col}55;">${eqsShort[eqOrig]||eqOrig}</span><div class="reg-jug-name">${nombre}</div></td>`;
-    DIAS.forEach(d=>{
-      let cls='empty', txt='·';
-      EQUIPOS.forEach(eq=>{
-        const esP=!!(modoPartido[d]?.[eq]);
-        if((data[d][eq].campo||[]).includes(nombre)){ cls=esP?'partido':'active'; txt=esP?'⚽':'✓'; }
-        else if((data[d][eq].banquillo||[]).includes(nombre) && cls==='empty'){ cls='banco'; txt='B'; }
-      });
-      html+=`<td><span class="reg-dot ${cls}">${txt}</span></td>`;
-    });
-    html+=`<td><span style="color:#4ade80;font-weight:800;">${entrenos||''}</span></td>`;
-    html+=`<td><span style="color:#f59e0b;font-weight:800;">${partidos||''}</span></td>`;
-    html+=`<td><span style="color:#60a5fa;font-weight:800;">${banco||''}</span></td>`;
+    const {diasCampo,diasBanquillo,diasLesionado,diasOtros,eqsConEntrenamiento,dobladoCount}=calcStatsJugador(nombre);
     const eqsTxt = Object.entries(eqsConEntrenamiento).map(([e,c])=>(eqsShort[e]||e)+'×'+c).join(', ');
-    html+=`<td style="font-size:10px;color:#5a6170;text-align:left;padding-left:8px;white-space:nowrap;">${eqsTxt||'—'}</td>`;
+    html+=`<tr><td><span class="reg-eq-pill" style="background:${col}1a;color:${col};border:1px solid ${col}55;">${eqsShort[eqOrig]||eqOrig}</span><div class="reg-jug-name">${nombre}</div></td>`;
+    html+=`<td>${diasCampo ? '<span class="ctrl-badge ctrl-campo">'+diasCampo+'</span>' : '—'}</td>`;
+    html+=`<td>${diasBanquillo ? '<span class="ctrl-badge ctrl-banco">'+diasBanquillo+'</span>' : '—'}</td>`;
+    html+=`<td>${diasLesionado ? '<span class="ctrl-badge ctrl-lesion">'+diasLesionado+'</span>' : '—'}</td>`;
+    html+=`<td>${diasOtros ? '<span class="ctrl-badge ctrl-otros">'+diasOtros+'</span>' : '—'}</td>`;
     html+=`<td>${dobladoCount ? '<span class="ctrl-badge ctrl-multi">'+dobladoCount+'</span>' : '—'}</td>`;
-    html+=`<td class="reg-total">${total||'—'}</td></tr>`;
+    html+=`<td style="font-size:11px;color:#5a6170;text-align:left;padding-left:8px;white-space:nowrap;">${eqsTxt||'—'}</td></tr>`;
   });
   html+='</tbody></table></div>';
   if(!filtrados.length) html='<div style="padding:30px;text-align:center;color:rgba(255,255,255,.25);font-family:\'Segoe UI\',-apple-system,sans-serif;font-size:14px;text-transform:uppercase;">Sin jugadores</div>';
