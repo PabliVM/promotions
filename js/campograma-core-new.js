@@ -992,15 +992,10 @@ function buildCardPrimerEquipo(){
   // Recoger los que han sido marcados con destino 1ER EQUIPO
   const dePromocion = [];
   EQUIPOS.forEach(eq=>{
-    // Desde promInfo (destino explícito)
+    // Desde promInfo (destino explícito, puede ser 1 o varios destinos)
     const prom = promInfo[dia]?.[eq]||{};
-    Object.entries(prom).forEach(([nombre,dest])=>{
-      if(dest==='1ER EQUIPO' && !dePromocion.includes(nombre)) dePromocion.push(nombre);
-    });
-    // Desde promovidos_1er con destino en promInfo
-    (data[dia]?.[eq]?.promovidos_1er||[]).forEach(nombre=>{
-      const dest = promInfo[dia]?.[eq]?.[nombre];
-      if(dest==='1ER EQUIPO' && !dePromocion.includes(nombre)) dePromocion.push(nombre);
+    Object.keys(prom).forEach(nombre=>{
+      if(getDestinos(dia,eq,nombre).includes('1ER EQUIPO') && !dePromocion.includes(nombre)) dePromocion.push(nombre);
     });
   });
   // Solo poner en campo los que ya tienen posición guardada
@@ -1477,7 +1472,7 @@ function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 function on(ev,fn,opts){document.addEventListener(ev,fn,opts);}
 function off(ev,fn){document.removeEventListener(ev,fn);}
 let alertCb=null;
-function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel=''){
+function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel='',onExtra2=null,extra2Label=''){
   document.getElementById('alert-msg').textContent=msg;
   document.getElementById('alert-ok-btn').textContent=okLabel;
   // Estilo rojo si es destructivo
@@ -1493,6 +1488,15 @@ function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel=''){
     extraBtn.style.display='none';
     extraBtn.onclick=null;
   }
+  const extra2Btn=document.getElementById('alert-extra2-btn');
+  if(onExtra2){
+    extra2Btn.textContent=extra2Label;
+    extra2Btn.style.display='';
+    extra2Btn.onclick=()=>{closeAlert();onExtra2();};
+  } else {
+    extra2Btn.style.display='none';
+    extra2Btn.onclick=null;
+  }
   document.getElementById('alert-overlay').classList.add('show');
   alertCb=onConfirm;
   okBtn.onclick=()=>{const cb=alertCb;closeAlert();if(cb)cb();};
@@ -1503,6 +1507,9 @@ function closeAlert(){
   const extraBtn=document.getElementById('alert-extra-btn');
   extraBtn.style.display='none';
   extraBtn.onclick=null;
+  const extra2Btn=document.getElementById('alert-extra2-btn');
+  extra2Btn.style.display='none';
+  extra2Btn.onclick=null;
 }
 let tT=null;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),2200);}
@@ -1617,27 +1624,38 @@ async function arrancarDesdeFirebase(){
   }
 }
 arrancarDesdeFirebase();
-function doblarJugador(nombre, eqOrigen, destino, diaP){
+// Un jugador puede tener 1 o varios destinos duplicados a la vez. Internamente
+// promInfo guarda un string (1 destino) o un array (2+). Este helper siempre
+// devuelve un array, sea cual sea el caso.
+function getDestinos(diaP, eqOrigen, nombre){
+  const v = promInfo[diaP]?.[eqOrigen]?.[nombre];
+  if(!v) return [];
+  return Array.isArray(v) ? v.slice() : [v];
+}
+function limpiarUnDestino(diaP, destino, nombre){
+  if(destino==='1ER EQUIPO'){
+    if(primerEquipoJugadores[diaP]){
+      const i = primerEquipoJugadores[diaP].indexOf(nombre);
+      if(i>=0) primerEquipoJugadores[diaP].splice(i,1);
+    }
+    delete pos[key(diaP,'1ER EQUIPO',nombre)];
+  } else if(data[diaP][destino]){
+    ZONAS_ACTIVAS.forEach(z=>{
+      const a = data[diaP][destino][z];
+      if(!a) return;
+      const i = a.indexOf(nombre);
+      if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(diaP,destino,nombre)]; }
+    });
+  }
+}
+function doblarJugador(nombre, eqOrigen, destino, diaP, modo){
   diaP = diaP || dia;
+  modo = modo || 'cambiar'; // 'cambiar' = reemplaza destino(s) anterior(es) | 'anadir' = triplicar, mantiene los anteriores
   if(!promInfo[diaP]) promInfo[diaP]={};
   if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
-  // Si ya estaba doblado en OTRO destino, limpiarlo primero (solo puede haber un destino a la vez)
-  const destinoAnterior = promInfo[diaP][eqOrigen][nombre];
-  if(destinoAnterior && destinoAnterior !== destino){
-    if(destinoAnterior !== '1ER EQUIPO' && data[diaP][destinoAnterior]){
-      ZONAS_ACTIVAS.forEach(z=>{
-        const a = data[diaP][destinoAnterior][z];
-        if(!a) return;
-        const i = a.indexOf(nombre);
-        if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(diaP,destinoAnterior,nombre)]; }
-      });
-    } else if(destinoAnterior === '1ER EQUIPO'){
-      if(primerEquipoJugadores[diaP]){
-        const i = primerEquipoJugadores[diaP].indexOf(nombre);
-        if(i>=0) primerEquipoJugadores[diaP].splice(i,1);
-      }
-      delete pos[key(diaP,'1ER EQUIPO',nombre)];
-    }
+  const previos = getDestinos(diaP, eqOrigen, nombre);
+  if(modo === 'cambiar'){
+    previos.forEach(d=>{ if(d!==destino) limpiarUnDestino(diaP, d, nombre); });
   }
   if(destino!=='1ER EQUIPO'){
     if(!data[diaP][destino]) { toast('❌ No se puede doblar ahí'); return; }
@@ -1653,10 +1671,23 @@ function doblarJugador(nombre, eqOrigen, destino, diaP){
   if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
     data[diaP][eqOrigen].promovidos_1er.push(nombre);
   }
-  promInfo[diaP][eqOrigen][nombre] = destino;
+  const nuevaLista = modo==='cambiar' ? [destino] : [...new Set([...previos, destino])];
+  promInfo[diaP][eqOrigen][nombre] = nuevaLista.length===1 ? nuevaLista[0] : nuevaLista;
   autoGuardar();
   render();
-  toast('⧉ '+nombre+' doblado en '+destino);
+  toast(nuevaLista.length>1 ? '⧉ '+nombre+' triplicado ('+nuevaLista.join(', ')+')' : '⧉ '+nombre+' doblado en '+destino);
+}
+// Elimina TODOS los duplicados de un jugador, dejándolo solo en su equipo de origen
+function eliminarTodosLosDuplicados(nombre, eqOrigen, diaP){
+  diaP = diaP || dia;
+  const previos = getDestinos(diaP, eqOrigen, nombre);
+  previos.forEach(d=>limpiarUnDestino(diaP, d, nombre));
+  const prom = data[diaP][eqOrigen]?.promovidos_1er;
+  if(prom){ const i=prom.indexOf(nombre); if(i>=0) prom.splice(i,1); }
+  if(promInfo[diaP]?.[eqOrigen]) delete promInfo[diaP][eqOrigen][nombre];
+  autoGuardar();
+  render();
+  toast('✕ Duplicado(s) de '+nombre+' eliminado(s)');
 }
 // Asegura que un jugador solo esté en UNA zona activa por equipo (evita duplicados internos)
 function limpiarEquipoExcepto(nombre, eq, zonaMantener, diaP){
