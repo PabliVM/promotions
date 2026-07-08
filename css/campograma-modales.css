@@ -416,7 +416,8 @@
 .ac-item:hover,.ac-item.ac-sel{background:rgba(59,130,246,.15);color:#fff;}
 .ac-item .ac-eq{font-size:9px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:.2px;text-transform:none;}
 .c-prueba{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-style:italic;}
-.c-multi{outline:3px solid #111827;outline-offset:1px;box-shadow:0 0 0 3px rgba(17,24,39,.35);}
+.c-multi{outline:3px solid #b91c1c;outline-offset:1px;box-shadow:0 0 0 3px rgba(185,28,28,.35);}
+.c-triple{outline:3px solid #111827;outline-offset:1px;box-shadow:0 0 0 3px rgba(17,24,39,.35);}
 .ac-prueba-hint{padding:4px 9px 5px;font-size:9px;color:#94a3b8;border-top:1px dashed #e2e8f0;font-style:italic;}
 /* ── SESIONES FIREBASE ── */
 #fb-overlay{position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;padding-top:60px;}
