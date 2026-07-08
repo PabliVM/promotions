@@ -158,3 +158,11 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   outline-offset: 1px;
   box-shadow: 0 0 0 4px rgba(37,99,235,.25) !important;
 }
+
+/* Chip de PROMOCIONADOS cuando es duplicado (sigue activo en su equipo origen) */
+.c-duplicado {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1.5px solid #ef4444 !important;
+  font-weight: 700;
+}
