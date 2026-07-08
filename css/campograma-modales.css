@@ -991,3 +991,21 @@ body.dark .app-footer-maestro{
   color: #fff;
   border-color: #2563eb;
 }
+
+/* Scrollbar horizontal siempre visible (Mac oculta por defecto) */
+#reg-table-wrap, #control-body {
+  scrollbar-width: auto; /* Firefox */
+}
+#reg-table-wrap::-webkit-scrollbar, #control-body::-webkit-scrollbar {
+  height: 10px;
+}
+#reg-table-wrap::-webkit-scrollbar-track, #control-body::-webkit-scrollbar-track {
+  background: #f0f4fa;
+}
+#reg-table-wrap::-webkit-scrollbar-thumb, #control-body::-webkit-scrollbar-thumb {
+  background: #c7cfdb;
+  border-radius: 6px;
+}
+#reg-table-wrap::-webkit-scrollbar-thumb:hover, #control-body::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
