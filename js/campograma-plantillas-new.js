@@ -18,8 +18,8 @@ function buildPlantillasIniciales(){
   });
   return p;
 }
-let plantillas = buildPlantillasIniciales();
-let plantEqActivo = EQUIPOS[0];
+var plantillas = buildPlantillasIniciales();
+var plantEqActivo = EQUIPOS[0];
 function openPlant(){
   document.getElementById('plant-overlay').classList.add('show');
   renderPlantTabs();
