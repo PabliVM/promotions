@@ -1,9 +1,9 @@
 // ── campograma-copiar.js — Copiar campograma entre días/semanas ──
-let _copyTipo = 'dia'; // 'dia' | 'semana'
-let _copyDiasDest = new Set();
-let _copyDiaSemanaLunes = null; // semana destino para modo día (null = semana actual)
-let _copyEqs = new Set(EQUIPOS);
-let _copyDiaOrigen = null; // día origen seleccionado
+var _copyTipo = 'dia'; // 'dia' | 'semana'
+var _copyDiasDest = new Set();
+var _copyDiaSemanaLunes = null; // semana destino para modo día (null = semana actual)
+var _copyEqs = new Set(EQUIPOS);
+var _copyDiaOrigen = null; // día origen seleccionado
 function abrirCopiarModal(){
   // Reset
   _copyTipo='dia';
@@ -48,7 +48,7 @@ function cerrarCopiarModal(){
   document.getElementById('copy-modal-overlay').classList.remove('open');
 }
 // Lunes de la semana destino para la copia semana completa
-let _copySemanaDestLunes = null;
+var _copySemanaDestLunes = null;
 function setCopyTipo(t){
   _copyTipo=t;
   document.getElementById('ctype-dia').classList.toggle('active',t==='dia');
