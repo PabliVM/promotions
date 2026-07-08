@@ -1686,6 +1686,23 @@ function eliminarTodosLosDuplicados(nombre, eqOrigen, diaP){
   render();
   toast('✕ Duplicado(s) de '+nombre+' eliminado(s)');
 }
+// Quita SOLO un destino concreto, dejando el resto de duplicados intactos
+function quitarUnDestino(nombre, eqOrigen, destino, diaP){
+  diaP = diaP || dia;
+  limpiarUnDestino(diaP, destino, nombre);
+  const restantes = getDestinos(diaP, eqOrigen, nombre).filter(d=>d!==destino);
+  if(restantes.length){
+    promInfo[diaP][eqOrigen][nombre] = restantes.length===1 ? restantes[0] : restantes;
+    toast('✕ '+nombre+' quitado de '+destino+' (sigue en '+restantes.join(', ')+')');
+  } else {
+    const prom = data[diaP][eqOrigen]?.promovidos_1er;
+    if(prom){ const i=prom.indexOf(nombre); if(i>=0) prom.splice(i,1); }
+    if(promInfo[diaP]?.[eqOrigen]) delete promInfo[diaP][eqOrigen][nombre];
+    toast('✕ '+nombre+' quitado de '+destino);
+  }
+  autoGuardar();
+  render();
+}
 // Asegura que un jugador solo esté en UNA zona activa por equipo (evita duplicados internos)
 function limpiarEquipoExcepto(nombre, eq, zonaMantener, diaP){
   diaP = diaP || dia;
