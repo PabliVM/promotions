@@ -18,6 +18,7 @@ function render(){
         const td = hoyEl.closest('.semana-td-card');
         if(td) td.scrollIntoView({behavior:'auto', block:'nearest', inline:'center'});
       }
+      window.scrollTo(0,0);
     });
   }
 }
