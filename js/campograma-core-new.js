@@ -948,13 +948,8 @@ function ejecutarPromocion(nombre, eqOrigen, destino, diaP){
       data[diaP][destino].disponibles.push(nombre);
     }
   }
-  // Si va a 1ER EQUIPO → acumular en primerEquipoJugadores
-  if(destino==='1ER EQUIPO'){
-    if(!primerEquipoJugadores[diaP]) primerEquipoJugadores[diaP]=[];
-    if(!primerEquipoJugadores[diaP].includes(nombre)){
-      primerEquipoJugadores[diaP].push(nombre);
-    }
-  }
+  // Si va a 1ER EQUIPO → aparece en Disponibles del 1er equipo (vía promInfo);
+  // solo se añade al campo cuando se arrastra ahí manualmente.
   autoGuardar();
   render();
 }
@@ -1626,18 +1621,15 @@ async function arrancarDesdeFirebase(){
 arrancarDesdeFirebase();
 function doblarJugador(nombre, eqOrigen, destino, diaP){
   diaP = diaP || dia;
-  if(destino==='1ER EQUIPO'){
-    if(!primerEquipoJugadores[diaP]) primerEquipoJugadores[diaP]=[];
-    if(!primerEquipoJugadores[diaP].includes(nombre)){
-      primerEquipoJugadores[diaP].push(nombre);
-    }
-  } else {
+  if(destino!=='1ER EQUIPO'){
     if(!data[diaP][destino]) { toast('❌ No se puede doblar ahí'); return; }
     limpiarEquipoExcepto(nombre, destino, 'disponibles', diaP); // evitar duplicado en destino
     if(!data[diaP][destino].disponibles.includes(nombre)){
       data[diaP][destino].disponibles.push(nombre);
     }
   }
+  // Si destino es 1ER EQUIPO, aparece en Disponibles vía promInfo (más abajo);
+  // solo se añade al campo cuando se arrastra ahí manualmente.
   // Marcar en PROMOCIONADOS del origen SIN quitarlo de donde está (es duplicado, no promoción real)
   if(!data[diaP][eqOrigen].promovidos_1er) data[diaP][eqOrigen].promovidos_1er=[];
   if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
