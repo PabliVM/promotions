@@ -6,6 +6,7 @@
 // DATOS
 // ══════════════════════════════════════════════════
 // Calcular fechas de la semana actual (lunes = día 0)
+let _semanaKeyActual = null; // fecha ISO del lunes de la semana activa (identifica la semana)
 function calcFechasSemana(lunesBase){
   const base = lunesBase ? new Date(lunesBase) : (()=>{
     const hoy = new Date();
@@ -13,6 +14,7 @@ function calcFechasSemana(lunesBase){
     const diff = d===0 ? -6 : 1-d;
     const lun = new Date(hoy); lun.setDate(hoy.getDate()+diff); return lun;
   })();
+  _semanaKeyActual = base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0');
   const fechas = {};
   DIAS.forEach((dia,i)=>{
     const f = new Date(base); f.setDate(base.getDate()+i);
@@ -29,6 +31,37 @@ let porteros = []; // array de nombres marcados como portero
 // ESTADO
 // ══════════════════════════════════════════════════
 let data = JSON.parse(JSON.stringify(RAW));
+// ── Independencia entre semanas: guarda una "foto" por semana (clave = lunes ISO) ──
+let _semanasGuardadas = {}; // { '2026-07-06': {data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido, primerEquipoJugadores, notas}, ... }
+function guardarFotoSemanaActual(){
+  if(!_semanaKeyActual) return;
+  _semanasGuardadas[_semanaKeyActual] = JSON.parse(JSON.stringify({
+    data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
+    primerEquipoJugadores, notas: window._notasData || {}
+  }));
+}
+function cargarFotoSemana(key){
+  const foto = _semanasGuardadas[key];
+  if(!foto) return false;
+  data = foto.data; pos = foto.pos; promInfo = foto.promInfo; multiEq = foto.multiEq;
+  modoPartido = foto.modoPartido; modoDescanso = foto.modoDescanso; tipoPartido = foto.tipoPartido;
+  primerEquipoJugadores = foto.primerEquipoJugadores || {};
+  window._notasData = foto.notas || {};
+  return true;
+}
+function crearSemanaVacia(){
+  data = JSON.parse(JSON.stringify(RAW));
+  pos = {}; promInfo = {}; multiEq = {}; modoPartido = {}; modoDescanso = {};
+  tipoPartido = {}; primerEquipoJugadores = {}; window._notasData = {};
+  // Rellenar disponibles con la plantilla de cada equipo
+  EQUIPOS.forEach(eq=>{
+    (plantillas[eq]||[]).forEach(nombre=>{
+      DIAS.forEach(d=>{
+        if(!data[d][eq].disponibles.includes(nombre)) data[d][eq].disponibles.push(nombre);
+      });
+    });
+  });
+}
 for(const d of DIAS) for(const e of EQUIPOS){
   if(!data[d])  data[d]={};
   if(!data[d][e]) data[d][e]={};
@@ -1505,6 +1538,18 @@ async function arrancarDesdeFirebase(){
       if(payload.modoPartido && typeof payload.modoPartido==='object') modoPartido = payload.modoPartido;
       if(payload.modoDescanso&& typeof payload.modoDescanso==='object')modoDescanso= payload.modoDescanso;
       if(payload.multiEq     && typeof payload.multiEq==='object')     multiEq     = payload.multiEq;
+      if(payload.semanasGuardadas && typeof payload.semanasGuardadas==='object') _semanasGuardadas = payload.semanasGuardadas;
+      // ── Independencia entre semanas ──
+      // 'data' recién restaurado pertenece a la semana 'payload.ultimaSemanaKey' (la última que se guardó).
+      // 'FECHAS'/'_semanaKeyActual' ya están forzados a la semana de HOY (más arriba).
+      // Si no coinciden, hay que guardar esa foto y cargar (o crear) la de esta semana.
+      if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
+        _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
+          data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
+          primerEquipoJugadores, notas: window._notasData || {}
+        }));
+        if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
+      }
       // FECHAS no se restaura del guardado: la app siempre abre en la semana actual
       if(Array.isArray(payload.primerEquipoJugadores)) primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
