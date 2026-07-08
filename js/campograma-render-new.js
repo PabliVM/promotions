@@ -213,17 +213,21 @@ function renderEqs(){
   const w=document.getElementById('eq-strip');
   if(!w) return;
   w.innerHTML='';
-  ['TODOS',...EQUIPOS].forEach(e=>{
-    const b=mk('div','eq-tab'+(e===eqF?' active':''));
-    b.textContent=EQ_LABEL[e]||e;
-    b.onclick=()=>{eqF=e;renderEqs();renderCards();};
-    w.appendChild(b);
-  });
+  const bTodos=mk('div','eq-tab'+('TODOS'===eqF?' active':''));
+  bTodos.textContent=EQ_LABEL['TODOS']||'TODOS';
+  bTodos.onclick=()=>{eqF='TODOS';renderEqs();renderCards();};
+  w.appendChild(bTodos);
   const b1=mk('div','eq-tab eq-primer'+(eqF==='1ER EQUIPO'?' active':''));
   b1.textContent='1ER EQ';
   b1.title='Ver jugadores con Primer Equipo';
   b1.onclick=()=>{eqF='1ER EQUIPO';renderEqs();renderCards();};
   w.appendChild(b1);
+  EQUIPOS.forEach(e=>{
+    const b=mk('div','eq-tab'+(e===eqF?' active':''));
+    b.textContent=EQ_LABEL[e]||e;
+    b.onclick=()=>{eqF=e;renderEqs();renderCards();};
+    w.appendChild(b);
+  });
 }
 function renderCopyBar(){ /* eliminado — usar modal copiar */ }
 
