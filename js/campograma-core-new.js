@@ -763,10 +763,7 @@ function getEstadoJugador(nombre, eq, diaP){
   const d = data[diaC][eq];
   if(!d) return {estado:'vacio', multi:false};
   // ¿Está en otro equipo además del suyo?
-  const eqsActivos = EQUIPOS.filter(e=>
-    ['campo','banquillo','disponibles','lesionados','otros','extra','promovidos_1er']
-      .some(z=>(data[diaC][e]?.[z]||[]).includes(nombre))
-  );
+  const eqsActivos = eqsDeNombre(diaC, nombre);
   const multi = eqsActivos.length > 1;
   // Estado en su propio equipo
   if((d.campo||[]).includes(nombre))           return {estado:'campo',     multi};
@@ -860,10 +857,10 @@ function renderControl(){
         if(multi){
           tdJ.classList.add('td-multi');
           tdE.classList.add('td-multi');
-          const eqsActivos = EQUIPOS
-            .filter(e=>ZONAS_ACTIVAS.some(z=>(data[diaC][e]?.[z]||[]).includes(nombre)))
-            .map(e=>eqsShort[e]||e).join('+');
-          tdE.innerHTML = `<span class="ctrl-badge ctrl-multi">⚡ ${eqsActivos}</span>`;
+          const eqsActivosArr = eqsDeNombre(diaC, nombre).map(e=>e==='1ER EQUIPO'?'1ER':(eqsShort[e]||e));
+          const eqsActivos = eqsActivosArr.join('+');
+          const etiqueta = eqsActivosArr.length>=3 ? 'TRIPLE' : 'DOBLE';
+          tdE.innerHTML = `<span class="ctrl-badge ctrl-multi">⚡ ${etiqueta}: ${eqsActivos}</span>`;
         } else if(estado==='disponible'){
           tdJ.classList.add('td-disponible');
           tdE.classList.add('td-disponible');
