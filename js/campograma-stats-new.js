@@ -1,6 +1,6 @@
 // ── campograma-stats.js — Estadísticas de jugadores y equipos ──
-let _regTab = 'jugadores';
-let _regJugEqSel = ''; // '' = todos los equipos
+var _regTab = 'jugadores';
+var _regJugEqSel = ''; // '' = todos los equipos
 function openReg(){
   document.getElementById('reg-overlay').classList.add('show');
   renderRegJugEqBtns();
@@ -26,7 +26,7 @@ function renderRegJugEqBtns(){
     wrap.appendChild(b);
   });
 }
-let _regEqSel = EQUIPOS[0];
+var _regEqSel = EQUIPOS[0];
 function switchRegTab(tab){
   _regTab = tab;
   document.querySelectorAll('.reg-tab').forEach((b,i)=>b.classList.toggle('active', (i===0&&tab==='jugadores')||(i===1&&tab==='equipos')));
@@ -129,7 +129,7 @@ function calcStatsEquipo(eq){
   Object.entries(conteoJugador).forEach(([n,c])=>{ if(c>topN){ topN=c; topJugador=n; } });
   return { totalSesiones, sesionesPartido, sesionesEntreno, pctExternos, promosSemana:[...promosSemana], jugsDias, avgJugadores, avgPorteros, topJugador, topN };
 }
-const EQ_COLOR = {
+var EQ_COLOR = {
   'CASTILLA':'#C8A800','RMC':'#3b82f6','JUVENIL A':'#10b981',
   'JUVENIL B':'#f59e0b','JUVENIL C':'#ec4899','CADETE A':'#8b5cf6'
 };
