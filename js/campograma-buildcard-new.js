@@ -455,10 +455,10 @@ function buildCard(eq){
     col.appendChild(lblWrap);
     const cw=mk('div','chips-wrap');
     d[zona].forEach(n=>{
-      // Si sigue activo en otra zona de su equipo, es duplicado → rojo en vez de naranja
+      // Si sigue activo en otra zona de su equipo, es duplicado → clase dedicada roja
       let ccChip = cc;
       if(zona==='promovidos_1er' && ZONAS_ACTIVAS.some(z=>z!=='promovidos_1er' && (d[z]||[]).includes(n))){
-        ccChip = 'c-rojo';
+        ccChip = 'c-duplicado';
       }
       const c=chip(n,eq,zona,ccChip,'cz');
       // Promoción: mostrar destino en el chip
