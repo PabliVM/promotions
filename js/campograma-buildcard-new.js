@@ -510,10 +510,12 @@ function chip(nombre,eq,zona,color,type){
   const prueba   = eqO === 'PRUEBA';
   const prestado = !prueba && eqO && eqO!==eq;
   let cf = prueba ? 'c-prueba' : (prestado ? (EQ_COLORS[eqO]||'c-prestado') : color);
-  const multi = esMulti(nombre);
+  const numEqs = esMulti(nombre);
+  const multi = numEqs > 1;
+  const claseMulti = numEqs >= 3 ? 'c-triple' : (numEqs === 2 ? 'c-multi' : '');
   const isCampo = type === 'cf';
   const esPort = porteros.includes(nombre);
-  const c=mk('div',`chip ${cf} ${multi?'c-multi':''} ${type}${esPort?' chip-portero':''}`);
+  const c=mk('div',`chip ${cf} ${claseMulti} ${type}${esPort?' chip-portero':''}`);
   c.innerHTML=chipHTML(nombre, isCampo);
   c.dataset.eq=eq; c.dataset.zona=zona; c.dataset.nombre=nombre; c.dataset.dia=dia;
   // Tooltip: último movimiento registrado
@@ -576,7 +578,7 @@ function eqsDeNombre(d, nombre){
   return eqs;
 }
 function esMulti(nombre){
-  return eqsDeNombre(dia, nombre).length > 1;
+  return eqsDeNombre(dia, nombre).length; // nº de equipos donde está activo (0,1,2,3...)
 }
 // ── Resetear equipo: todos los jugadores del equipo a disponibles ──
 function resetearEquipo(eq){
