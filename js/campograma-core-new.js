@@ -6,7 +6,7 @@
 // DATOS
 // ══════════════════════════════════════════════════
 // Calcular fechas de la semana actual (lunes = día 0)
-let _semanaKeyActual = null; // fecha ISO del lunes de la semana activa (identifica la semana)
+var _semanaKeyActual = null; // fecha ISO del lunes de la semana activa (identifica la semana)
 function calcFechasSemana(lunesBase){
   const base = lunesBase ? new Date(lunesBase) : (()=>{
     const hoy = new Date();
@@ -22,17 +22,17 @@ function calcFechasSemana(lunesBase){
   });
   return fechas;
 }
-let dia   = sessionStorage.getItem("rm_dia") || "LUNES"; // día activo global
-let FECHAS = calcFechasSemana();
-const origen = {};
-let movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
-let porteros = []; // array de nombres marcados como portero
+var dia   = sessionStorage.getItem("rm_dia") || "LUNES"; // día activo global
+var FECHAS = calcFechasSemana();
+var origen = {};
+var movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
+var porteros = []; // array de nombres marcados como portero
 // ══════════════════════════════════════════════════
 // ESTADO
 // ══════════════════════════════════════════════════
-let data = JSON.parse(JSON.stringify(RAW));
+var data = JSON.parse(JSON.stringify(RAW));
 // ── Independencia entre semanas: guarda una "foto" por semana (clave = lunes ISO) ──
-let _semanasGuardadas = {}; // { '2026-07-06': {data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido, primerEquipoJugadores, notas}, ... }
+var _semanasGuardadas = {}; // { '2026-07-06': {data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido, primerEquipoJugadores, notas}, ... }
 function guardarFotoSemanaActual(){
   if(!_semanaKeyActual) return;
   _semanasGuardadas[_semanaKeyActual] = JSON.parse(JSON.stringify({
@@ -70,25 +70,25 @@ for(const d of DIAS) for(const e of EQUIPOS){
   if(data[d][e].banquillo === undefined) data[d][e].banquillo = [];
 }
 // dia declarada en campograma-constants.js
-let eqF  = "TODOS";
-let pos  = {};   // "dia|eq|nombre" → [top,left]
+var eqF  = "TODOS";
+var pos  = {};   // "dia|eq|nombre" → [top,left]
 // Nombres editables de columnas por equipo: colNames[eq] = ['PROMOCIONADOS','LESIONADOS','OTROS']
-let colNames = {};
+var colNames = {};
 // Info de promoción: promInfo[dia][eqOrigen][nombre] = 'CASTILLA' (equipo destino)
-let promInfo = {};
-let multiEq    = {};
-let primerEqVisible = false; // pestaña 1er Equipo visible o no
-let promDestinos = {}; // promDestinos[dia][eq][nombre] = 'RMC' | '1ER EQUIPO' | 'CASTILLA'... // multiEq[dia][nombre] = [eq1, eq2, ...] — jugadores en varios equipos
-let modoPartido = {}; // modoPartido[dia][eq] = true/false
-let modoDescanso = {}; // modoDescanso[dia][eq] = true/false
-let modoUYL     = {}; // modoUYL[dia] = true/false (solo Juvenil A)
-let listaUYL    = []; // jugadores elegibles para Youth League (fija temporada)
-let rivales     = {}; // rivales[dia][eq] = 'Nombre rival'
-let tipoPartido  = {}; // tipoPartido[dia][eq] = key del tipo
+var promInfo = {};
+var multiEq    = {};
+var primerEqVisible = false; // pestaña 1er Equipo visible o no
+var promDestinos = {}; // promDestinos[dia][eq][nombre] = 'RMC' | '1ER EQUIPO' | 'CASTILLA'... // multiEq[dia][nombre] = [eq1, eq2, ...] — jugadores en varios equipos
+var modoPartido = {}; // modoPartido[dia][eq] = true/false
+var modoDescanso = {}; // modoDescanso[dia][eq] = true/false
+var modoUYL     = {}; // modoUYL[dia] = true/false (solo Juvenil A)
+var listaUYL    = []; // jugadores elegibles para Youth League (fija temporada)
+var rivales     = {}; // rivales[dia][eq] = 'Nombre rival'
+var tipoPartido  = {}; // tipoPartido[dia][eq] = key del tipo
 // Configuración de tipos por equipo — editable por el usuario
 // { key, label, color (hex), esUYL? }
 // tiposConfig[eq] = [{k,l,c,uyl?}] — null = usar base
-let tiposConfig = {};
+var tiposConfig = {};
 // Inicializar con valores por equipo
 function initTiposConfig(){
   const defaults = {
@@ -101,18 +101,18 @@ function initTiposConfig(){
   };
   EQUIPOS.forEach(eq=>{ if(!tiposConfig[eq]) tiposConfig[eq]=defaults[eq]||[...TIPOS_BASE]; });
 }
-let calendarioPartidos = {}; // calendarioPartidos[eq] = [{fecha:'YYYY-MM-DD', rival:'...'}]
+var calendarioPartidos = {}; // calendarioPartidos[eq] = [{fecha:'YYYY-MM-DD', rival:'...'}]
 function initPromInfo(){ DIAS.forEach(d=>{ promInfo[d]={}; EQUIPOS.forEach(eq=>{ promInfo[d][eq]={}; }); }); }
 initPromInfo();
 EQUIPOS.forEach(eq=> colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS']);
 // Zonas extra (4ª columna) por equipo: extraZonas[eq] = bool
-let extraZonas = {};
+var extraZonas = {};
 EQUIPOS.forEach(eq=> extraZonas[eq]=false);
-let drag = null;
-let dOff = {x:0,y:0};
-const key    = (d,e,n) => d+'|'+e+'|'+n;
-const getPos = (d,e,n,i) => pos[key(d,e,n)] || POS_DEF[i%POS_DEF.length] || [50,50];
-const savePos= (d,e,n,t,l) => pos[key(d,e,n)] = [clamp(t,0,100), clamp(l,0,100)];
+var drag = null;
+var dOff = {x:0,y:0};
+var key    = (d,e,n) => d+'|'+e+'|'+n;
+var getPos = (d,e,n,i) => pos[key(d,e,n)] || POS_DEF[i%POS_DEF.length] || [50,50];
+var savePos= (d,e,n,t,l) => pos[key(d,e,n)] = [clamp(t,0,100), clamp(l,0,100)];
 // Zona del área (portero) — viewBox 0 0 100 118 — portero a partir de top 85%
 function esPortero(eq,nombre,i){
   const [t,l]=getPos(dia,eq,nombre,i);
@@ -146,7 +146,7 @@ function distMinOcupadas(t, l, ocupadas){
   return Math.min(...ocupadas.map(([ot,ol]) => Math.hypot(t-ot, l-ol)));
 }
 // Radio de exclusión — los chips no se solapan si están al menos RADIO_MIN % separados
-const RADIO_MIN = 6; // % del campo
+var RADIO_MIN = 6; // % del campo
 function snapToGrid(eq, nombre, rawTop, rawLeft){
   const ocupadas = posOcupadas(eq, nombre);
   // 1. Si el punto exacto de drop está libre, usarlo tal cual
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ══════════════════════════════════════════════════
 // FOTO MÚLTIPLE — varios equipos en una imagen
 // ══════════════════════════════════════════════════
-let _fotoEqsSel = new Set();
+var _fotoEqsSel = new Set();
 function abrirFotoMultiModal(){
   // Preseleccionar equipos visibles en la vista actual
   const enVista = (vistaActual==='2col'||vistaActual==='3col')
@@ -706,8 +706,8 @@ async function generarFotoMulti(){
 // ══════════════════════════════════════════════════
 // TABLA DE CONTROL
 // ══════════════════════════════════════════════════
-let _controlDia = null;
-let _controlEqsActivos = new Set(EQUIPOS);
+var _controlDia = null;
+var _controlEqsActivos = new Set(EQUIPOS);
 function abrirControl(){
   document.getElementById('control-overlay').classList.add('open');
   _controlDia = dia;
@@ -896,7 +896,7 @@ function renderControl(){
 // ══════════════════════════════════════════════════
 // MODAL DESTINO PROMOCIÓN
 // ══════════════════════════════════════════════════
-let _promoCallback = null; // fn a llamar con el destino elegido
+var _promoCallback = null; // fn a llamar con el destino elegido
 function abrirPromoDestModal(nombre, eqOrigen, callback){
   _promoCallback = callback;
   document.getElementById('promo-dest-title').textContent = '¿A qué equipo va '+nombre+'?';
@@ -954,7 +954,7 @@ function ejecutarPromocion(nombre, eqOrigen, destino, diaP){
 // CARD PRIMER EQUIPO
 // ══════════════════════════════════════════════════
 // Acumula jugadores que han sido promocionados a 1ER EQUIPO
-let primerEquipoJugadores = {}; // primerEquipoJugadores[dia] = [nombres]
+var primerEquipoJugadores = {}; // primerEquipoJugadores[dia] = [nombres]
 function buildCardPrimerEquipo(){
   const card=mk('div','card');
   card.dataset.eqCard='1ER EQUIPO';
@@ -1038,8 +1038,8 @@ function buildCardPrimerEquipo(){
 // ══════════════════════════════════════════════════
 // SELECTOR DE VISTA
 // ══════════════════════════════════════════════════
-let vistaActual = sessionStorage.getItem('rm_vista') || 'semana';
-let eqsMultiSel = new Set(EQUIPOS);
+var vistaActual = sessionStorage.getItem('rm_vista') || 'semana';
+var eqsMultiSel = new Set(EQUIPOS);
 function setView(n){
   vistaActual = n;
   sessionStorage.setItem('rm_vista', n);
@@ -1460,15 +1460,15 @@ function generarFotoLista(eq){
 // DRAG
 // ══════════════════════════════════════════════════
 // ── Doble tap/click para eliminar chip ──
-const _tapTimer = new WeakMap();   // chip → timeout id
-const _tapCount = new WeakMap();   // chip → nº de taps
+var _tapTimer = new WeakMap();   // chip → timeout id
+var _tapCount = new WeakMap();   // chip → nº de taps
 // Devuelve un jugador a disponibles de su equipo propio desde eq/zona
 // Devuelve un jugador a disponibles de su equipo propio desde cualquier zona/equipo
 function moveGhost(x,y){const g=document.getElementById('ghost');g.style.left=(x-dOff.x)+'px';g.style.top=(y-dOff.y)+'px';}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 function on(ev,fn,opts){document.addEventListener(ev,fn,opts);}
 function off(ev,fn){document.removeEventListener(ev,fn);}
-let alertCb=null;
+var alertCb=null;
 function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel='',onExtra2=null,extra2Label=''){
   document.getElementById('alert-msg').textContent=msg;
   document.getElementById('alert-ok-btn').textContent=okLabel;
@@ -1508,7 +1508,7 @@ function closeAlert(){
   extra2Btn.style.display='none';
   extra2Btn.onclick=null;
 }
-let tT=null;
+var tT=null;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),2200);}
 // Intentar cargar guardado previo
 // ── ARRANQUE: cargar sesión principal desde Firebase ──
