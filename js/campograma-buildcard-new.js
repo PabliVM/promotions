@@ -565,9 +565,16 @@ function borrarMultiEq(d, nombre, eq){
 // Zonas que cuentan como "presencia activa" en un equipo (excluye promovidos_1er)
 function eqsDeNombre(d, nombre){
   // Equipos donde el jugador tiene presencia ACTIVA hoy (no como promovido)
-  return EQUIPOS.filter(eq=>
+  const eqs = EQUIPOS.filter(eq=>
     ZONAS_ACTIVAS.some(z=>(data[d]?.[eq]?.[z]||[]).includes(nombre))
   );
+  // El Primer Equipo no es un "equipo" normal (no tiene data[d][eq]), así que se
+  // comprueba aparte: en el campo (primerEquipoJugadores) o duplicado pendiente
+  // de colocar (destino = 1ER EQUIPO en promInfo de cualquier equipo).
+  const enCampo1er = (primerEquipoJugadores[d]||[]).includes(nombre);
+  const enDispo1er = EQUIPOS.some(eq => promInfo[d]?.[eq]?.[nombre] === '1ER EQUIPO');
+  if(enCampo1er || enDispo1er) eqs.push('1ER EQUIPO');
+  return eqs;
 }
 function esMulti(nombre){
   return eqsDeNombre(dia, nombre).length > 1;
