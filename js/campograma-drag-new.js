@@ -61,8 +61,26 @@ function dispararDobleTap(nombre, eq, zona, diaP){
   const esPrimario = (zona === 'disponibles' && eq === eqPropio);
   const destinosActuales = getDestinos(diaP, eqPropio, nombre);
 
+  // Doble clic en la COPIA de un destino concreto (no en el origen): solo afecta a ESE destino
+  if(eq !== eqPropio && destinosActuales.includes(eq)){
+    const msg = `${nombre} está doblado en ${eq}. ¿Qué quieres hacer?`;
+    const onQuitarAqui = ()=> quitarUnDestino(nombre, eqPropio, eq, diaP);
+    const onCambiar = ()=>{
+      abrirPromoDestModal(nombre, eqPropio, (destino)=>{
+        doblarJugador(nombre, eqPropio, destino, diaP, 'cambiar');
+      });
+    };
+    const onTriplicar = ()=>{
+      abrirPromoDestModal(nombre, eqPropio, (destino)=>{
+        doblarJugador(nombre, eqPropio, destino, diaP, 'anadir');
+      });
+    };
+    showAlert(msg, onQuitarAqui, 'Quitar de aquí', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
+    return;
+  }
+
   if(destinosActuales.length > 0){
-    // Ya está duplicado en 1+ sitios: Triplicar (añadir otro) / Cambiar (sustituir) / Eliminar (quitar todos)
+    // Ya está duplicado en 1+ sitios: Triplicar (añadir otro) / Cambiar (sustituir todos) / Eliminar (quitar todos)
     const listaDestinos = destinosActuales.map(d=>d==='1ER EQUIPO'?'Primer Equipo':d).join(' y ');
     const msg = `${nombre} ya está doblado en ${listaDestinos}. ¿Qué quieres hacer?`;
     const onTriplicar = ()=>{
