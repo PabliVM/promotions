@@ -41,7 +41,6 @@ function renderDias(){
 // ══════════════════════════════════════════════════
 let _calFecha = new Date(); // mes visible en el calendario
 let _calLunesSel = null;    // lunes seleccionado
-const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DIAS_DOW = ['L','M','X','J','V','S','D'];
 function abrirCal(){
   // Iniciar en el lunes actual de FECHAS
@@ -151,7 +150,9 @@ function aplicarSemana(){
     document.getElementById('copy-modal-overlay').classList.add('open');
     return;
   }
+  guardarFotoSemanaActual();
   FECHAS = calcFechasSemana(_calLunesSel);
+  if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
   // Si hoy cae dentro de esta semana, seleccionar ese día automáticamente
   DIAS.forEach(d=>{
     const [dd,mm] = (FECHAS[d]||'').split('/');
