@@ -29,6 +29,17 @@ function renderFiltrosSemana(){
   });
 
   eqsRow.innerHTML='';
+  // Botón extra: incluir Primer Equipo como card más (apagado por defecto) — va PRIMERO
+  const btnPrimer = mk('button','filtro-eq-btn'+(_incluirPrimerEquipo?' activo':''));
+  btnPrimer.textContent = '1ER EQ';
+  btnPrimer.title = 'Mostrar Primer Equipo como equipo más';
+  btnPrimer.onclick=()=>{
+    _incluirPrimerEquipo = !_incluirPrimerEquipo;
+    renderFiltrosSemana();
+    renderCards();
+    if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+  };
+  eqsRow.appendChild(btnPrimer);
   const EQ_CORTO = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
   EQUIPOS.forEach(eq=>{
     const btn=mk('button','filtro-eq-btn'+(_filtroEqsActivos.has(eq)?' activo':''));
@@ -43,17 +54,6 @@ function renderFiltrosSemana(){
     };
     eqsRow.appendChild(btn);
   });
-  // Botón extra: incluir Primer Equipo como card más (apagado por defecto)
-  const btnPrimer = mk('button','filtro-eq-btn'+(_incluirPrimerEquipo?' activo':''));
-  btnPrimer.textContent = '1ER EQ';
-  btnPrimer.title = 'Mostrar Primer Equipo como equipo más';
-  btnPrimer.onclick=()=>{
-    _incluirPrimerEquipo = !_incluirPrimerEquipo;
-    renderFiltrosSemana();
-    renderCards();
-    if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
-  };
-  eqsRow.appendChild(btnPrimer);
 }
 
 function renderCardsSemana(grid){
@@ -67,6 +67,49 @@ function renderCardsSemana(grid){
 
   // SIN thead — el día/fecha va en el header de cada card
   const tbody = document.createElement('tbody');
+
+  if(_incluirPrimerEquipo){
+    const trP = document.createElement('tr');
+    trP.className = 'semana-tr-eq';
+    diasFiltrados.forEach(d => {
+      const fechaStr = FECHAS[d] || '';
+      const esHoy = (()=>{
+        const [dd,mm] = (fechaStr||'').split('/');
+        return dd && mm && parseInt(dd)===hoy.getDate() && parseInt(mm)===(hoy.getMonth()+1);
+      })();
+      const [dd2,mm2] = (fechaStr||'').split('/');
+      const aaStr = String(hoy.getFullYear()).slice(2);
+      const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
+
+      const diaOrig = dia;
+      dia = d;
+      const card = buildCardPrimerEquipo();
+      dia = diaOrig;
+
+      const nm = card.querySelector('.card-hdr-name');
+      if(nm){
+        const nombreHtml = nm.innerHTML;
+        nm.innerHTML = '';
+        const nombreSpan = document.createElement('span');
+        nombreSpan.className = 'card-hdr-nombre-txt';
+        nombreSpan.innerHTML = nombreHtml;
+        nm.appendChild(nombreSpan);
+        const fechaSpan = document.createElement('span');
+        fechaSpan.className = 'card-hdr-fecha'+(esHoy?' card-hdr-fecha-hoy':'');
+        fechaSpan.textContent = d + '  ' + fechaFmt;
+        nm.appendChild(fechaSpan);
+      }
+      if(esHoy){
+        const hdrEl = card.querySelector('.card-hdr');
+        if(hdrEl) hdrEl.classList.add('card-hdr-hoy');
+      }
+      const td = document.createElement('td');
+      td.className = 'semana-td-card';
+      td.appendChild(card);
+      trP.appendChild(td);
+    });
+    tbody.appendChild(trP);
+  }
 
   lista.forEach(eq => {
     const tr = document.createElement('tr');
@@ -117,49 +160,6 @@ function renderCardsSemana(grid){
 
     tbody.appendChild(tr);
   });
-
-  if(_incluirPrimerEquipo){
-    const trP = document.createElement('tr');
-    trP.className = 'semana-tr-eq';
-    diasFiltrados.forEach(d => {
-      const fechaStr = FECHAS[d] || '';
-      const esHoy = (()=>{
-        const [dd,mm] = (fechaStr||'').split('/');
-        return dd && mm && parseInt(dd)===hoy.getDate() && parseInt(mm)===(hoy.getMonth()+1);
-      })();
-      const [dd2,mm2] = (fechaStr||'').split('/');
-      const aaStr = String(hoy.getFullYear()).slice(2);
-      const fechaFmt = dd2 && mm2 ? dd2.padStart(2,'0')+'/'+mm2.padStart(2,'0')+'/'+aaStr : d;
-
-      const diaOrig = dia;
-      dia = d;
-      const card = buildCardPrimerEquipo();
-      dia = diaOrig;
-
-      const nm = card.querySelector('.card-hdr-name');
-      if(nm){
-        const nombreHtml = nm.innerHTML;
-        nm.innerHTML = '';
-        const nombreSpan = document.createElement('span');
-        nombreSpan.className = 'card-hdr-nombre-txt';
-        nombreSpan.innerHTML = nombreHtml;
-        nm.appendChild(nombreSpan);
-        const fechaSpan = document.createElement('span');
-        fechaSpan.className = 'card-hdr-fecha'+(esHoy?' card-hdr-fecha-hoy':'');
-        fechaSpan.textContent = d + '  ' + fechaFmt;
-        nm.appendChild(fechaSpan);
-      }
-      if(esHoy){
-        const hdrEl = card.querySelector('.card-hdr');
-        if(hdrEl) hdrEl.classList.add('card-hdr-hoy');
-      }
-      const td = document.createElement('td');
-      td.className = 'semana-td-card';
-      td.appendChild(card);
-      trP.appendChild(td);
-    });
-    tbody.appendChild(trP);
-  }
 
   table.appendChild(tbody);
   grid.appendChild(table);
