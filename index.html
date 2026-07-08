@@ -22,13 +22,17 @@
 <script>
 (function(){
   if(!('serviceWorker' in navigator)) return;
+  if(sessionStorage.getItem('_swCleaned')) return; // evitar bucles de recarga
   navigator.serviceWorker.getRegistrations().then(function(regs){
     var n = regs.length;
     regs.forEach(function(r){ r.unregister(); });
-    if(n > 0){ window.location.reload(true); return; }
-  });
-  caches.keys().then(function(keys){
-    keys.forEach(function(k){ caches.delete(k); });
+    caches.keys().then(function(keys){
+      keys.forEach(function(k){ caches.delete(k); });
+    });
+    if(n > 0){
+      sessionStorage.setItem('_swCleaned', '1');
+      window.location.reload();
+    }
   });
 })();
 </script>
