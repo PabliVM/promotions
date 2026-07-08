@@ -59,7 +59,30 @@ function dispararDobleTap(nombre, eq, zona, diaP){
   diaP = diaP || dia;
   const eqPropio = origen[nombre] || eq;
   const esPrimario = (zona === 'disponibles' && eq === eqPropio);
-  // ── Mensaje ──
+  const destinosActuales = getDestinos(diaP, eqPropio, nombre);
+
+  if(destinosActuales.length > 0){
+    // Ya está duplicado en 1+ sitios: Triplicar (añadir otro) / Cambiar (sustituir) / Eliminar (quitar todos)
+    const listaDestinos = destinosActuales.map(d=>d==='1ER EQUIPO'?'Primer Equipo':d).join(' y ');
+    const msg = `${nombre} ya está doblado en ${listaDestinos}. ¿Qué quieres hacer?`;
+    const onTriplicar = ()=>{
+      abrirPromoDestModal(nombre, eqPropio, (destino)=>{
+        doblarJugador(nombre, eqPropio, destino, diaP, 'anadir');
+      });
+    };
+    const onCambiar = ()=>{
+      abrirPromoDestModal(nombre, eqPropio, (destino)=>{
+        doblarJugador(nombre, eqPropio, destino, diaP, 'cambiar');
+      });
+    };
+    const onEliminarTodo = ()=>{
+      eliminarTodosLosDuplicados(nombre, eqPropio, diaP);
+    };
+    showAlert(msg, onEliminarTodo, 'Eliminar', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
+    return;
+  }
+
+  // ── Mensaje (caso normal, sin duplicado activo) ──
   let msg;
   if(esPrimario){
     msg = `${nombre} — ¿qué quieres hacer?`;
