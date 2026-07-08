@@ -17,7 +17,7 @@ function updateSaveTS(label){
 }
 // Payload completo para guardar
 // Timestamp del último guardado MANUAL
-let _lastManualTS = null;
+var _lastManualTS = null;
 function buildPayload(manualSave=false){
   if(manualSave) _lastManualTS = new Date().toISOString();
   return {
@@ -30,7 +30,7 @@ function buildPayload(manualSave=false){
   };
 }
 // Autoguardado silencioso — guarda datos, NO toca el timestamp
-let _autoSaveTimer=null;
+var _autoSaveTimer=null;
 function autoGuardar(){
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer=setTimeout(()=>{
@@ -49,7 +49,7 @@ function autoGuardar(){
   },1500); // 1.5s debounce para no saturar Firestore
 }
 // Guardado manual — botón elegante arriba
-let _fbSesionActiva = null; // nombre de la sesión Firebase activa
+var _fbSesionActiva = null; // nombre de la sesión Firebase activa
 function guardarManual(){
   try{
     const payload=buildPayload(true);  // true → guarda timestamp ahora
@@ -79,8 +79,8 @@ function guardarDia(){ guardarManual(); }
 // ══════════════════════════════════════════════════
 // Jerarquía de equipos para el ascenso automático
 // Temporadas guardadas: { id, nombre, ts, payload }
-let temporadas = [];
-let temporadaActual = null;   // id de la temporada activa
+var temporadas = [];
+var temporadaActual = null;   // id de la temporada activa
 function cargarTemporadas(){
   // localStorage desactivado — temporadas vienen de Firebase
   temporadas = [];
@@ -157,7 +157,7 @@ function cambiarATemporada(id){
   toast('✅ Temporada '+t.nombre+' cargada');
 }
 // ── Nueva temporada con ascenso ──
-let _pendingAscenso = null;
+var _pendingAscenso = null;
 function nuevaTemporada(){
   document.getElementById('season-modal').classList.remove('open');
   // Calcular nombre sugerido
