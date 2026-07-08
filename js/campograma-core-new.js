@@ -711,6 +711,13 @@ let _controlEqsActivos = new Set(EQUIPOS);
 function abrirControl(){
   document.getElementById('control-overlay').classList.add('open');
   _controlDia = dia;
+  const hoy = new Date();
+  DIAS.forEach(d=>{
+    const [dd,mm] = (FECHAS[d]||'').split('/');
+    if(dd && mm && parseInt(dd)===hoy.getDate() && parseInt(mm)===(hoy.getMonth()+1)){
+      _controlDia = d;
+    }
+  });
   _controlEqsActivos = new Set(EQUIPOS);
   renderControlDiaBtns();
   renderControlEqsRow();
