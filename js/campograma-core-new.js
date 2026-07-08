@@ -1026,13 +1026,11 @@ function buildCardPrimerEquipo(){
   disponiblesHoy.forEach(nombre=>{
     const eqOrig=origen[nombre]||'?';
     const eqsShort={'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
-    const c=mk('div','chip c-naranja cz');
-    c.textContent=nombre;
+    const c=chip(nombre,'1ER EQUIPO','disponibles','c-naranja','cz');
     const s=document.createElement('span');
     s.className='chip-dest';
     s.textContent=' ('+( eqsShort[eqOrig]||eqOrig)+')';
     c.appendChild(s);
-    c.dataset.eq='1ER EQUIPO'; c.dataset.zona='disponibles'; c.dataset.nombre=nombre;
     cwD.appendChild(c);
   });
   zDisp.appendChild(cwD);
@@ -1621,6 +1619,26 @@ async function arrancarDesdeFirebase(){
 arrancarDesdeFirebase();
 function doblarJugador(nombre, eqOrigen, destino, diaP){
   diaP = diaP || dia;
+  if(!promInfo[diaP]) promInfo[diaP]={};
+  if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
+  // Si ya estaba doblado en OTRO destino, limpiarlo primero (solo puede haber un destino a la vez)
+  const destinoAnterior = promInfo[diaP][eqOrigen][nombre];
+  if(destinoAnterior && destinoAnterior !== destino){
+    if(destinoAnterior !== '1ER EQUIPO' && data[diaP][destinoAnterior]){
+      ZONAS_ACTIVAS.forEach(z=>{
+        const a = data[diaP][destinoAnterior][z];
+        if(!a) return;
+        const i = a.indexOf(nombre);
+        if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(diaP,destinoAnterior,nombre)]; }
+      });
+    } else if(destinoAnterior === '1ER EQUIPO'){
+      if(primerEquipoJugadores[diaP]){
+        const i = primerEquipoJugadores[diaP].indexOf(nombre);
+        if(i>=0) primerEquipoJugadores[diaP].splice(i,1);
+      }
+      delete pos[key(diaP,'1ER EQUIPO',nombre)];
+    }
+  }
   if(destino!=='1ER EQUIPO'){
     if(!data[diaP][destino]) { toast('❌ No se puede doblar ahí'); return; }
     limpiarEquipoExcepto(nombre, destino, 'disponibles', diaP); // evitar duplicado en destino
@@ -1635,8 +1653,6 @@ function doblarJugador(nombre, eqOrigen, destino, diaP){
   if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
     data[diaP][eqOrigen].promovidos_1er.push(nombre);
   }
-  if(!promInfo[diaP]) promInfo[diaP]={};
-  if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
   promInfo[diaP][eqOrigen][nombre] = destino;
   autoGuardar();
   render();
