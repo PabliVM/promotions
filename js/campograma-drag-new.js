@@ -217,6 +217,11 @@ function initDrag(){
 }
 function startChip(c,ev){
   if(!c.isConnected) return; // el chip puede haber sido re-renderizado
+  // Si el chip pulsado forma parte de una selección múltiple activa, mover el grupo entero
+  if(_campoSeleccion.length >= 2 && _campoSeleccion.some(s=>s.pof.contains(c))){
+    startGroupDrag(c, ev);
+    return;
+  }
   const esDeCampo = c.classList.contains('cf');
   drag={
     c, nombre:c.dataset.nombre, eq:c.dataset.eq, zona:c.dataset.zona||'campo',
@@ -541,4 +546,64 @@ function alinearSeleccionados(direccion){
   autoGuardar();
   render();
   toast(direccion==='v' ? '↕ Jugadores alineados' : '↔ Jugadores alineados');
+}
+function eliminarSeleccionados(){
+  if(_campoSeleccion.length < 2) return;
+  const n = _campoSeleccion.length;
+  const seleccion = [..._campoSeleccion]; // copia — limpiarSeleccionCampo() vacía el original
+  showAlert(`¿Quitar del campo a estos ${n} jugadores? Volverán a disponibles de su equipo.`, ()=>{
+    seleccion.forEach(s=>{
+      devolverADisponibles(s.nombre, s.eq, 'campo', s.dia || dia);
+    });
+    limpiarSeleccionCampo();
+    autoGuardar();
+    render();
+    toast('🗑 '+n+' jugadores quitados del campo');
+  }, 'Eliminar');
+}
+// ── Arrastrar el grupo seleccionado entero (solo dentro del mismo campo) ──
+var _groupDrag = null;
+function startGroupDrag(c, ev){
+  const pof = c.parentElement;
+  const campoWrap = pof.closest('.campo-wrap');
+  if(!campoWrap) return;
+  _groupDrag = {
+    campoWrap,
+    startX: ev.clientX, startY: ev.clientY,
+    items: _campoSeleccion.map(s=>({
+      pof: s.pof, eq: s.eq, nombre: s.nombre, dia: s.dia,
+      startTop: parseFloat(s.pof.style.top||'50'), startLeft: parseFloat(s.pof.style.left||'50')
+    }))
+  };
+  _groupDrag.items.forEach(it=>{ it.pof.classList.add('no-anim'); });
+  on('mousemove', moveGroupDrag); on('mouseup', endGroupDrag);
+  on('touchmove', moveGroupDrag, {passive:false}); on('touchend', endGroupDrag);
+}
+function moveGroupDrag(e){
+  if(!_groupDrag) return;
+  e.preventDefault && e.preventDefault();
+  const ev = e.touches ? e.touches[0] : e;
+  const r = _groupDrag.campoWrap.getBoundingClientRect();
+  const dxPct = ((ev.clientX - _groupDrag.startX)/r.width)*100;
+  const dyPct = ((ev.clientY - _groupDrag.startY)/r.height)*100;
+  _groupDrag.items.forEach(it=>{
+    it.pof.style.top = clamp(it.startTop+dyPct,0,100)+'%';
+    it.pof.style.left = clamp(it.startLeft+dxPct,0,100)+'%';
+  });
+}
+function endGroupDrag(e){
+  off('mousemove', moveGroupDrag); off('mouseup', endGroupDrag);
+  off('touchmove', moveGroupDrag); off('touchend', endGroupDrag);
+  if(!_groupDrag) return;
+  const items = _groupDrag.items;
+  _groupDrag = null;
+  items.forEach(it=>{
+    const top = parseFloat(it.pof.style.top);
+    const left = parseFloat(it.pof.style.left);
+    savePos(it.dia||dia, it.eq, it.nombre, top, left);
+  });
+  limpiarSeleccionCampo();
+  autoGuardar();
+  render();
+  toast('↕ Grupo movido');
 }
