@@ -27,7 +27,13 @@ function devolverADisponibles(nombre, eq, zona, diaP){
     delete pos[key(diaP, eq, nombre)];
   }
   // 3. Si había promoción/duplicado activo, deshacerla también en el equipo destino
-  if(destino && data[diaP][destino]){
+  if(destino === '1ER EQUIPO'){
+    if(primerEquipoJugadores[diaP]){
+      const i = primerEquipoJugadores[diaP].indexOf(nombre);
+      if(i>=0) primerEquipoJugadores[diaP].splice(i,1);
+    }
+    delete pos[key(diaP,'1ER EQUIPO',nombre)];
+  } else if(destino && data[diaP][destino]){
     ZONAS_ACTIVAS.forEach(z=>{
       const a = data[diaP][destino][z];
       if(!a) return;
