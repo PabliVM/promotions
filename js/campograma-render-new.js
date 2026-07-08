@@ -1,4 +1,11 @@
 // ── campograma-render.js — Render principal, cards, lista, calendario, filtros ──
+// Blindaje: si este script se llegara a ejecutar más de una vez en la misma página
+// (doble <script>, caché vieja, service worker fantasma, etc.), no debe romper nada.
+if (window.__rmRenderLoaded) {
+  console.warn('campograma-render-new.js ya estaba cargado — segunda ejecución ignorada.');
+} else {
+window.__rmRenderLoaded = true;
+(function(){
 function render(){
   renderDias(); renderEqs(); renderCards();
   autoGuardar();
@@ -610,4 +617,31 @@ function igualarZonasSemana(grid){
       });
     }
   });
+}
+
+// Exponer al scope global las funciones/variables que otros archivos o el HTML necesitan
+window.render = render;
+window.renderDias = renderDias;
+window.abrirCal = abrirCal;
+window.cerrarCal = cerrarCal;
+window.renderCal = renderCal;
+window.resetCal = resetCal;
+window.aplicarSemana = aplicarSemana;
+window.renderEqs = renderEqs;
+window.renderCopyBar = renderCopyBar;
+window.toggleVistaListaGlobal = toggleVistaListaGlobal;
+window.toggleVistaListaCard = toggleVistaListaCard;
+window.esVistaLista = esVistaLista;
+window.reordenarEnZona = reordenarEnZona;
+window.renombrarJugadorGlobal = renombrarJugadorGlobal;
+window.buildListaView = buildListaView;
+window.capturarLista = capturarLista;
+window.renderCards = renderCards;
+window.sincronizarScrollBar = sincronizarScrollBar;
+window.igualarZonasSemana = igualarZonasSemana;
+window.EQ_LABEL = EQ_LABEL;
+Object.defineProperty(window, '_calFecha', { get:()=>_calFecha, set:(v)=>{_calFecha=v;}, configurable:true });
+Object.defineProperty(window, '_calLunesSel', { get:()=>_calLunesSel, set:(v)=>{_calLunesSel=v;}, configurable:true });
+Object.defineProperty(window, '_calModoCopia', { get:()=>_calModoCopia, set:(v)=>{_calModoCopia=v;}, configurable:true });
+})();
 }
