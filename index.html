@@ -72,7 +72,7 @@
   <button id="btn-alinear-v" style="background:#2563eb;color:#fff;border:none;border-radius:20px;padding:10px 16px;font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.25);cursor:pointer;" onclick="alinearSeleccionados('v')">↕ Vertical</button>
   <button id="btn-alinear-del" style="background:#ef4444;color:#fff;border:none;border-radius:20px;padding:10px 16px;font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.25);cursor:pointer;" onclick="eliminarSeleccionados()">🗑 Eliminar</button>
 </div>
-<div id="alert-overlay">
+<div id="alert-overlay" onclick="if(event.target===this) closeAlert()">
   <div id="alert-box">
     <div id="alert-msg"></div>
     <div id="alert-btns">
