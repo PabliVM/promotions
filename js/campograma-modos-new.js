@@ -91,7 +91,7 @@ function elegirUYL(nombre){
 }
 // MODAL RESET EQUIPO
 // ══════════════════════════════════════════════════
-let _resetEq = null;
+var _resetEq = null;
 function abrirResetModal(eq){
   _resetEq = eq;
   document.getElementById('reset-modal-title').textContent = 'Resetear ' + eq;
@@ -204,7 +204,7 @@ function toggleDescanso(eq, diaParam){
 // ══════════════════════════════════════════════════
 // CONFIG TIPOS DE PARTIDO
 // ══════════════════════════════════════════════════
-let _cfgEqActivo = null;
+var _cfgEqActivo = null;
 function abrirConfigTipos(eq){
   _cfgEqActivo = eq || EQUIPOS[0];
   renderCfgEqStrip();
