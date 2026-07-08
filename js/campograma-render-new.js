@@ -6,9 +6,20 @@ if (window.__rmRenderLoaded) {
 } else {
 window.__rmRenderLoaded = true;
 (function(){
+let _yaCentradoInicial = false;
 function render(){
   renderDias(); renderEqs(); renderCards();
   autoGuardar();
+  if(!_yaCentradoInicial && vistaActual==='semana'){
+    _yaCentradoInicial = true;
+    requestAnimationFrame(()=>{
+      const hoyEl = document.querySelector('.card-hdr-hoy');
+      if(hoyEl){
+        const td = hoyEl.closest('.semana-td-card');
+        if(td) td.scrollIntoView({behavior:'auto', block:'nearest', inline:'center'});
+      }
+    });
+  }
 }
 function renderDias(){
   // Actualizar etiqueta semana en botón
