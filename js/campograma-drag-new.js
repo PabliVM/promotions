@@ -118,9 +118,9 @@ function dispararDobleTap(nombre, eq, zona, diaP){
 function onChipDoubleTap(c){ dispararDobleTap(c.dataset.nombre, c.dataset.eq, c.dataset.zona||'campo', c.dataset.dia); }
 // ── DRAG UNIFICADO — cualquier chip puede ir a cualquier zona o campo ──
 // El drag arranca tras 180ms para dejar hueco al doble clic
-const _dragDelay = new WeakMap();  // chip → timeout del drag pendiente
-const _lastClick = new WeakMap();   // chip → timestamp (legacy)
-const _globalLastClick = new Map(); // clave nombre|eq|zona → timestamp doble tap
+var _dragDelay = new WeakMap();  // chip → timeout del drag pendiente
+var _lastClick = new WeakMap();   // chip → timestamp (legacy)
+var _globalLastClick = new Map(); // clave nombre|eq|zona → timestamp doble tap
 function equalizarCards(){
   const grid = document.getElementById('grid');
   if(!grid) return;
@@ -393,7 +393,7 @@ function endChip(e){
     dia = _diaOrigDrop;
   }
 }
-const ZONA_NAMES={campo:'Campo',banquillo:'Banquillo',disponibles:'Disponibles',promovidos_1er:'Promovido',lesionados:'Lesión',otros:'Otros'};
+var ZONA_NAMES={campo:'Campo',banquillo:'Banquillo',disponibles:'Disponibles',promovidos_1er:'Promovido',lesionados:'Lesión',otros:'Otros'};
 function move(fromEq,fromZona,toEq,toZona,nombre){
   const arr=data[dia][fromEq][fromZona];
   const i=arr.indexOf(nombre); if(i===-1)return;
@@ -424,10 +424,10 @@ function move(fromEq,fromZona,toEq,toZona,nombre){
 // ══════════════════════════════════════════════════
 // SELECCIÓN MÚLTIPLE EN EL CAMPO (rectángulo) + ALINEAR
 // ══════════════════════════════════════════════════
-let _selCampoWrap = null;      // campo-wrap donde se está seleccionando
-let _selRectEl = null;
-let _selStart = null;
-let _campoSeleccion = [];      // [{nombre,eq,pofEl}]
+var _selCampoWrap = null;      // campo-wrap donde se está seleccionando
+var _selRectEl = null;
+var _selStart = null;
+var _campoSeleccion = [];      // [{nombre,eq,pofEl}]
 
 function initSeleccionCampo(){
   document.querySelectorAll('.campo-wrap').forEach(cWrap=>{
