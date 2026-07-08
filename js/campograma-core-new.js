@@ -1018,7 +1018,7 @@ function buildCardPrimerEquipo(){
   const disponiblesHoy = dePromocion.filter(n=>!enCampo.has(n));
   const zDisp=mk('div','zona-disponibles dz');
   zDisp.dataset.eq='1ER EQUIPO'; zDisp.dataset.zona='disponibles';
-  const lblD=mk('div','zona-lbl'); lblD.textContent='DISPONIBLES ('+(d.disponibles||[]).length+')';
+  const lblD=mk('div','zona-lbl'); lblD.textContent='DISPONIBLES ('+disponiblesHoy.length+')';
   zDisp.appendChild(lblD);
   const cwD=mk('div','chips-wrap');
   disponiblesHoy.forEach(nombre=>{
