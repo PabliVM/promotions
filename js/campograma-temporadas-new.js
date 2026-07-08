@@ -24,6 +24,8 @@ function buildPayload(manualSave=false){
     data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,notas:window._notasData||{},porteros,movimientos,
     modoUYL, listaUYL, listaUYLExcl: window.listaUYLExcl||[], tipoPartido, tiposConfig, modoDescanso,
     modoPartido, primerEquipoJugadores, rivales: window.rivales||{},
+    semanasGuardadas: _semanasGuardadas,
+    ultimaSemanaKey: _semanaKeyActual,
     ts: _lastManualTS
   };
 }
