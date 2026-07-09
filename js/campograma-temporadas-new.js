@@ -103,6 +103,7 @@ function actualizarBadgeTemporada(){
 }
 // ── Modal de selección ──
 function abrirSeasonModal(){
+  try{
   const list = document.getElementById('season-list');
   list.innerHTML = '';
   temporadas.forEach(t=>{
@@ -117,6 +118,12 @@ function abrirSeasonModal(){
     `;
     if(t.id!==temporadaActual){
       row.onclick = ()=>cambiarATemporada(t.id);
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '🗑';
+      delBtn.title = 'Borrar temporada';
+      delBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:#ef4444;font-size:14px;padding:4px 8px;flex-shrink:0;';
+      delBtn.onclick = (e)=>{ e.stopPropagation(); borrarTemporada(t.id); };
+      row.appendChild(delBtn);
     }
     list.appendChild(row);
   });
@@ -124,6 +131,21 @@ function abrirSeasonModal(){
     list.innerHTML = '<div style="padding:16px 20px;font-family:Segoe UI,sans-serif;font-size:12px;color:#9ca3af;">Sin temporadas guardadas aún</div>';
   }
   document.getElementById('season-modal').classList.add('open');
+  }catch(e){
+    console.error('abrirSeasonModal error:', e);
+    alert('Error al abrir Temporada:\n\n'+(e&&e.message?e.message:String(e))+'\n\n'+(e&&e.stack?e.stack.slice(0,400):''));
+  }
+}
+function borrarTemporada(id){
+  const t = temporadas.find(x=>x.id===id);
+  if(!t) return;
+  if(id === temporadaActual){ toast('⚠️ No puedes borrar la temporada activa'); return; }
+  showAlert('¿Borrar la temporada "'+t.nombre+'"? No se puede deshacer.', ()=>{
+    temporadas = temporadas.filter(x=>x.id!==id);
+    guardarTemporadas();
+    abrirSeasonModal();
+    toast('🗑️ Temporada "'+t.nombre+'" borrada');
+  }, 'Borrar');
 }
 function cerrarSeasonModal(e){
   if(!e||e.target===document.getElementById('season-modal')||e.currentTarget===document.getElementById('season-box-close'))
