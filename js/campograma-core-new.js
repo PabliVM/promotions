@@ -1075,7 +1075,8 @@ function setView(n){
       const hoyEl = document.querySelector('.card-hdr-hoy');
       if(hoyEl){
         const td = hoyEl.closest('.semana-td-card');
-        if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+        const esMovil = window.matchMedia('(max-width: 640px)').matches;
+        if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline: esMovil ? 'start' : 'center'});
       }
     });
   }
