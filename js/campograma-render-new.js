@@ -10,6 +10,9 @@ let _yaCentradoInicial = false;
 function centrarDiaActivo(){
   if(vistaActual!=='semana') return;
   requestAnimationFrame(()=>{
+    const grid = document.getElementById('grid');
+    const snapPrevio = grid ? grid.style.scrollSnapType : '';
+    if(grid) grid.style.scrollSnapType = 'none'; // evitar que el navegador "corrija" el snap a la primera card
     const hdrs = document.querySelectorAll('.card-hdr-fecha');
     hdrs.forEach(h=>{
       if(h.textContent.trim().startsWith(dia)){
@@ -18,6 +21,9 @@ function centrarDiaActivo(){
       }
     });
     if(!_yaCentradoInicial){ _yaCentradoInicial = true; window.scrollTo(0,0); }
+    if(grid){
+      setTimeout(()=>{ grid.style.scrollSnapType = snapPrevio; }, 400);
+    }
   });
 }
 function render(){
