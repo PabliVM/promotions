@@ -722,7 +722,7 @@ async function generarFotoMulti(){
 // TABLA DE CONTROL
 // ══════════════════════════════════════════════════
 var _controlDia = null;
-var _controlEqsActivos = new Set(EQUIPOS);
+var _controlEqsActivos = new Set(['1ER EQUIPO', ...EQUIPOS]);
 function abrirControl(){
   document.getElementById('control-overlay').classList.add('open');
   _controlDia = dia;
@@ -733,7 +733,7 @@ function abrirControl(){
       _controlDia = d;
     }
   });
-  _controlEqsActivos = new Set(EQUIPOS);
+  _controlEqsActivos = new Set(['1ER EQUIPO', ...EQUIPOS]);
   renderControlDiaBtns();
   renderControlEqsRow();
   renderControl();
@@ -760,7 +760,7 @@ function toggleControlEq(eq){
 function renderControlEqsRow(){
   const row = document.getElementById('control-eqs-row');
   row.innerHTML = '';
-  EQUIPOS.forEach(eq=>{
+  ['1ER EQUIPO'].concat(EQUIPOS).forEach(eq=>{
     const activo = _controlEqsActivos.has(eq);
     const b = document.createElement('button');
     b.className = 'filtro-eq-btn'+(activo?' activo':'');
@@ -810,7 +810,7 @@ function renderControl(){
     'CASTILLA':'CAS','RMC':'RMC',
     'JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'
   };
-  const eqsVisibles = EQUIPOS.filter(eq=>_controlEqsActivos.has(eq));
+  const eqsVisibles = (_controlEqsActivos.has('1ER EQUIPO') ? ['1ER EQUIPO'] : []).concat(EQUIPOS.filter(eq=>_controlEqsActivos.has(eq)));
   // ── Colgroup: fija el ancho real (table-layout:fixed usa la 1ª fila si no hay colgroup)
   const oldColgroup = document.getElementById('control-colgroup');
   if(oldColgroup) oldColgroup.remove();
@@ -825,18 +825,21 @@ function renderControl(){
   // ── FILA 1 cabecera: nombre equipo (colspan 2)
   const trH1 = document.createElement('tr');
   eqsVisibles.forEach(eq=>{
-    const color = EQ_DOT_COLORS[eq]||'#888';
+    const color = eq==='1ER EQUIPO' ? '#000' : (EQ_DOT_COLORS[eq]||'#888');
     const th = document.createElement('th');
     th.className = 'th-eq-grupo';
     th.colSpan = 2;
-    // Contar jugadores: propios en campo + los que están en alguna zona activa
-    const totalJugs = (plantillas[eq]||[]).length;
-    const enCampo = (data[diaC][eq]?.campo||[]).length;
-    const prestados = EQUIPOS.filter(e=>e!==eq).reduce((acc,e)=>
-      acc + (data[diaC][e]?.campo||[]).filter(n=>origen[n]===eq).length, 0);
-    const countStr = enCampo > 0
-      ? `${enCampo}${prestados>0?'+'+prestados:''}`
-      : `${totalJugs}`;
+    let countStr;
+    if(eq==='1ER EQUIPO'){
+      countStr = (primerEquipoJugadores[diaC]||[]).length + '/' + (plantillas['1ER EQUIPO']||[]).length;
+    } else {
+      // Contar jugadores: propios en campo + los que están en alguna zona activa
+      const totalJugs = (plantillas[eq]||[]).length;
+      const enCampo = (data[diaC][eq]?.campo||[]).length;
+      const prestados = EQUIPOS.filter(e=>e!==eq).reduce((acc,e)=>
+        acc + (data[diaC][e]?.campo||[]).filter(n=>origen[n]===eq).length, 0);
+      countStr = enCampo > 0 ? `${enCampo}${prestados>0?'+'+prestados:''}` : `${totalJugs}`;
+    }
     th.innerHTML = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};margin-right:6px;vertical-align:middle;"></span>${eqsShort[eq]||eq}<span style="margin-left:8px;color:rgba(255,255,255,.45);font-weight:700;">${countStr}</span>`;
     trH1.appendChild(th);
   });
@@ -866,8 +869,25 @@ function renderControl(){
       tdE.className = 'td-estado-cel';
       if(i < jugs.length){
         const nombre = jugs[i];
-        const {estado, multi} = getEstadoJugador(nombre, eq, diaC);
         tdJ.textContent = nombre;
+        if(eq==='1ER EQUIPO'){
+          const enCampo1er = (primerEquipoJugadores[diaC]||[]).includes(nombre);
+          const eqsActivosArr = eqsDeNombre(diaC, nombre).map(e=>e==='1ER EQUIPO'?'1ER':(eqsShort[e]||e));
+          if(eqsActivosArr.length>1){
+            tdJ.classList.add('td-multi'); tdE.classList.add('td-multi');
+            const etiqueta = eqsActivosArr.length>=3 ? 'TRIPLE' : 'DOBLE';
+            tdE.innerHTML = `<span class="ctrl-badge ctrl-multi">⚡ ${etiqueta}: ${eqsActivosArr.join('+')}</span>`;
+          } else if(enCampo1er){
+            tdE.classList.add('td-campo');
+            tdE.innerHTML = '<span class="ctrl-badge ctrl-campo">Campo</span>';
+          } else {
+            tdJ.classList.add('td-disponible'); tdE.classList.add('td-disponible');
+            tdE.innerHTML = '<span class="ctrl-badge ctrl-disp">Disp.</span>';
+          }
+          tr.appendChild(tdJ); tr.appendChild(tdE);
+          return;
+        }
+        const {estado, multi} = getEstadoJugador(nombre, eq, diaC);
         const isPor = porteros.includes(nombre);
         if(multi){
           tdJ.classList.add('td-multi');
