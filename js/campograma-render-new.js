@@ -7,20 +7,23 @@ if (window.__rmRenderLoaded) {
 window.__rmRenderLoaded = true;
 (function(){
 let _yaCentradoInicial = false;
+function centrarDiaActivo(){
+  if(vistaActual!=='semana') return;
+  requestAnimationFrame(()=>{
+    const hdrs = document.querySelectorAll('.card-hdr-fecha');
+    hdrs.forEach(h=>{
+      if(h.textContent.trim().startsWith(dia)){
+        const td = h.closest('.semana-td-card');
+        if(td) td.scrollIntoView({behavior: _yaCentradoInicial ? 'smooth' : 'auto', block:'nearest', inline:'center'});
+      }
+    });
+    if(!_yaCentradoInicial){ _yaCentradoInicial = true; window.scrollTo(0,0); }
+  });
+}
 function render(){
   renderDias(); renderEqs(); renderCards();
   autoGuardar();
-  if(!_yaCentradoInicial && vistaActual==='semana'){
-    _yaCentradoInicial = true;
-    requestAnimationFrame(()=>{
-      const hoyEl = document.querySelector('.card-hdr-hoy');
-      if(hoyEl){
-        const td = hoyEl.closest('.semana-td-card');
-        if(td) td.scrollIntoView({behavior:'auto', block:'nearest', inline:'center'});
-      }
-      window.scrollTo(0,0);
-    });
-  }
+  centrarDiaActivo();
 }
 function renderDias(){
   // Actualizar etiqueta semana en botón
@@ -53,17 +56,7 @@ function renderDias(){
       <span class="dia-tab-dot"></span>`;
     tab.onclick=()=>{
       dia=d;sessionStorage.setItem('rm_dia',d);renderDias();renderCards();
-      if(vistaActual==='semana'){
-        requestAnimationFrame(()=>{
-          const hdrs = document.querySelectorAll('.card-hdr-fecha');
-          hdrs.forEach(h=>{
-            if(h.textContent.trim().startsWith(d)){
-              const td = h.closest('.semana-td-card');
-              if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
-            }
-          });
-        });
-      }
+      centrarDiaActivo();
     };
     strip.appendChild(tab);
   });
