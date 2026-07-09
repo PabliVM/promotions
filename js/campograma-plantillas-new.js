@@ -48,6 +48,12 @@ function closePlant(){
 function renderPlantTabs(){
   const wrap = document.getElementById('plant-eq-tabs');
   wrap.innerHTML = '';
+  // Pestaña Primer Equipo primero (antes que Castilla/cantera)
+  const jj1er = plantillas['1ER EQUIPO'] || [];
+  const btn1er = mk('button','plant-eq-tab'+('1ER EQUIPO'===plantEqActivo?' active':''));
+  btn1er.textContent = '1ER EQUIPO (' + jj1er.length + ')';
+  btn1er.onclick = ()=>{ plantEqActivo='1ER EQUIPO'; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
+  wrap.appendChild(btn1er);
   EQUIPOS.forEach(eq=>{
     const btn = mk('button','plant-eq-tab'+(eq===plantEqActivo?' active':''));
     const _jj = plantillas[eq] || [];
@@ -63,12 +69,6 @@ function renderPlantTabs(){
   btnUYL.innerHTML = 'JA Youth <span style="font-size:9px;opacity:.7">('+uylN+')</span>';
   btnUYL.onclick = ()=>{ plantEqActivo='JA_YOUTH'; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
   wrap.appendChild(btnUYL);
-  // Pestaña Primer Equipo (jugadores que empiezan directamente en 1er equipo)
-  const jj1er = plantillas['1ER EQUIPO'] || [];
-  const btn1er = mk('button','plant-eq-tab'+('1ER EQUIPO'===plantEqActivo?' active':''));
-  btn1er.textContent = '1ER EQUIPO (' + jj1er.length + ')';
-  btn1er.onclick = ()=>{ plantEqActivo='1ER EQUIPO'; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
-  wrap.appendChild(btn1er);
 }
 function renderPlantBody(){
   const list = document.getElementById('plant-list');
