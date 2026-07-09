@@ -7,10 +7,27 @@ if (window.__rmRenderLoaded) {
 window.__rmRenderLoaded = true;
 (function(){
 let _diaElegidoManualmente = false; // en móvil, ningún día se marca hasta que el usuario toque uno
+function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
 function render(){
   renderDias(); renderEqs(); renderCards();
   autoGuardar();
-  window.scrollTo(0,0); // la página siempre arriba del todo al entrar/recargar
+  if(esMovilVista()){
+    window.scrollTo(0,0); // móvil: la página siempre arriba, sin autoscroll de días
+  } else {
+    centrarDiaEnEscritorio();
+  }
+}
+function centrarDiaEnEscritorio(){
+  if(vistaActual!=='semana') return;
+  requestAnimationFrame(()=>{
+    const hdrs = document.querySelectorAll('.card-hdr-fecha');
+    hdrs.forEach(h=>{
+      if(h.textContent.trim().startsWith(dia)){
+        const td = h.closest('.semana-td-card');
+        if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+      }
+    });
+  });
 }
 function renderDias(){
   // Actualizar etiqueta semana en botón
@@ -33,7 +50,8 @@ function renderDias(){
   DIAS.forEach(d=>{
     const tieneDatos = EQUIPOS.some(e=>data[d][e].campo.length>0);
     const esP = EQUIPOS.some(e=>modoPartido[d]?.[e]);
-    const marcado = _diaElegidoManualmente && d===dia;
+    // Escritorio: se marca el día activo normalmente. Móvil: solo si el usuario ya eligió uno.
+    const marcado = esMovilVista() ? (_diaElegidoManualmente && d===dia) : (d===dia);
     const tab = mk('div','dia-tab'+(marcado?' active':'')+(tieneDatos?' tiene-datos':'')+(esP?' es-partido':''));
     tab.setAttribute('role','tab');
     const f = FECHAS[d] || '';
@@ -46,6 +64,7 @@ function renderDias(){
       dia=d;sessionStorage.setItem('rm_dia',d);
       _diaElegidoManualmente = true;
       renderDias();renderCards();
+      if(!esMovilVista()) centrarDiaEnEscritorio();
     };
     strip.appendChild(tab);
   });
