@@ -1070,16 +1070,6 @@ function setView(n){
     bar.classList.remove('visible');
   }
   renderCards();
-  if(n==='semana'){
-    requestAnimationFrame(()=>{
-      const hoyEl = document.querySelector('.card-hdr-hoy');
-      if(hoyEl){
-        const td = hoyEl.closest('.semana-td-card');
-        const esMovil = window.matchMedia('(max-width: 640px)').matches;
-        if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline: esMovil ? 'start' : 'center'});
-      }
-    });
-  }
 }
 function renderMultiEqBar(){
   const bar=document.getElementById('multi-eq-bar');
