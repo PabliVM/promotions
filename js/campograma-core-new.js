@@ -48,7 +48,7 @@ function guardarFotoSemanaActual(){
   if(!_semanaKeyActual) return;
   _semanasGuardadas[_semanaKeyActual] = JSON.parse(JSON.stringify({
     data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
-    primerEquipoJugadores, notas: window._notasData || {}
+    primerEquipoJugadores, notas: window._notasData || {}, origen
   }));
 }
 function cargarFotoSemana(key){
@@ -58,12 +58,16 @@ function cargarFotoSemana(key){
   modoPartido = foto.modoPartido; modoDescanso = foto.modoDescanso; tipoPartido = foto.tipoPartido;
   primerEquipoJugadores = foto.primerEquipoJugadores || {};
   window._notasData = foto.notas || {};
+  // El equipo de cada jugador se recuerda TAL COMO ERA esa semana (histórico real para stats)
+  if(foto.origen) origen = foto.origen;
   return true;
 }
 function crearSemanaVacia(){
   data = JSON.parse(JSON.stringify(RAW));
   pos = {}; promInfo = {}; multiEq = {}; modoPartido = {}; modoDescanso = {};
   tipoPartido = {}; primerEquipoJugadores = {}; window._notasData = {};
+  // Una semana NUEVA parte de los equipos actuales de cada jugador (no toca 'origen':
+  // se queda con el valor vivo de ahora mismo, que es lo correcto para una semana que empieza hoy)
   // Rellenar disponibles con la plantilla de cada equipo
   EQUIPOS.forEach(eq=>{
     (plantillas[eq]||[]).forEach(nombre=>{
@@ -1552,7 +1556,7 @@ async function arrancarDesdeFirebase(){
       if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
         _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
           data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
-          primerEquipoJugadores, notas: window._notasData || {}
+          primerEquipoJugadores, notas: window._notasData || {}, origen
         }));
         if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
       }
