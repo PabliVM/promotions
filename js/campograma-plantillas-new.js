@@ -318,18 +318,13 @@ function plantAñadir(){
     toast('⚠️ '+nombre+' ya está en '+plantEqActivo);
     return;
   }
-  // Avisar si hay nombres iguales o parecidos en OTRO equipo (posible duplicado)
+  // Avisar si hay nombres iguales o parecidos en OTRO equipo (posible duplicado) — sin bloquear
   const parecidos = buscarPosiblesDuplicados(nombre);
+  _plantAñadirConfirmado(nombre);
   if(parecidos.length){
     const lista = parecidos.map(n=>n+' ('+(origen[n]||'?')+')').join(', ');
-    showAlert(
-      '⚠️ Ya existe alguien con nombre igual o parecido: '+lista+'. ¿Seguro que quieres añadir "'+nombre+'" en '+plantEqActivo+'?',
-      ()=> _plantAñadirConfirmado(nombre),
-      'Añadir de todas formas'
-    );
-    return;
+    toast('⚠️ Revisa: nombre parecido a '+lista);
   }
-  _plantAñadirConfirmado(nombre);
 }
 function _plantAñadirConfirmado(nombre){
   const input = document.getElementById('plant-add-input');
@@ -377,32 +372,6 @@ function plantEliminar(nombre){
   renderPlantBody();
   render();
   toast('🗑️ '+nombre+' eliminado de '+plantEqActivo);
-}
-// Limpia rastros de jugadores en equipos que YA NO son el suyo (origen[nombre] cambió),
-// dejados por cambios de equipo hechos antes de que esto se controlara bien.
-// No toca duplicados/promociones activas legítimas.
-function repararEquiposFantasma(){
-  let contador = 0;
-  Object.keys(origen).forEach(nombre=>{
-    const eqReal = origen[nombre];
-    if(eqReal === '1ER EQUIPO') return; // ese no tiene data[d][eq]
-    EQUIPOS.forEach(eq=>{
-      if(eq === eqReal) return;
-      DIAS.forEach(d=>{
-        const destinos = getDestinos(d, eqReal, nombre);
-        if(destinos.includes(eq)) return; // es un duplicado/promoción real activa: no tocar
-        ZONAS.forEach(z=>{
-          const arr = data[d][eq]?.[z];
-          if(!arr) return;
-          const i = arr.indexOf(nombre);
-          if(i>=0){ arr.splice(i,1); contador++; }
-        });
-      });
-    });
-  });
-  autoGuardar();
-  render();
-  toast('🧹 Reparados '+contador+' rastros de jugadores en equipos que ya no eran el suyo');
 }
 // Borra TODOS los jugadores de TODOS los equipos (plantillas, orígenes, posiciones,
 // promociones, campo, etc.) para empezar de cero. Acción irreversible — pide confirmación.
