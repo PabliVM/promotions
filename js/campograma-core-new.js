@@ -22,8 +22,19 @@ function calcFechasSemana(lunesBase){
   });
   return fechas;
 }
-var dia   = sessionStorage.getItem("rm_dia") || "LUNES"; // día activo global
+var dia   = sessionStorage.getItem("rm_dia") || "LUNES"; // día activo global (se corrige abajo al de hoy)
 var FECHAS = calcFechasSemana();
+// Al arrancar, siempre partir del día de HOY (no de lo que quedara guardado de otra sesión)
+(function(){
+  var hoy = new Date();
+  DIAS.forEach(function(d){
+    var partes = (FECHAS[d]||'').split('/');
+    if(partes.length===2 && parseInt(partes[0])===hoy.getDate() && parseInt(partes[1])===(hoy.getMonth()+1)){
+      dia = d;
+      sessionStorage.setItem('rm_dia', d);
+    }
+  });
+})();
 var origen = {};
 var movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
 var porteros = []; // array de nombres marcados como portero
