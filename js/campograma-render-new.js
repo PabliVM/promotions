@@ -10,6 +10,7 @@ let _yaCentradoInicial = false;
 function centrarDiaActivo(){
   if(vistaActual!=='semana') return;
   requestAnimationFrame(()=>{
+    const esMovil = window.matchMedia('(max-width: 640px)').matches;
     const grid = document.getElementById('grid');
     const snapPrevio = grid ? grid.style.scrollSnapType : '';
     if(grid) grid.style.scrollSnapType = 'none'; // evitar que el navegador "corrija" el snap a la primera card
@@ -17,7 +18,7 @@ function centrarDiaActivo(){
     hdrs.forEach(h=>{
       if(h.textContent.trim().startsWith(dia)){
         const td = h.closest('.semana-td-card');
-        if(td) td.scrollIntoView({behavior: _yaCentradoInicial ? 'smooth' : 'auto', block:'nearest', inline:'center'});
+        if(td) td.scrollIntoView({behavior: _yaCentradoInicial ? 'smooth' : 'auto', block:'nearest', inline: esMovil ? 'start' : 'center'});
       }
     });
     if(!_yaCentradoInicial){ _yaCentradoInicial = true; window.scrollTo(0,0); }
@@ -265,7 +266,8 @@ function toggleVistaListaGlobal(){
     const hoyEl = document.querySelector('.card-hdr-hoy');
     if(hoyEl){
       const td = hoyEl.closest('.semana-td-card');
-      if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+      const esMovil = window.matchMedia('(max-width: 640px)').matches;
+      if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline: esMovil ? 'start' : 'center'});
     }
   });
 }
