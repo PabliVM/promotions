@@ -1022,9 +1022,10 @@ function buildCardPrimerEquipo(){
     pw.appendChild(pof);
   });
   card.appendChild(cWrap);
-  // Disponibles: todos los promocionados que NO están ya en el campo
+  // Disponibles: nativos de la plantilla 1ER EQUIPO + promocionados desde cantera, menos los que ya están en el campo
   const enCampo = new Set(jugsHoy);
-  const disponiblesHoy = dePromocion.filter(n=>!enCampo.has(n));
+  const nativos = (plantillas['1ER EQUIPO'] || []).filter(n=>!enCampo.has(n) && !dePromocion.includes(n));
+  const disponiblesHoy = [...nativos, ...dePromocion.filter(n=>!enCampo.has(n))];
   const zDisp=mk('div','zona-disponibles dz');
   zDisp.dataset.eq='1ER EQUIPO'; zDisp.dataset.zona='disponibles';
   const lblD=mk('div','zona-lbl'); lblD.textContent='DISPONIBLES ('+disponiblesHoy.length+')';
@@ -1034,10 +1035,12 @@ function buildCardPrimerEquipo(){
     const eqOrig=origen[nombre]||'?';
     const eqsShort={'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
     const c=chip(nombre,'1ER EQUIPO','disponibles','c-naranja','cz');
-    const s=document.createElement('span');
-    s.className='chip-dest';
-    s.textContent=' ('+( eqsShort[eqOrig]||eqOrig)+')';
-    c.appendChild(s);
+    if(eqOrig !== '1ER EQUIPO'){
+      const s=document.createElement('span');
+      s.className='chip-dest';
+      s.textContent=' ('+( eqsShort[eqOrig]||eqOrig)+')';
+      c.appendChild(s);
+    }
     cwD.appendChild(c);
   });
   zDisp.appendChild(cwD);
