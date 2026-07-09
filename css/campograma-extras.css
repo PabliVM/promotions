@@ -78,8 +78,8 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   #filtro-dias-row, #filtro-eqs-row, .filtros-sep { flex-shrink: 0; }
   /* Nombres de jugador más pequeños en móvil */
   .chip { font-size: 7px !important; padding: 1px 2px !important; }
-  .pof .chip { font-size: 6px !important; padding: 1px 2px !important; letter-spacing: 0 !important; }
-  .pof { width: 19% !important; }
+  .pof .chip { font-size: 7px !important; padding: 1px 2px !important; letter-spacing: normal !important; line-height: 1.1 !important; }
+  .pof { width: 22% !important; }
   .chip.chip-2l { font-size: 9px !important; }
 }
 
