@@ -20,11 +20,18 @@ function render(){
 function centrarDiaEnEscritorio(){
   if(vistaActual!=='semana') return;
   requestAnimationFrame(()=>{
+    const hoyEl = document.querySelector('.card-hdr-hoy');
+    if(hoyEl){
+      const td = hoyEl.closest('.semana-td-card');
+      if(td) td.scrollIntoView({behavior:'auto', block:'nearest', inline:'center'});
+      return;
+    }
+    // Si no hay card marcada como "hoy" (p.ej. semana sin hoy dentro), centrar en el día activo
     const hdrs = document.querySelectorAll('.card-hdr-fecha');
     hdrs.forEach(h=>{
       if(h.textContent.trim().startsWith(dia)){
         const td = h.closest('.semana-td-card');
-        if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+        if(td) td.scrollIntoView({behavior:'auto', block:'nearest', inline:'center'});
       }
     });
   });
