@@ -240,6 +240,17 @@ function plantCambiarEquipo(nombre, nuevoEq){
   if(!plantillas[nuevoEq]) plantillas[nuevoEq] = [];
   if(!plantillas[nuevoEq].includes(nombre)) plantillas[nuevoEq].push(nombre);
   origen[nombre] = nuevoEq;
+  // Quitar cualquier rastro del jugador en el equipo ANTERIOR (todas las zonas, todos los días)
+  if(plantEqActivo !== '1ER EQUIPO'){
+    DIAS.forEach(d=>{
+      ZONAS.forEach(z=>{
+        const a = data[d][plantEqActivo]?.[z];
+        if(!a) return;
+        const i = a.indexOf(nombre);
+        if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(d,plantEqActivo,nombre)]; }
+      });
+    });
+  }
   // Si entra en un equipo de cantera, que aparezca en Disponibles (si no está ya en otra zona)
   if(nuevoEq !== '1ER EQUIPO'){
     DIAS.forEach(d=>{
