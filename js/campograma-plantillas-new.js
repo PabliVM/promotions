@@ -63,6 +63,12 @@ function renderPlantTabs(){
   btnUYL.innerHTML = 'JA Youth <span style="font-size:9px;opacity:.7">('+uylN+')</span>';
   btnUYL.onclick = ()=>{ plantEqActivo='JA_YOUTH'; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
   wrap.appendChild(btnUYL);
+  // Pestaña Primer Equipo (jugadores que empiezan directamente en 1er equipo)
+  const jj1er = plantillas['1ER EQUIPO'] || [];
+  const btn1er = mk('button','plant-eq-tab'+('1ER EQUIPO'===plantEqActivo?' active':''));
+  btn1er.textContent = '1ER EQUIPO (' + jj1er.length + ')';
+  btn1er.onclick = ()=>{ plantEqActivo='1ER EQUIPO'; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
+  wrap.appendChild(btn1er);
 }
 function renderPlantBody(){
   const list = document.getElementById('plant-list');
@@ -211,7 +217,7 @@ function renderPlantBody(){
     // Selector cambiar de equipo
     const eqSel = mk('select','plant-eq-sel');
     eqSel.title = 'Cambiar de equipo';
-    EQUIPOS.forEach(eqOpt=>{
+    EQUIPOS.concat(['1ER EQUIPO']).forEach(eqOpt=>{
       const opt = document.createElement('option');
       opt.value = eqOpt;
       opt.textContent = EQ_LABEL[eqOpt] || eqOpt;
@@ -234,6 +240,24 @@ function plantCambiarEquipo(nombre, nuevoEq){
   if(!plantillas[nuevoEq]) plantillas[nuevoEq] = [];
   if(!plantillas[nuevoEq].includes(nombre)) plantillas[nuevoEq].push(nombre);
   origen[nombre] = nuevoEq;
+  // Si entra en un equipo de cantera, que aparezca en Disponibles (si no está ya en otra zona)
+  if(nuevoEq !== '1ER EQUIPO'){
+    DIAS.forEach(d=>{
+      if(!data[d][nuevoEq].disponibles.includes(nombre) &&
+         !ZONAS.some(z=>data[d][nuevoEq][z].includes(nombre))){
+        data[d][nuevoEq].disponibles.push(nombre);
+      }
+    });
+  }
+  // Si sale del Primer Equipo, quitarlo también de su campo (si estaba puesto ahí algún día)
+  if(plantEqActivo === '1ER EQUIPO'){
+    DIAS.forEach(d=>{
+      if(primerEquipoJugadores[d]){
+        const i = primerEquipoJugadores[d].indexOf(nombre);
+        if(i>=0) primerEquipoJugadores[d].splice(i,1);
+      }
+    });
+  }
   autoGuardar();
   renderPlantBody();
   toast('✓ '+nombre+' movido a '+(EQ_LABEL[nuevoEq]||nuevoEq));
@@ -269,12 +293,14 @@ function plantAñadir(){
   plantillas[plantEqActivo].push(nombre);
   plantillas[plantEqActivo].sort((a,b)=>a.localeCompare(b,'es'));
   origen[nombre] = plantEqActivo;
-  DIAS.forEach(d=>{
-    if(!data[d][plantEqActivo].disponibles.includes(nombre) &&
-       !ZONAS.some(z=>data[d][plantEqActivo][z].includes(nombre))){
-      data[d][plantEqActivo].disponibles.push(nombre);
-    }
-  });
+  if(plantEqActivo !== '1ER EQUIPO'){
+    DIAS.forEach(d=>{
+      if(!data[d][plantEqActivo].disponibles.includes(nombre) &&
+         !ZONAS.some(z=>data[d][plantEqActivo][z].includes(nombre))){
+        data[d][plantEqActivo].disponibles.push(nombre);
+      }
+    });
+  }
   input.value=''; input.focus();
   renderPlantTabs(); renderPlantBody();
   autoGuardar(); render();
@@ -287,13 +313,23 @@ function plantEliminar(nombre){
   plantillas[plantEqActivo].splice(idx,1);
   // Quitar de origen si era de este equipo
   if(origen[nombre]===plantEqActivo) delete origen[nombre];
-  // Quitar de data en todos los días
-  DIAS.forEach(d=>{
-    ZONAS.forEach(z=>{
-      const i=(data[d][plantEqActivo][z]||[]).indexOf(nombre);
-      if(i>=0) data[d][plantEqActivo][z].splice(i,1);
+  if(plantEqActivo !== '1ER EQUIPO'){
+    // Quitar de data en todos los días
+    DIAS.forEach(d=>{
+      ZONAS.forEach(z=>{
+        const i=(data[d][plantEqActivo][z]||[]).indexOf(nombre);
+        if(i>=0) data[d][plantEqActivo][z].splice(i,1);
+      });
     });
-  });
+  } else {
+    // 1ER EQUIPO usa su propia lista de campo (no data[d][eq])
+    DIAS.forEach(d=>{
+      if(primerEquipoJugadores[d]){
+        const i = primerEquipoJugadores[d].indexOf(nombre);
+        if(i>=0) primerEquipoJugadores[d].splice(i,1);
+      }
+    });
+  }
   renderPlantTabs();
   renderPlantBody();
   render();
