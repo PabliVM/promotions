@@ -6,31 +6,11 @@ if (window.__rmRenderLoaded) {
 } else {
 window.__rmRenderLoaded = true;
 (function(){
-let _yaCentradoInicial = false;
-function centrarDiaActivo(){
-  if(vistaActual!=='semana') return;
-  requestAnimationFrame(()=>{
-    const esMovil = window.matchMedia('(max-width: 640px)').matches;
-    const grid = document.getElementById('grid');
-    const snapPrevio = grid ? grid.style.scrollSnapType : '';
-    if(grid) grid.style.scrollSnapType = 'none'; // evitar que el navegador "corrija" el snap a la primera card
-    const hdrs = document.querySelectorAll('.card-hdr-fecha');
-    hdrs.forEach(h=>{
-      if(h.textContent.trim().startsWith(dia)){
-        const td = h.closest('.semana-td-card');
-        if(td) td.scrollIntoView({behavior: _yaCentradoInicial ? 'smooth' : 'auto', block:'nearest', inline: esMovil ? 'start' : 'center'});
-      }
-    });
-    if(!_yaCentradoInicial){ _yaCentradoInicial = true; window.scrollTo(0,0); }
-    if(grid){
-      setTimeout(()=>{ grid.style.scrollSnapType = snapPrevio; }, 400);
-    }
-  });
-}
+let _diaElegidoManualmente = false; // en móvil, ningún día se marca hasta que el usuario toque uno
 function render(){
   renderDias(); renderEqs(); renderCards();
   autoGuardar();
-  centrarDiaActivo();
+  window.scrollTo(0,0); // la página siempre arriba del todo al entrar/recargar
 }
 function renderDias(){
   // Actualizar etiqueta semana en botón
@@ -53,7 +33,8 @@ function renderDias(){
   DIAS.forEach(d=>{
     const tieneDatos = EQUIPOS.some(e=>data[d][e].campo.length>0);
     const esP = EQUIPOS.some(e=>modoPartido[d]?.[e]);
-    const tab = mk('div','dia-tab'+(d===dia?' active':'')+(tieneDatos?' tiene-datos':'')+(esP?' es-partido':''));
+    const marcado = _diaElegidoManualmente && d===dia;
+    const tab = mk('div','dia-tab'+(marcado?' active':'')+(tieneDatos?' tiene-datos':'')+(esP?' es-partido':''));
     tab.setAttribute('role','tab');
     const f = FECHAS[d] || '';
     const [numDia] = f.split('/');
@@ -62,8 +43,9 @@ function renderDias(){
       <span class="dia-tab-fecha">${numDia||''}</span>
       <span class="dia-tab-dot"></span>`;
     tab.onclick=()=>{
-      dia=d;sessionStorage.setItem('rm_dia',d);renderDias();renderCards();
-      centrarDiaActivo();
+      dia=d;sessionStorage.setItem('rm_dia',d);
+      _diaElegidoManualmente = true;
+      renderDias();renderCards();
     };
     strip.appendChild(tab);
   });
@@ -262,13 +244,6 @@ function toggleVistaListaGlobal(){
   renderCards();
   if(vistaActual==='semana') requestAnimationFrame(()=>{
     igualarZonasSemana(document.getElementById('grid'));
-    // Scroll al día de hoy
-    const hoyEl = document.querySelector('.card-hdr-hoy');
-    if(hoyEl){
-      const td = hoyEl.closest('.semana-td-card');
-      const esMovil = window.matchMedia('(max-width: 640px)').matches;
-      if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline: esMovil ? 'start' : 'center'});
-    }
   });
 }
 
