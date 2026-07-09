@@ -51,7 +51,20 @@ function renderDias(){
       <span class="dia-tab-nombre">${d.slice(0,3)}</span>
       <span class="dia-tab-fecha">${numDia||''}</span>
       <span class="dia-tab-dot"></span>`;
-    tab.onclick=()=>{dia=d;sessionStorage.setItem('rm_dia',d);renderDias();renderCards();};
+    tab.onclick=()=>{
+      dia=d;sessionStorage.setItem('rm_dia',d);renderDias();renderCards();
+      if(vistaActual==='semana'){
+        requestAnimationFrame(()=>{
+          const hdrs = document.querySelectorAll('.card-hdr-fecha');
+          hdrs.forEach(h=>{
+            if(h.textContent.trim().startsWith(d)){
+              const td = h.closest('.semana-td-card');
+              if(td) td.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+            }
+          });
+        });
+      }
+    };
     strip.appendChild(tab);
   });
 }
