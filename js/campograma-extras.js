@@ -76,6 +76,10 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   #filtros-semana-bar { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   #filtros-semana-bar::-webkit-scrollbar { display: none; }
   #filtro-dias-row, #filtro-eqs-row, .filtros-sep { flex-shrink: 0; }
+  /* Nombres de jugador más pequeños en móvil */
+  .chip { font-size: 8px !important; padding: 2px 3px !important; }
+  .pof .chip { font-size: 7px !important; padding: 1px 2px !important; letter-spacing: 0 !important; }
+  .chip.chip-2l { font-size: 9px !important; }
 }
 
 /* Checkbox portero */
@@ -132,7 +136,45 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 }
 
 /* Descanso: mostrar zonas normales, sin bloquear */
-.card.en-descanso .zona-disponibles,
-.card.en-descanso .cols-estado {
+.card.en-descanso .zona-disponibles {
   display: block !important;
+}
+.card.en-descanso .cols-estado {
+  display: grid !important;
+}
+
+/* Selector cambiar equipo en Plantillas */
+.plant-eq-sel {
+  font-family: 'Segoe UI',-apple-system,sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #5a6170;
+  border: 1px solid #dfe1e6;
+  border-radius: 6px;
+  padding: 3px 4px;
+  background: #f8fafd;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.chip.chip-seleccionado {
+  outline: 3px solid #2563eb !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.25) !important;
+}
+
+/* Chip de PROMOCIONADOS cuando es duplicado (sigue activo en su equipo origen) */
+.c-duplicado {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1.5px solid #ef4444 !important;
+  font-weight: 700;
+}
+
+/* Recortar nombres largos en el campo para que no se superpongan (móvil sobre todo) */
+.pof .chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
