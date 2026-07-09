@@ -262,6 +262,23 @@ function plantCambiarEquipo(nombre, nuevoEq){
   renderPlantBody();
   toast('✓ '+nombre+' movido a '+(EQ_LABEL[nuevoEq]||nuevoEq));
 }
+function _normalizarNombre(s){
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+}
+function buscarPosiblesDuplicados(nombre){
+  const nombreNorm = _normalizarNombre(nombre);
+  const palabras = nombreNorm.split(/\s+/).filter(w=>w.length>=3); // ignorar iniciales sueltas
+  const encontrados = [];
+  Object.keys(origen).forEach(existente=>{
+    if(existente === nombre) return; // el mismo exacto se avisa aparte
+    const existenteNorm = _normalizarNombre(existente);
+    if(existenteNorm === nombreNorm){ encontrados.push(existente); return; }
+    const palabrasExistente = existenteNorm.split(/\s+/).filter(w=>w.length>=3);
+    const coincide = palabras.some(p=>palabrasExistente.includes(p));
+    if(coincide) encontrados.push(existente);
+  });
+  return encontrados;
+}
 function plantAñadir(){
   const input = document.getElementById('plant-add-input');
   const nombre = input.value.trim().toUpperCase();
@@ -290,6 +307,21 @@ function plantAñadir(){
     toast('⚠️ '+nombre+' ya está en '+plantEqActivo);
     return;
   }
+  // Avisar si hay nombres iguales o parecidos en OTRO equipo (posible duplicado)
+  const parecidos = buscarPosiblesDuplicados(nombre);
+  if(parecidos.length){
+    const lista = parecidos.map(n=>n+' ('+(origen[n]||'?')+')').join(', ');
+    showAlert(
+      '⚠️ Ya existe alguien con nombre igual o parecido: '+lista+'. ¿Seguro que quieres añadir "'+nombre+'" en '+plantEqActivo+'?',
+      ()=> _plantAñadirConfirmado(nombre),
+      'Añadir de todas formas'
+    );
+    return;
+  }
+  _plantAñadirConfirmado(nombre);
+}
+function _plantAñadirConfirmado(nombre){
+  const input = document.getElementById('plant-add-input');
   plantillas[plantEqActivo].push(nombre);
   plantillas[plantEqActivo].sort((a,b)=>a.localeCompare(b,'es'));
   origen[nombre] = plantEqActivo;
