@@ -2,7 +2,7 @@
 // ══════════════════════════════════════════════════
 // FILTROS VISTA SEMANA — días y equipos visibles
 // ══════════════════════════════════════════════════
-var _filtroDiasActivos = new Set(DIAS);
+var _filtroDiasActivos = window.matchMedia('(max-width: 640px)').matches ? new Set([dia]) : new Set(DIAS);
 var _filtroEqsActivos = new Set(EQUIPOS);
 var _incluirPrimerEquipo = false; // botón "1ER EQ" en filtros de vista semana — apagado por defecto
 
@@ -19,8 +19,15 @@ function renderFiltrosSemana(){
     btn.textContent = DIA_INICIAL[d]||d[0];
     btn.title = d;
     btn.onclick=()=>{
-      if(_filtroDiasActivos.has(d)) _filtroDiasActivos.delete(d);
-      else _filtroDiasActivos.add(d);
+      const esMovil = window.matchMedia('(max-width: 640px)').matches;
+      if(esMovil){
+        // Móvil: selección única — solo el día pulsado queda activo
+        _filtroDiasActivos = new Set([d]);
+      } else {
+        // Escritorio: multi-selección normal (acumulativa)
+        if(_filtroDiasActivos.has(d)) _filtroDiasActivos.delete(d);
+        else _filtroDiasActivos.add(d);
+      }
       renderFiltrosSemana();
       renderCards();
       if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
