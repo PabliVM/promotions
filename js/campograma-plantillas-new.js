@@ -404,3 +404,29 @@ function repararEquiposFantasma(){
   render();
   toast('🧹 Reparados '+contador+' rastros de jugadores en equipos que ya no eran el suyo');
 }
+// Borra TODOS los jugadores de TODOS los equipos (plantillas, orígenes, posiciones,
+// promociones, campo, etc.) para empezar de cero. Acción irreversible — pide confirmación.
+function borrarTodosLosJugadores(){
+  showAlert(
+    '⚠️ Esto borrará TODOS los jugadores de TODOS los equipos (plantillas, campo, promociones, todo) de forma irreversible. ¿Seguro que quieres empezar de cero?',
+    ()=>{
+      EQUIPOS.concat(['1ER EQUIPO']).forEach(eq=>{ plantillas[eq] = []; });
+      origen = {};
+      porteros = [];
+      listaUYL = [];
+      if(window.listaUYLExcl) window.listaUYLExcl = [];
+      primerEquipoJugadores = {};
+      promInfo = {};
+      pos = {};
+      multiEq = {};
+      movimientos = {};
+      data = JSON.parse(JSON.stringify(RAW));
+      autoGuardar();
+      renderPlantTabs();
+      renderPlantBody();
+      render();
+      toast('🗑️ Todos los jugadores han sido borrados');
+    },
+    'Borrar todo'
+  );
+}
