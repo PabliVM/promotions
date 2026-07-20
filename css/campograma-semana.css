@@ -205,6 +205,12 @@ body.dark .semana-td-card .card-hdr-fecha { color: #8b949e; }
   font-size: 11px !important;
   padding: 3px 6px !important;
 }
+@media (max-width: 640px) {
+  .cards-grid.view-semana .pof .chip {
+    font-size: 7px !important;
+    padding: 1px 2px !important;
+  }
+}
 
 @media (max-width: 767px) {
   .cards-grid.view-semana {
