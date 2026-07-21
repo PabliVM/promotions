@@ -74,6 +74,16 @@ function renderPlantBody(){
   const list = document.getElementById('plant-list');
   list.innerHTML = '';
   document.getElementById('plant-add-input').value = '';
+  const filaTexto = document.getElementById('plant-add-row');
+  const filaSelects = document.getElementById('plant-uyl-add-row');
+  if(plantEqActivo === 'JA_YOUTH'){
+    filaTexto.style.display = 'none';
+    filaSelects.style.display = 'flex';
+    renderUYLEqSel();
+  } else {
+    filaTexto.style.display = '';
+    filaSelects.style.display = 'none';
+  }
   if(plantEqActivo === 'JA_YOUTH'){
     document.getElementById('plant-eq-title').textContent = 'JA Youth League';
     // Inicializar con JA si está vacía
@@ -416,4 +426,46 @@ function borrarTodosLosJugadores(){
     },
     'Borrar todo'
   );
+}
+// ── JA Youth: añadir por selector de equipo → jugador (en vez de buscador de texto) ──
+function renderUYLEqSel(){
+  const sel = document.getElementById('plant-uyl-eq-sel');
+  sel.innerHTML = '';
+  EQUIPOS.filter(eq=>eq!=='JUVENIL A').forEach(eq=>{
+    const opt = document.createElement('option');
+    opt.value = eq;
+    opt.textContent = EQ_LABEL[eq] || eq;
+    sel.appendChild(opt);
+  });
+  renderUYLJugSel();
+}
+function renderUYLJugSel(){
+  const eqSel = document.getElementById('plant-uyl-eq-sel');
+  const jugSel = document.getElementById('plant-uyl-jug-sel');
+  jugSel.innerHTML = '';
+  const eq = eqSel.value;
+  const candidatos = (plantillas[eq] || []).filter(n=>!listaUYL.includes(n)).sort((a,b)=>a.localeCompare(b,'es'));
+  if(!candidatos.length){
+    const opt = document.createElement('option');
+    opt.textContent = '— sin jugadores disponibles —';
+    opt.disabled = true;
+    jugSel.appendChild(opt);
+    return;
+  }
+  candidatos.forEach(nombre=>{
+    const opt = document.createElement('option');
+    opt.value = nombre;
+    opt.textContent = nombre;
+    jugSel.appendChild(opt);
+  });
+}
+function uylAñadirDesdeSelects(){
+  const jugSel = document.getElementById('plant-uyl-jug-sel');
+  const nombre = jugSel.value;
+  if(!nombre) return;
+  if(listaUYL.includes(nombre)){ toast('⚠️ '+nombre+' ya está en JA Youth'); return; }
+  listaUYL.push(nombre);
+  listaUYL.sort((a,b)=>a.localeCompare(b,'es'));
+  renderPlantTabs(); renderPlantBody(); autoGuardar();
+  toast('✅ '+nombre+' añadido a JA Youth');
 }
