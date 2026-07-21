@@ -201,18 +201,16 @@ function snapToGrid(eq, nombre, rawTop, rawLeft, gaps){
   if(masCercanaIdx >= 0){
     const [ot, ol] = ocupadas[masCercanaIdx];
     const dt = rawTop - ot, dl = rawLeft - ol;
-    let t, l;
-    if(Math.abs(dl) >= Math.abs(dt)){
-      // El desplazamiento pedido es más horizontal → empujar a der/izq, MISMA altura
-      const signo = dl >= 0 ? 1 : -1;
-      l = clamp(ol + signo * gH, 0, 100);
-      t = clamp(rawTop, 0, 100);
-    } else {
-      // El desplazamiento pedido es más vertical → empujar arriba/abajo, MISMA horizontal
-      const signo = dt >= 0 ? 1 : -1;
-      t = clamp(ot + signo * gV, 0, 100);
-      l = clamp(rawLeft, 0, 100);
-    }
+    // Respetar la dirección real en la que se soltó en CADA eje: si ya había suficiente
+    // separación en un eje, se mantiene tal cual; solo se estira el eje que falte. Si
+    // faltan los dos a la vez (solape en diagonal), se empuja en diagonal — quedando lo
+    // más cerca posible del punto donde realmente se soltó.
+    const signoT = dt >= 0 ? 1 : -1;
+    const signoL = dl >= 0 ? 1 : -1;
+    const necesitaT = Math.max(gV, Math.abs(dt));
+    const necesitaL = Math.max(gH, Math.abs(dl));
+    const t = clamp(ot + signoT * necesitaT, 0, 100);
+    const l = clamp(ol + signoL * necesitaL, 0, 100);
     if(distMinOcupadas(t, l, ocupadas, gaps) >= RADIO_MIN){
       return [t, l];
     }
