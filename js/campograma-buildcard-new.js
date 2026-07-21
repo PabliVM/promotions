@@ -215,6 +215,13 @@ function buildCard(eq){
   const _diaReset = dia;
   resetBtn.onclick=(e)=>{ e.stopPropagation(); abrirResetModal(eq, _diaReset); };
   right.appendChild(resetBtn);
+  // Botón reordenar campo sin solapes
+  const alinearBtn=mk('button','snap-btn');
+  alinearBtn.innerHTML='⊞';
+  alinearBtn.title='Reordenar el campo sin solapes';
+  const _diaAlinear = dia;
+  alinearBtn.onclick=(e)=>{ e.stopPropagation(); autoAlinear(eq, _diaAlinear); };
+  right.appendChild(alinearBtn);
   const listaBtn=mk('button','snap-btn');
   listaBtn.textContent='📋';
   listaBtn.title='Foto de la lista de jugadores';
