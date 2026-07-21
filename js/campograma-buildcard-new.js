@@ -635,3 +635,18 @@ function resetearEquipo(eq){
   render();
   toast(`↺ ${eq} reseteado — ${propios.length} jugadores en disponibles`);
 }
+// Resetea TODOS los equipos del día activo a la vez: todo el mundo (campo, banquillo,
+// lesionados, promocionados, otros...) vuelve a Disponibles. Pide confirmación (destructivo).
+function resetearTodoElDia(){
+  showAlert(
+    '⚠️ Esto pone a TODOS los jugadores de TODOS los equipos en Disponibles hoy ('+dia+'). Se pierden lesiones, promociones y colocaciones de ese día. ¿Seguro?',
+    ()=>{
+      EQUIPOS.forEach(eq=>resetearEquipo(eq));
+      if(primerEquipoJugadores[dia]) primerEquipoJugadores[dia] = [];
+      autoGuardar();
+      render();
+      toast('↺ Todos los equipos reseteados en '+dia);
+    },
+    'Resetear todo'
+  );
+}
