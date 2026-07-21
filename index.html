@@ -120,6 +120,11 @@
         <button id="plant-add-btn" onclick="plantAñadir()">+ Añadir</button>
         <div id="plant-uyl-dropdown"></div>
       </div>
+      <div id="plant-uyl-add-row" style="display:none;gap:6px;margin-bottom:10px;">
+        <select id="plant-uyl-eq-sel" onchange="renderUYLJugSel()"></select>
+        <select id="plant-uyl-jug-sel"></select>
+        <button id="plant-uyl-add-btn" onclick="uylAñadirDesdeSelects()">+ Añadir</button>
+      </div>
       <div id="plant-count"></div>
       <div id="plant-list"></div>
     </div>
