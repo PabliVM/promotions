@@ -288,6 +288,21 @@ function buildAddInput(eq, zona){
     render();
   }
   function elegir(nombre){
+    const eqPropio = origen[nombre];
+    const esPromocionCruzada = eqPropio && eqPropio !== eq && eqPropio !== 'PRUEBA';
+
+    if(esPromocionCruzada){
+      // Misma función que usa el flujo "promocionar desde origen" — comportamiento idéntico
+      // sea cual sea el punto desde el que se inicie la acción. Siempre a Disponibles,
+      // nunca directo al campo (el usuario lo coloca él mismo después si quiere).
+      ejecutarPromocion(nombre, eqPropio, eq, dia);
+      toast(nombre+' promocionado a '+eq);
+      input.value=''; list.classList.remove('open');
+      render();
+      return;
+    }
+
+    // Caso normal (mismo equipo, o jugador a prueba): sin promoción, comportamiento de siempre
     // Evitar duplicado dentro del MISMO equipo: quitarlo de cualquier otra zona suya en este equipo
     ZONAS_ACTIVAS.forEach(z=>{
       if(z===zona) return;
@@ -308,25 +323,6 @@ function buildAddInput(eq, zona){
       }
       const [t,l] = SNAP_SLOTS[bestIdx] || [50,50];
       savePos(dia,eq,nombre,t,l);
-    }
-    // Si viene de otro equipo → registrar promoción en su equipo de origen
-    const eqPropio = origen[nombre];
-    if(eqPropio && eqPropio !== eq && eqPropio !== 'PRUEBA'){
-      // Quitar de disponibles del equipo origen si estaba ahí
-      const dispOrigen = data[dia][eqPropio]?.disponibles;
-      if(dispOrigen){
-        const idx = dispOrigen.indexOf(nombre);
-        if(idx >= 0) dispOrigen.splice(idx, 1);
-      }
-      // Registrar en promovidos_1er del equipo origen
-      if(!data[dia][eqPropio].promovidos_1er) data[dia][eqPropio].promovidos_1er = [];
-      if(!data[dia][eqPropio].promovidos_1er.includes(nombre)){
-        data[dia][eqPropio].promovidos_1er.push(nombre);
-      }
-      // Guardar destino
-      if(!promInfo[dia]) promInfo[dia] = {};
-      if(!promInfo[dia][eqPropio]) promInfo[dia][eqPropio] = {};
-      promInfo[dia][eqPropio][nombre] = eq;
     }
     data[dia][eq][zona].push(nombre);
     toast(nombre+' → '+ZONA_NAMES[zona]);
