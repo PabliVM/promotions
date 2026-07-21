@@ -365,7 +365,14 @@ function renombrarJugadorGlobal(nombreViejo, nombreNuevo){
 
   // Reemplazar en porteros
   const pIdx = porteros.indexOf(nombreViejo);
-  if(pIdx >= 0) porteros[pIdx] = nombreNuevo;
+  if(pIdx >= 0){
+    porteros[pIdx] = nombreNuevo;
+    // Avisar a Firebase del cambio de nombre (porteros va aparte del guardado general)
+    if(typeof window.fbTogglePortero === 'function'){
+      window.fbTogglePortero(nombreViejo, false);
+      window.fbTogglePortero(nombreNuevo, true);
+    }
+  }
 
   // Reemplazar en listaUYL
   const uIdx = listaUYL.indexOf(nombreViejo);
