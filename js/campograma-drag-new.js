@@ -15,7 +15,7 @@ function devolverADisponibles(nombre, eq, zona, diaP){
   const arr = data[diaP][eq]?.[zona];
   if(arr){ const i = arr.indexOf(nombre); if(i >= 0) arr.splice(i, 1); }
   if(zona === 'campo') delete pos[key(diaP, eq, nombre)];
-  const destino = promInfo[diaP]?.[eqPropio]?.[nombre];
+  const destinos = getDestinos(diaP, eqPropio, nombre);
   // 2. Si era la copia del equipo DESTINO (prestado/doblado), quitar de TODAS sus zonas activas ahí
   if(eq !== eqPropio){
     ZONAS_ACTIVAS.forEach(z => {
@@ -26,21 +26,23 @@ function devolverADisponibles(nombre, eq, zona, diaP){
     });
     delete pos[key(diaP, eq, nombre)];
   }
-  // 3. Si había promoción/duplicado activo, deshacerla también en el equipo destino
-  if(destino === '1ER EQUIPO'){
-    if(primerEquipoJugadores[diaP]){
-      const i = primerEquipoJugadores[diaP].indexOf(nombre);
-      if(i>=0) primerEquipoJugadores[diaP].splice(i,1);
+  // 3. Si había promoción/duplicado(s) activo(s), deshacerlos también en el/los equipo(s) destino
+  destinos.forEach(destino=>{
+    if(destino === '1ER EQUIPO'){
+      if(primerEquipoJugadores[diaP]){
+        const i = primerEquipoJugadores[diaP].indexOf(nombre);
+        if(i>=0) primerEquipoJugadores[diaP].splice(i,1);
+      }
+      delete pos[key(diaP,'1ER EQUIPO',nombre)];
+    } else if(destino && data[diaP][destino]){
+      ZONAS_ACTIVAS.forEach(z=>{
+        const a = data[diaP][destino][z];
+        if(!a) return;
+        const i = a.indexOf(nombre);
+        if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(diaP,destino,nombre)]; }
+      });
     }
-    delete pos[key(diaP,'1ER EQUIPO',nombre)];
-  } else if(destino && data[diaP][destino]){
-    ZONAS_ACTIVAS.forEach(z=>{
-      const a = data[diaP][destino][z];
-      if(!a) return;
-      const i = a.indexOf(nombre);
-      if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(diaP,destino,nombre)]; }
-    });
-  }
+  });
   // 4. Quitar de promovidos_1er en su equipo propio
   const prom = data[diaP][eqPropio]?.promovidos_1er;
   if(prom){ const pi = prom.indexOf(nombre); if(pi >= 0) prom.splice(pi, 1); }
