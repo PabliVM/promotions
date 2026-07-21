@@ -33,11 +33,14 @@ function buildPayload(manualSave=false){
 }
 // Autoguardado silencioso — guarda datos, NO toca el timestamp
 var _autoSaveTimer=null;
+var _guardadoVersion = 0; // se incrementa en cada cambio local
 window._hayGuardadoPendiente = false; // true desde que hay un cambio local hasta que se confirma en Firebase
 function autoGuardar(){
+  _guardadoVersion++;
   window._hayGuardadoPendiente = true;
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer=setTimeout(()=>{
+    const miVersion = _guardadoVersion; // versión en el momento de EMPEZAR a guardar esto
     try{
       const payload=buildPayload(false);
       // localStorage desactivado — solo Firebase
@@ -47,12 +50,16 @@ function autoGuardar(){
         window.fbGuardarSesion(_fbSesionActiva, payload).then(res=>{
           if(res && res.ok) console.log('✓ Auto-sync Firebase:', _fbSesionActiva);
           else console.warn('Auto-sync Firebase error:', res && res.message);
-          window._hayGuardadoPendiente = false;
+          // Solo "sin pendientes" si NADA ha cambiado desde que empezamos a guardar esto
+          if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
         });
       } else {
-        window._hayGuardadoPendiente = false;
+        if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
       }
-    }catch(e){ console.warn('autoGuardar error:', e); window._hayGuardadoPendiente = false; }
+    }catch(e){
+      console.warn('autoGuardar error:', e);
+      if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+    }
   },1500); // 1.5s debounce para no saturar Firestore
 }
 // Guardado manual — botón elegante arriba
