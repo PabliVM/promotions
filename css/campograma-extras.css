@@ -78,11 +78,13 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   #filtro-dias-row, #filtro-eqs-row, .filtros-sep { flex-shrink: 0; }
   /* Nombres de jugador más pequeños en móvil */
   .chip { font-size: 7px !important; padding: 1px 2px !important; }
-  /* Cabecera de cada card: compactar botones para que quepan todos (DESCANSA, ENTRENO, YL, reset, lista, cámara) */
-  .card-hdr-right { flex-wrap: wrap; gap: 3px !important; justify-content: flex-end; row-gap: 3px; }
-  .card-hdr-right .modo-btn { font-size: 8px !important; padding: 2px 5px !important; }
-  .card-hdr-right .reset-btn { font-size: 8px !important; padding: 2px 5px !important; }
-  .card-hdr-right .snap-btn { padding: 2px 4px !important; }
+  /* Cabecera de cada card: compactar botones para que quepan TODOS en una sola línea */
+  .card-hdr { padding: 6px 8px !important; }
+  .card-hdr-right { gap: 2px !important; flex-wrap: nowrap !important; }
+  .card-hdr-right .modo-btn { font-size: 7px !important; padding: 2px 4px !important; }
+  .card-hdr-right .reset-btn { font-size: 10px !important; padding: 1px 4px !important; }
+  .card-hdr-right .snap-btn { padding: 1px 3px !important; font-size: 10px !important; }
+  .card-hdr-name { font-size: 11px !important; }
   .pof .chip { font-size: 7px !important; padding: 1px 2px !important; letter-spacing: normal !important; line-height: 1.1 !important; }
   .pof { width: 22% !important; }
   .chip.chip-2l { font-size: 9px !important; }
