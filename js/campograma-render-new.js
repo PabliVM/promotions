@@ -20,8 +20,10 @@ function render(){
     } else {
       window.scrollTo(0,_scrollYPrevio); // resto de veces: mantener donde estabas
     }
+  } else if(vistaActual==='semana'){
+    centrarDiaEnEscritorio(); // esta ya restaura/centra el scroll horizontal en escritorio
   } else {
-    centrarDiaEnEscritorio();
+    window.scrollTo(0,_scrollYPrevio); // escritorio, vistas normales: mantener donde estabas
   }
 }
 function centrarDiaEnEscritorio(){
