@@ -162,13 +162,15 @@ function posOcupadas(eq, nombreMovido){
 // hace falta más separación horizontal que vertical para no solaparse de verdad.
 var GAP_V = 2;  // % mínimo vertical — solo un hueco fino
 var GAP_H = 4;  // % mínimo horizontal — solo un hueco fino
-function distMinOcupadas(t, l, ocupadas){
+function distMinOcupadas(t, l, ocupadas, gaps){
   if(!ocupadas.length) return 999;
+  const gV = gaps?.gapV ?? GAP_V;
+  const gH = gaps?.gapH ?? GAP_H;
   let peor = 999;
   ocupadas.forEach(([ot,ol])=>{
     const dt = Math.abs(t-ot), dl = Math.abs(l-ol);
-    const faltaV = Math.max(0, GAP_V - dt);
-    const faltaH = Math.max(0, GAP_H - dl);
+    const faltaV = Math.max(0, gV - dt);
+    const faltaH = Math.max(0, gH - dl);
     // Solo hay colisión real si falta espacio en LOS DOS ejes a la vez
     if(faltaV > 0 && faltaH > 0){
       const gravedad = Math.max(faltaV, faltaH);
@@ -179,10 +181,12 @@ function distMinOcupadas(t, l, ocupadas){
 }
 // Radio de exclusión — usado como umbral de "libre" junto con distMinOcupadas
 var RADIO_MIN = 4; // % del campo — margen mínimo, solo un hueco fino visible
-function snapToGrid(eq, nombre, rawTop, rawLeft){
+function snapToGrid(eq, nombre, rawTop, rawLeft, gaps){
   const ocupadas = posOcupadas(eq, nombre);
+  const gV = gaps?.gapV ?? GAP_V;
+  const gH = gaps?.gapH ?? GAP_H;
   // 1. Si el punto exacto de drop está libre, usarlo tal cual
-  if(distMinOcupadas(rawTop, rawLeft, ocupadas) >= RADIO_MIN){
+  if(distMinOcupadas(rawTop, rawLeft, ocupadas, gaps) >= RADIO_MIN){
     return [rawTop, rawLeft];
   }
   // 2. Hay solapamiento: empujar en la MISMA dirección en la que se soltó, respecto al
@@ -201,27 +205,27 @@ function snapToGrid(eq, nombre, rawTop, rawLeft){
     if(Math.abs(dl) >= Math.abs(dt)){
       // El desplazamiento pedido es más horizontal → empujar a der/izq, MISMA altura
       const signo = dl >= 0 ? 1 : -1;
-      l = clamp(ol + signo * GAP_H, 0, 100);
+      l = clamp(ol + signo * gH, 0, 100);
       t = clamp(rawTop, 0, 100);
     } else {
       // El desplazamiento pedido es más vertical → empujar arriba/abajo, MISMA horizontal
       const signo = dt >= 0 ? 1 : -1;
-      t = clamp(ot + signo * GAP_V, 0, 100);
+      t = clamp(ot + signo * gV, 0, 100);
       l = clamp(rawLeft, 0, 100);
     }
-    if(distMinOcupadas(t, l, ocupadas) >= RADIO_MIN){
+    if(distMinOcupadas(t, l, ocupadas, gaps) >= RADIO_MIN){
       return [t, l];
     }
   }
   // 3. Fallback (campo muy lleno / varios jugadores en conflicto a la vez):
   //    búsqueda en espiral como red de seguridad
-  const step = 1.5; // % del campo por paso
-  for(let radio = step; radio <= RADIO_MIN * 3; radio += step){
+  const step = Math.max(1.5, gV/2); // % del campo por paso
+  for(let radio = step; radio <= Math.max(gH,gV) * 3; radio += step){
     for(let ang = 0; ang < 360; ang += 30){
       const rad = ang * Math.PI / 180;
       const t = clamp(rawTop  + radio * Math.sin(rad), 0, 100);
       const l = clamp(rawLeft + radio * Math.cos(rad), 0, 100);
-      if(distMinOcupadas(t, l, ocupadas) >= RADIO_MIN){
+      if(distMinOcupadas(t, l, ocupadas, gaps) >= RADIO_MIN){
         return [t, l];
       }
     }
