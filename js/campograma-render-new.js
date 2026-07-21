@@ -22,19 +22,27 @@ function render(){
     }
   }
   const _scrollXPrevio = window.scrollX, _scrollYPrevio = window.scrollY;
-  renderDias(); renderEqs(); renderCards();
-  // Restaurar posición ANTES de que el navegador pinte, para que no se note el salto
-  if(_anclaIdx >= 0){
-    const filasNuevas = document.querySelectorAll('.semana-tr-eq');
-    if(filasNuevas[_anclaIdx]){
-      const rNuevo = filasNuevas[_anclaIdx].getBoundingClientRect();
-      window.scrollBy(0, rNuevo.top - _anclaTop);
+  function restaurarScroll(){
+    if(_anclaIdx >= 0){
+      const filasNuevas = document.querySelectorAll('.semana-tr-eq');
+      if(filasNuevas[_anclaIdx]){
+        const rNuevo = filasNuevas[_anclaIdx].getBoundingClientRect();
+        window.scrollBy(0, rNuevo.top - _anclaTop);
+      } else if(document.scrollingElement){
+        document.scrollingElement.scrollTop = _scrollYPrevio;
+      }
     } else if(document.scrollingElement){
+      document.scrollingElement.scrollLeft = _scrollXPrevio;
       document.scrollingElement.scrollTop = _scrollYPrevio;
     }
-  } else if(document.scrollingElement){
-    document.scrollingElement.scrollLeft = _scrollXPrevio;
-    document.scrollingElement.scrollTop = _scrollYPrevio;
+  }
+  renderDias(); renderEqs(); renderCards();
+  // 1ª corrección: inmediata, antes de pintar
+  restaurarScroll();
+  // 2ª corrección: después de que igualarZonasSemana (vía rAF) termine de ajustar alturas,
+  // que es lo que desplazaba la página otra vez tras la primera corrección
+  if(vistaActual==='semana'){
+    requestAnimationFrame(()=>requestAnimationFrame(restaurarScroll));
   }
   autoGuardar();
   if(esMovilVista()){
