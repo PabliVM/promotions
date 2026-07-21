@@ -27,7 +27,9 @@ function render(){
       const filasNuevas = document.querySelectorAll('.semana-tr-eq');
       if(filasNuevas[_anclaIdx]){
         const rNuevo = filasNuevas[_anclaIdx].getBoundingClientRect();
-        window.scrollBy(0, rNuevo.top - _anclaTop);
+        const delta = rNuevo.top - _anclaTop;
+        window.scrollBy(0, delta);
+        if(Math.abs(delta) > 3) toast('↕ ajuste scroll: '+Math.round(delta)+'px (fila '+_anclaIdx+')');
       } else if(document.scrollingElement){
         document.scrollingElement.scrollTop = _scrollYPrevio;
       }
@@ -43,6 +45,7 @@ function render(){
   // que es lo que desplazaba la página otra vez tras la primera corrección
   if(vistaActual==='semana'){
     requestAnimationFrame(()=>requestAnimationFrame(restaurarScroll));
+    setTimeout(restaurarScroll, 120); // red de seguridad si el navegador tarda más de 2 frames
   }
   autoGuardar();
   if(esMovilVista()){
