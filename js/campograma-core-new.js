@@ -158,12 +158,12 @@ function posOcupadas(eq, nombreMovido){
     .map((n,i) => pos[key(dia,eq,n)] || POS_DEF[i % POS_DEF.length] || [50,50]);
 }
 // Distancia mínima entre punto y lista de posiciones ocupadas
+// Las fichas son rectángulos ANCHOS (mucho más anchas que altas), no círculos:
+// hace falta más separación horizontal que vertical para no solaparse de verdad.
+var GAP_V = 2;  // % mínimo vertical — solo un hueco fino
+var GAP_H = 4;  // % mínimo horizontal — solo un hueco fino
 function distMinOcupadas(t, l, ocupadas){
   if(!ocupadas.length) return 999;
-  // Las fichas son rectángulos ANCHOS (mucho más anchas que altas), no círculos:
-  // hace falta más separación horizontal que vertical para no solaparse de verdad.
-  const GAP_V = 6;  // % mínimo vertical
-  const GAP_H = 14; // % mínimo horizontal
   let peor = 999;
   ocupadas.forEach(([ot,ol])=>{
     const dt = Math.abs(t-ot), dl = Math.abs(l-ol);
@@ -178,17 +178,45 @@ function distMinOcupadas(t, l, ocupadas){
   return peor;
 }
 // Radio de exclusión — usado como umbral de "libre" junto con distMinOcupadas
-var RADIO_MIN = 11; // % del campo
+var RADIO_MIN = 4; // % del campo — margen mínimo, solo un hueco fino visible
 function snapToGrid(eq, nombre, rawTop, rawLeft){
   const ocupadas = posOcupadas(eq, nombre);
   // 1. Si el punto exacto de drop está libre, usarlo tal cual
   if(distMinOcupadas(rawTop, rawLeft, ocupadas) >= RADIO_MIN){
     return [rawTop, rawLeft];
   }
-  // 2. Si hay solapamiento, desplazar en pequeños incrementos en 8 direcciones
-  //    buscando el punto libre más cercano al drop original
+  // 2. Hay solapamiento: empujar en la MISMA dirección en la que se soltó, respecto al
+  //    jugador ocupado más cercano — no saltar a cualquier lado libre. Si se soltó más
+  //    abajo, baja (misma horizontal); si más a la derecha, va a la derecha (misma
+  //    altura); y así con los 4 lados.
+  let masCercanaIdx = -1, menorDist = Infinity;
+  ocupadas.forEach(([ot,ol], i)=>{
+    const d = Math.hypot(rawTop-ot, rawLeft-ol);
+    if(d < menorDist){ menorDist = d; masCercanaIdx = i; }
+  });
+  if(masCercanaIdx >= 0){
+    const [ot, ol] = ocupadas[masCercanaIdx];
+    const dt = rawTop - ot, dl = rawLeft - ol;
+    let t, l;
+    if(Math.abs(dl) >= Math.abs(dt)){
+      // El desplazamiento pedido es más horizontal → empujar a der/izq, MISMA altura
+      const signo = dl >= 0 ? 1 : -1;
+      l = clamp(ol + signo * GAP_H, 0, 100);
+      t = clamp(rawTop, 0, 100);
+    } else {
+      // El desplazamiento pedido es más vertical → empujar arriba/abajo, MISMA horizontal
+      const signo = dt >= 0 ? 1 : -1;
+      t = clamp(ot + signo * GAP_V, 0, 100);
+      l = clamp(rawLeft, 0, 100);
+    }
+    if(distMinOcupadas(t, l, ocupadas) >= RADIO_MIN){
+      return [t, l];
+    }
+  }
+  // 3. Fallback (campo muy lleno / varios jugadores en conflicto a la vez):
+  //    búsqueda en espiral como red de seguridad
   const step = 1.5; // % del campo por paso
-  for(let radio = step; radio <= RADIO_MIN * 2; radio += step){
+  for(let radio = step; radio <= RADIO_MIN * 3; radio += step){
     for(let ang = 0; ang < 360; ang += 30){
       const rad = ang * Math.PI / 180;
       const t = clamp(rawTop  + radio * Math.sin(rad), 0, 100);
