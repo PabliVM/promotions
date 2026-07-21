@@ -1665,6 +1665,35 @@ function getDestinos(diaP, eqOrigen, nombre){
   if(!v) return [];
   return Array.isArray(v) ? v.slice() : [v];
 }
+// Igual que getDestinos, pero busca en TODOS los equipos, no solo en el "origen" asumido.
+// Esto encuentra rastros "huérfanos" que quedaron archivados bajo un equipo antiguo
+// (por ejemplo, si al jugador le cambiaron de equipo por Plantillas mientras estaba doblado).
+function getDestinosEnCualquierEquipo(diaP, nombre){
+  const encontrados = []; // [{eqArchivo, destino}, ...]
+  EQUIPOS.forEach(eq=>{
+    getDestinos(diaP, eq, nombre).forEach(destino=>{
+      encontrados.push({eqArchivo: eq, destino});
+    });
+  });
+  return encontrados;
+}
+// Limpia TODOS los rastros de duplicado de un jugador, estén archivados bajo el equipo
+// que estén (incluso equipos "antiguos" tras un cambio de equipo). Red de seguridad final.
+function limpiarTodosLosRastros(nombre, diaP){
+  diaP = diaP || dia;
+  const encontrados = getDestinosEnCualquierEquipo(diaP, nombre);
+  if(!encontrados.length) return 0;
+  encontrados.forEach(({eqArchivo, destino})=>{
+    limpiarUnDestino(diaP, destino, nombre);
+    const prom = data[diaP][eqArchivo]?.promovidos_1er;
+    if(prom){ const i=prom.indexOf(nombre); if(i>=0) prom.splice(i,1); }
+    if(promInfo[diaP]?.[eqArchivo]) delete promInfo[diaP][eqArchivo][nombre];
+  });
+  autoGuardar();
+  render();
+  toast('🧹 '+nombre+': '+encontrados.length+' rastro(s) de duplicado eliminado(s)');
+  return encontrados.length;
+}
 function limpiarUnDestino(diaP, destino, nombre){
   if(destino==='1ER EQUIPO'){
     if(primerEquipoJugadores[diaP]){
