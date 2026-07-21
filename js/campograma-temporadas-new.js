@@ -21,12 +21,14 @@ var _lastManualTS = null;
 function buildPayload(manualSave=false){
   if(manualSave) _lastManualTS = new Date().toISOString();
   return {
-    data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,notas:window._notasData||{},porteros,movimientos,
+    data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,notas:window._notasData||{},movimientos,
     modoUYL, listaUYL, listaUYLExcl: window.listaUYLExcl||[], tipoPartido, tiposConfig, modoDescanso,
     modoPartido, primerEquipoJugadores, rivales: window.rivales||{},
     semanasGuardadas: _semanasGuardadas,
     ultimaSemanaKey: _semanaKeyActual,
     ts: _lastManualTS
+    // 'porteros' NO va aquí a propósito: se guarda con fbTogglePortero (escritura atómica),
+    // así nunca se pisa aunque otra persona esté guardando algo distinto a la vez.
   };
 }
 // Autoguardado silencioso — guarda datos, NO toca el timestamp
