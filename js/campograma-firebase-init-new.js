@@ -109,6 +109,19 @@ try {
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
     }
   };
+  // Escuchar cambios EN VIVO de una sesión (de otros dispositivos/pestañas).
+  // callback(data) se llama cada vez que hay un cambio confirmado en el servidor
+  // que NO viene de una escritura pendiente nuestra (evita reaccionar a nuestro propio guardado).
+  window.fbEscucharSesion = function(nombre, callback){
+    return db.collection('sesiones').doc(nombre)
+      .onSnapshot({ includeMetadataChanges: true }, (snap) => {
+        if(!snap.exists) return;
+        if(snap.metadata.hasPendingWrites) return; // es nuestra propia escritura local, ignorar
+        callback(snap.data());
+      }, (err) => {
+        console.error('fbEscucharSesion error:', err);
+      });
+  };
   // (firebase-ready ahora se dispara desde onAuthStateChanged tras login)
 
 } catch (errorInicial) {
@@ -124,4 +137,5 @@ try {
   window.fbCargarSesion = _fbStub(MSG);
   window.fbListarSesiones = _fbStub(MSG);
   window.fbEliminarSesion = _fbStub(MSG);
+  window.fbEscucharSesion = function(){ return function(){}; }; // no-op: devuelve un "cancelar" vacío
 }
