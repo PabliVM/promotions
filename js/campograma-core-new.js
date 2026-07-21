@@ -160,9 +160,24 @@ function posOcupadas(eq, nombreMovido){
 // Distancia mínima entre punto y lista de posiciones ocupadas
 function distMinOcupadas(t, l, ocupadas){
   if(!ocupadas.length) return 999;
-  return Math.min(...ocupadas.map(([ot,ol]) => Math.hypot(t-ot, l-ol)));
+  // Las fichas son rectángulos ANCHOS (mucho más anchas que altas), no círculos:
+  // hace falta más separación horizontal que vertical para no solaparse de verdad.
+  const GAP_V = 6;  // % mínimo vertical
+  const GAP_H = 14; // % mínimo horizontal
+  let peor = 999;
+  ocupadas.forEach(([ot,ol])=>{
+    const dt = Math.abs(t-ot), dl = Math.abs(l-ol);
+    const faltaV = Math.max(0, GAP_V - dt);
+    const faltaH = Math.max(0, GAP_H - dl);
+    // Solo hay colisión real si falta espacio en LOS DOS ejes a la vez
+    if(faltaV > 0 && faltaH > 0){
+      const gravedad = Math.max(faltaV, faltaH);
+      peor = Math.min(peor, RADIO_MIN - gravedad);
+    }
+  });
+  return peor;
 }
-// Radio de exclusión — los chips no se solapan si están al menos RADIO_MIN % separados
+// Radio de exclusión — usado como umbral de "libre" junto con distMinOcupadas
 var RADIO_MIN = 11; // % del campo
 function snapToGrid(eq, nombre, rawTop, rawLeft){
   const ocupadas = posOcupadas(eq, nombre);
@@ -268,17 +283,6 @@ function buildAddInput(eq, zona){
           list.appendChild(it);
         });
       });
-    }
-    // Opción "a prueba": si hay texto escrito y no coincide exacto con nadie
-    if(zona==='disponibles' && q.length>1){
-      const qUp = q.toUpperCase().trim();
-      const exacto = todos.some(n=>n.toUpperCase()===qUp);
-      if(!exacto){
-        const hint = mk('div','ac-prueba-hint');
-        hint.textContent = '⚡ Añadir "'+qUp+'" como jugador a prueba';
-        hint.onmousedown=(e)=>{ e.preventDefault(); elegirPrueba(qUp); };
-        list.appendChild(hint);
-      }
     }
     if(list.children.length>0) list.classList.add('open');
     else list.classList.remove('open');
