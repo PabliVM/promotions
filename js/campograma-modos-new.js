@@ -300,6 +300,18 @@ function toggleUYL(diaParam){
   const d = diaParam || dia;
   if(esPartido('JUVENIL A', d)) return; // En partido no se puede activar YL
   modoUYL[d] = !modoUYL[d];
+  if(modoUYL[d]){
+    // Al activar: los EXTRAS (de otros equipos) se promocionan DE VERDAD a JUVENIL A
+    // para ese día — aparecen en Disponibles de JA, desaparecen de Disponibles de su
+    // equipo real, y salen en Promocionados de su equipo con destino JUVENIL A. Esto
+    // NO toca listaUYL (la lista base de quién es Youth League no cambia).
+    getPlantillaUYL().forEach(nombre=>{
+      const eqPropio = origen[nombre];
+      if(!eqPropio || eqPropio === 'JUVENIL A' || eqPropio === 'PRUEBA') return;
+      const yaPromovido = getDestinos(d, eqPropio, nombre).includes('JUVENIL A');
+      if(!yaPromovido) ejecutarPromocion(nombre, eqPropio, 'JUVENIL A', d);
+    });
+  }
   autoGuardar();
   renderCards();
   if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
