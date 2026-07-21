@@ -292,6 +292,14 @@ function buildAddInput(eq, zona){
     const esPromocionCruzada = eqPropio && eqPropio !== eq && eqPropio !== 'PRUEBA';
 
     if(esPromocionCruzada){
+      // Quitarlo de donde esté AHORA en su equipo origen (campo, disponibles, banquillo...)
+      // — es una transferencia real, no debe quedarse duplicado ahí.
+      ZONAS_ACTIVAS.forEach(z=>{
+        const arr = data[dia][eqPropio]?.[z];
+        if(!arr) return;
+        const i = arr.indexOf(nombre);
+        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(dia,eqPropio,nombre)]; }
+      });
       // Misma función que usa el flujo "promocionar desde origen" — comportamiento idéntico
       // sea cual sea el punto desde el que se inicie la acción. Siempre a Disponibles,
       // nunca directo al campo (el usuario lo coloca él mismo después si quiere).
