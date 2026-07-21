@@ -379,7 +379,7 @@
 #plant-list{display:flex;flex-direction:column;gap:3px;max-height:360px;overflow-y:auto;padding-right:2px;}
 .plant-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;background:#f8fafd;border:1px solid #e8eef8;}
 .plant-row:hover{background:#e8eef8;}
-.plant-name{flex:1;color:#1a1d23;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;}
+.plant-name{flex:1;color:#1a1d23;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;}
 .plant-del{background:none;border:none;color:#ef4444;font-size:15px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;opacity:.5;}
 .plant-del:hover{opacity:1;}
 .plant-count{color:#9ca3af;font-size:11px;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;margin-bottom:8px;}
