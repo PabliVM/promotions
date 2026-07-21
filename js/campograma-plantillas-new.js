@@ -240,6 +240,15 @@ function plantCambiarEquipo(nombre, nuevoEq){
   if(!plantillas[nuevoEq]) plantillas[nuevoEq] = [];
   if(!plantillas[nuevoEq].includes(nombre)) plantillas[nuevoEq].push(nombre);
   origen[nombre] = nuevoEq;
+  // Limpiar cualquier duplicado que estuviera archivado bajo el equipo ANTIGUO
+  // (si no, se queda "fantasma": ya no se puede gestionar desde ningún sitio)
+  DIAS.forEach(d=>{
+    if(promInfo[d]?.[plantEqActivo]?.[nombre]){
+      const destinos = getDestinos(d, plantEqActivo, nombre);
+      destinos.forEach(destino=>limpiarUnDestino(d, destino, nombre));
+      delete promInfo[d][plantEqActivo][nombre];
+    }
+  });
   // Quitar cualquier rastro del jugador en el equipo ANTERIOR (todas las zonas, todos los días)
   if(plantEqActivo !== '1ER EQUIPO'){
     DIAS.forEach(d=>{
