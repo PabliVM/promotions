@@ -9,6 +9,7 @@ window.__rmRenderLoaded = true;
 let _diaElegidoManualmente = false; // en móvil, ningún día se marca hasta que el usuario toque uno
 let _yaSubidoInicial = false; // para no forzar scroll arriba en CADA acción, solo al arrancar
 function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
+let _yaCentradoEscritorio = false; // el centrado en "hoy" de escritorio, solo una vez al arrancar
 function render(){
   const _scrollYPrevio = window.scrollY;
   renderDias(); renderEqs(); renderCards();
@@ -20,10 +21,11 @@ function render(){
     } else {
       window.scrollTo(0,_scrollYPrevio); // resto de veces: mantener donde estabas
     }
-  } else if(vistaActual==='semana'){
-    centrarDiaEnEscritorio(); // esta ya restaura/centra el scroll horizontal en escritorio
+  } else if(vistaActual==='semana' && !_yaCentradoEscritorio){
+    _yaCentradoEscritorio = true;
+    centrarDiaEnEscritorio(); // solo la primera vez: centra la card de hoy
   } else {
-    window.scrollTo(0,_scrollYPrevio); // escritorio, vistas normales: mantener donde estabas
+    window.scrollTo(0,_scrollYPrevio); // resto de veces: mantener donde estabas
   }
 }
 function centrarDiaEnEscritorio(){
