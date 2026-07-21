@@ -212,7 +212,8 @@ function buildCard(eq){
   const resetBtn=mk('button','reset-btn');
   resetBtn.innerHTML='↺';
   resetBtn.title='Resetear equipo';
-  resetBtn.onclick=(e)=>{ e.stopPropagation(); abrirResetModal(eq); };
+  const _diaReset = dia;
+  resetBtn.onclick=(e)=>{ e.stopPropagation(); abrirResetModal(eq, _diaReset); };
   right.appendChild(resetBtn);
   const listaBtn=mk('button','snap-btn');
   listaBtn.textContent='📋';
@@ -588,50 +589,51 @@ function esMulti(nombre){
   return eqsDeNombre(dia, nombre).length; // nº de equipos donde está activo (0,1,2,3...)
 }
 // ── Resetear equipo: todos los jugadores del equipo a disponibles ──
-function resetearEquipo(eq){
+function resetearEquipo(eq, diaP){
+  diaP = diaP || dia;
   // Jugadores propios del equipo (origen === eq)
   const propios = Object.keys(origen).filter(n => origen[n] === eq);
-  // 1. Limpiar todas las zonas del equipo HOY
+  // 1. Limpiar todas las zonas del equipo ese día
   ZONAS_ACTIVAS.forEach(z => {
-    if(data[dia][eq]?.[z]) data[dia][eq][z] = [];
+    if(data[diaP][eq]?.[z]) data[diaP][eq][z] = [];
   });
-  if(data[dia][eq]?.promovidos_1er) data[dia][eq].promovidos_1er = [];
-  if(data[dia][eq]?.banquillo)      data[dia][eq].banquillo      = [];
+  if(data[diaP][eq]?.promovidos_1er) data[diaP][eq].promovidos_1er = [];
+  if(data[diaP][eq]?.banquillo)      data[diaP][eq].banquillo      = [];
   // 2. Limpiar posiciones de campo de jugadores propios
-  propios.forEach(n => delete pos[key(dia, eq, n)]);
+  propios.forEach(n => delete pos[key(diaP, eq, n)]);
   // 3. Limpiar promInfo del equipo
-  if(promInfo[dia]?.[eq]) promInfo[dia][eq] = {};
+  if(promInfo[diaP]?.[eq]) promInfo[diaP][eq] = {};
   // 4. Limpiar multiEq de jugadores propios
   propios.forEach(n => {
-    if(multiEq[dia]?.[n]){
-      multiEq[dia][n] = multiEq[dia][n].filter(e => e !== eq);
-      if(multiEq[dia][n].length <= 1) delete multiEq[dia][n];
+    if(multiEq[diaP]?.[n]){
+      multiEq[diaP][n] = multiEq[diaP][n].filter(e => e !== eq);
+      if(multiEq[diaP][n].length <= 1) delete multiEq[diaP][n];
     }
   });
   // 5. Quitar jugadores propios de otros equipos donde estuvieran prestados
   EQUIPOS.forEach(otroEq => {
     if(otroEq === eq) return;
     ZONAS_ACTIVAS.forEach(z => {
-      const arr = data[dia][otroEq]?.[z];
+      const arr = data[diaP][otroEq]?.[z];
       if(!arr) return;
       propios.forEach(n => {
         const i = arr.indexOf(n);
         if(i >= 0){
           arr.splice(i, 1);
-          delete pos[key(dia, otroEq, n)];
+          delete pos[key(diaP, otroEq, n)];
         }
       });
     });
     // Limpiar promovidos en otros equipos
-    const prom = data[dia][otroEq]?.promovidos_1er;
+    const prom = data[diaP][otroEq]?.promovidos_1er;
     if(prom) propios.forEach(n => {
       const i = prom.indexOf(n); if(i >= 0) prom.splice(i, 1);
     });
-    if(promInfo[dia]?.[otroEq]) propios.forEach(n => delete promInfo[dia][otroEq][n]);
+    if(promInfo[diaP]?.[otroEq]) propios.forEach(n => delete promInfo[diaP][otroEq][n]);
   });
   // 6. Todos los jugadores propios → disponibles de su equipo
-  data[dia][eq].disponibles = [...propios];
+  data[diaP][eq].disponibles = [...propios];
   autoGuardar();
   render();
-  toast(`↺ ${eq} reseteado — ${propios.length} jugadores en disponibles`);
+  toast(`↺ ${eq} reseteado (${diaP}) — ${propios.length} jugadores en disponibles`);
 }
