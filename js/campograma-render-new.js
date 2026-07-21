@@ -11,21 +11,22 @@ let _yaSubidoInicial = false; // para no forzar scroll arriba en CADA acción, s
 function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
 let _yaCentradoEscritorio = false; // el centrado en "hoy" de escritorio, solo una vez al arrancar
 function render(){
-  const _scrollYPrevio = window.scrollY;
+  const _scrollXPrevio = window.scrollX, _scrollYPrevio = window.scrollY;
   renderDias(); renderEqs(); renderCards();
+  // Restaurar posición de scroll ANTES de que el navegador pinte, para que no se note el salto
+  if(document.scrollingElement){
+    document.scrollingElement.scrollLeft = _scrollXPrevio;
+    document.scrollingElement.scrollTop = _scrollYPrevio;
+  }
   autoGuardar();
   if(esMovilVista()){
     if(!_yaSubidoInicial){
       _yaSubidoInicial = true;
       window.scrollTo(0,0); // móvil: solo al ARRANCAR la app sube arriba
-    } else {
-      window.scrollTo(0,_scrollYPrevio); // resto de veces: mantener donde estabas
     }
   } else if(vistaActual==='semana' && !_yaCentradoEscritorio){
     _yaCentradoEscritorio = true;
     centrarDiaEnEscritorio(); // solo la primera vez: centra la card de hoy
-  } else {
-    window.scrollTo(0,_scrollYPrevio); // resto de veces: mantener donde estabas
   }
 }
 function centrarDiaEnEscritorio(){
