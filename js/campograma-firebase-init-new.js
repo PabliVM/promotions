@@ -65,11 +65,27 @@ try {
   window.fbGuardarSesion = async function(nombre, payload){
     try{
       const clean = JSON.parse(JSON.stringify(payload));
-      await db.collection('sesiones').doc(nombre).set({
-        ...clean,
-        _nombre: nombre,
-        _ts: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      const doc = { ...clean, _nombre: nombre, _ts: firebase.firestore.FieldValue.serverTimestamp() };
+      // 'data' y 'promInfo' se mandan EQUIPO POR EQUIPO (con rutas tipo "data_por_eq.LUNES.CASTILLA")
+      // en vez de como un bloque único: así Firestore fusiona cada equipo por separado, y dos
+      // personas tocando equipos DISTINTOS a la vez nunca se pisan entre sí.
+      if(doc.data && typeof doc.data === 'object'){
+        Object.keys(doc.data).forEach(dia=>{
+          Object.keys(doc.data[dia]||{}).forEach(eq=>{
+            doc['data_por_eq.' + dia + '.' + eq] = doc.data[dia][eq];
+          });
+        });
+        delete doc.data;
+      }
+      if(doc.promInfo && typeof doc.promInfo === 'object'){
+        Object.keys(doc.promInfo).forEach(dia=>{
+          Object.keys(doc.promInfo[dia]||{}).forEach(eq=>{
+            doc['prominfo_por_eq.' + dia + '.' + eq] = doc.promInfo[dia][eq];
+          });
+        });
+        delete doc.promInfo;
+      }
+      await db.collection('sesiones').doc(nombre).set(doc, { merge: true });
       return { ok:true };
     }catch(e){
       console.error('fbGuardarSesion error:', e);
@@ -77,13 +93,27 @@ try {
     }
   };
   // Cargar sesión desde Firebase
+  function _reconstruirDesdePorEq(raw){
+    // Reconstruye 'data' y 'promInfo' normales a partir de los campos aplanados
+    // (data_por_eq / prominfo_por_eq), para que el resto de la app no note el cambio.
+    const out = { ...raw };
+    if(raw.data_por_eq && typeof raw.data_por_eq === 'object'){
+      out.data = raw.data_por_eq;
+      delete out.data_por_eq;
+    }
+    if(raw.prominfo_por_eq && typeof raw.prominfo_por_eq === 'object'){
+      out.promInfo = raw.prominfo_por_eq;
+      delete out.prominfo_por_eq;
+    }
+    return out;
+  }
   window.fbCargarSesion = async function(nombre){
     try{
       const snap = await db.collection('sesiones').doc(nombre).get();
       if(!snap.exists){
         return { ok:false, reason:'not_found', message:'La sesión no existe en Firebase.' };
       }
-      return { ok:true, data:snap.data() };
+      return { ok:true, data: _reconstruirDesdePorEq(snap.data()) };
     }catch(e){
       console.error('fbCargarSesion error:', e);
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
@@ -117,10 +147,35 @@ try {
       .onSnapshot({ includeMetadataChanges: true }, (snap) => {
         if(!snap.exists) return;
         if(snap.metadata.hasPendingWrites) return; // es nuestra propia escritura local, ignorar
-        callback(snap.data());
+        callback(_reconstruirDesdePorEq(snap.data()));
       }, (err) => {
         console.error('fbEscucharSesion error:', err);
       });
+  };
+  // Marcar/desmarcar portero de forma ATÓMICA — no depende del guardado general (buildPayload),
+  // así nunca se pisa aunque otra persona esté guardando algo distinto en ese mismo instante.
+  window.fbTogglePortero = async function(nombre, marcar){
+    try{
+      const ref = db.collection('sesiones').doc('principal');
+      const cambio = marcar
+        ? firebase.firestore.FieldValue.arrayUnion(nombre)
+        : firebase.firestore.FieldValue.arrayRemove(nombre);
+      await ref.set({ porteros: cambio }, { merge: true });
+      return { ok:true };
+    }catch(e){
+      console.error('fbTogglePortero error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
+  // Sobrescribe la lista de porteros entera (para "Borrar todo" u otras operaciones masivas)
+  window.fbSetPorterosCompleto = async function(arr){
+    try{
+      await db.collection('sesiones').doc('principal').set({ porteros: arr }, { merge: true });
+      return { ok:true };
+    }catch(e){
+      console.error('fbSetPorterosCompleto error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
   };
   // (firebase-ready ahora se dispara desde onAuthStateChanged tras login)
 
@@ -138,4 +193,6 @@ try {
   window.fbListarSesiones = _fbStub(MSG);
   window.fbEliminarSesion = _fbStub(MSG);
   window.fbEscucharSesion = function(){ return function(){}; }; // no-op: devuelve un "cancelar" vacío
+  window.fbTogglePortero = _fbStub(MSG);
+  window.fbSetPorterosCompleto = _fbStub(MSG);
 }
