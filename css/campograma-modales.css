@@ -376,6 +376,28 @@
 #plant-add-btn{padding:7px 16px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-transform:none;letter-spacing:0;white-space:nowrap;}
 #plant-add-btn:hover{background:#1d4ed8;}
 #plant-add-row{position:relative;}
+#plant-uyl-dropdown{
+  display:none;
+  position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:500;
+  background:#fff;border:1px solid #e8eef8;border-radius:10px;
+  box-shadow:0 6px 24px rgba(0,0,0,.15);max-height:220px;overflow-y:auto;
+}
+#plant-uyl-dropdown.open{display:block;}
+.puyl-group-hdr{
+  padding:5px 9px 3px;
+  font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;
+  color:#2563eb;background:#f0f4fa;
+  border-bottom:1px solid #e8eef8;
+  position:sticky;top:0;z-index:1;
+}
+.puyl-item{
+  padding:7px 10px;font-family:'Segoe UI',-apple-system,sans-serif;
+  font-size:12px;font-weight:600;color:#1a1d23;
+  cursor:pointer;border-bottom:1px solid #f0f4fa;
+}
+.puyl-item:last-child{border-bottom:none;}
+.puyl-item:hover,.puyl-item.sel{background:rgba(37,99,235,.08);color:#2563eb;}
 #plant-list{display:flex;flex-direction:column;gap:3px;max-height:360px;overflow-y:auto;padding-right:2px;}
 .plant-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;background:#f8fafd;border:1px solid #e8eef8;}
 .plant-row:hover{background:#e8eef8;}
