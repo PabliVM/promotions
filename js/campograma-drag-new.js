@@ -61,7 +61,22 @@ function dispararDobleTap(nombre, eq, zona, diaP){
   diaP = diaP || dia;
   const eqPropio = origen[nombre] || eq;
   const esPrimario = (zona === 'disponibles' && eq === eqPropio);
-  const destinosActuales = getDestinos(diaP, eqPropio, nombre);
+  let destinosActuales = getDestinos(diaP, eqPropio, nombre);
+
+  // Si no hay nada bajo su equipo actual pero SÍ hay rastros archivados en otro equipo
+  // (p.ej. tras un cambio de equipo mientras estaba doblado), ofrecer limpiarlos directamente
+  if(destinosActuales.length === 0){
+    const huerfanos = getDestinosEnCualquierEquipo(diaP, nombre).filter(h=>h.eqArchivo!==eqPropio);
+    if(huerfanos.length > 0){
+      const lista = huerfanos.map(h=>h.destino==='1ER EQUIPO'?'Primer Equipo':h.destino).join(', ');
+      showAlert(
+        `${nombre} tiene un duplicado "fantasma" archivado (${lista}) de cuando estaba en otro equipo. ¿Lo limpio?`,
+        ()=> limpiarTodosLosRastros(nombre, diaP),
+        'Limpiar'
+      );
+      return;
+    }
+  }
 
   // Doble clic en la COPIA de un destino concreto (no en el origen): solo afecta a ESE destino
   if(eq !== eqPropio && destinosActuales.includes(eq)){
