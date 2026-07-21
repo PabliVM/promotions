@@ -375,6 +375,14 @@
 #plant-add-input:focus{border-color:#2563eb;}
 #plant-add-btn{padding:7px 16px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-transform:none;letter-spacing:0;white-space:nowrap;}
 #plant-add-btn:hover{background:#1d4ed8;}
+#plant-uyl-eq-sel,#plant-uyl-jug-sel{
+  flex:1;padding:7px 10px;border-radius:8px;border:1px solid #dfe1e6;
+  background:#f8fafd;color:#1a1d23;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:12px;font-weight:600;outline:none;
+}
+#plant-uyl-eq-sel:focus,#plant-uyl-jug-sel:focus{border-color:#2563eb;}
+#plant-uyl-add-btn{padding:7px 16px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+#plant-uyl-add-btn:hover{background:#1d4ed8;}
 #plant-add-row{position:relative;}
 #plant-uyl-dropdown{
   display:none;
