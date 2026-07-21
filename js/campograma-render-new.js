@@ -11,10 +11,28 @@ let _yaSubidoInicial = false; // para no forzar scroll arriba en CADA acción, s
 function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
 let _yaCentradoEscritorio = false; // el centrado en "hoy" de escritorio, solo una vez al arrancar
 function render(){
+  // Anclar el scroll a la FILA de equipo que está visible ahora mismo (más fiable que
+  // guardar solo el número de píxeles, que se desajusta si algo de arriba cambia de alto)
+  let _anclaIdx = -1, _anclaTop = 0;
+  if(vistaActual==='semana'){
+    const filas = document.querySelectorAll('.semana-tr-eq');
+    for(let i=0; i<filas.length; i++){
+      const r = filas[i].getBoundingClientRect();
+      if(r.bottom > 0 && r.top < window.innerHeight){ _anclaIdx = i; _anclaTop = r.top; break; }
+    }
+  }
   const _scrollXPrevio = window.scrollX, _scrollYPrevio = window.scrollY;
   renderDias(); renderEqs(); renderCards();
-  // Restaurar posición de scroll ANTES de que el navegador pinte, para que no se note el salto
-  if(document.scrollingElement){
+  // Restaurar posición ANTES de que el navegador pinte, para que no se note el salto
+  if(_anclaIdx >= 0){
+    const filasNuevas = document.querySelectorAll('.semana-tr-eq');
+    if(filasNuevas[_anclaIdx]){
+      const rNuevo = filasNuevas[_anclaIdx].getBoundingClientRect();
+      window.scrollBy(0, rNuevo.top - _anclaTop);
+    } else if(document.scrollingElement){
+      document.scrollingElement.scrollTop = _scrollYPrevio;
+    }
+  } else if(document.scrollingElement){
     document.scrollingElement.scrollLeft = _scrollXPrevio;
     document.scrollingElement.scrollTop = _scrollYPrevio;
   }
