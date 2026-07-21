@@ -92,12 +92,15 @@ function elegirUYL(nombre){
 // MODAL RESET EQUIPO
 // ══════════════════════════════════════════════════
 var _resetEq = null;
-function abrirResetModal(eq){
+var _resetDia = null;
+function abrirResetModal(eq, diaP){
+  diaP = diaP || dia;
   _resetEq = eq;
+  _resetDia = diaP;
   document.getElementById('reset-modal-title').textContent = 'Resetear ' + eq;
-  document.getElementById('reset-modal-sub').textContent = eq + ' — ' + dia;
+  document.getElementById('reset-modal-sub').textContent = eq + ' — ' + diaP;
   // Contar jugadores en campo para contexto
-  const enCampo = data[dia][eq]?.campo?.length || 0;
+  const enCampo = data[diaP][eq]?.campo?.length || 0;
   const propios = Object.keys(origen).filter(n=>origen[n]===eq).length;
   document.querySelector('.reset-opt-campo .reset-opt-desc').textContent =
     `${enCampo} jugadores del campo vuelven a disponibles. Lesiones, promociones y otros se mantienen.`;
@@ -105,11 +108,11 @@ function abrirResetModal(eq){
     `Los ${propios} jugadores del equipo (campo, lesiones, promociones…) vuelven todos a disponibles.`;
   document.getElementById('reset-opt-campo').onclick = ()=>{
     cerrarResetModal();
-    resetearSoloCampo(_resetEq);
+    resetearSoloCampo(_resetEq, _resetDia);
   };
   document.getElementById('reset-opt-todo').onclick = ()=>{
     cerrarResetModal();
-    resetearEquipo(_resetEq);
+    resetearEquipo(_resetEq, _resetDia);
   };
   document.getElementById('reset-modal-overlay').classList.add('open');
 }
@@ -117,20 +120,21 @@ function cerrarResetModal(e){
   if(!e || e.target===document.getElementById('reset-modal-overlay'))
     document.getElementById('reset-modal-overlay').classList.remove('open');
 }
-function resetearSoloCampo(eq){
+function resetearSoloCampo(eq, diaP){
+  diaP = diaP || dia;
   const propios = Object.keys(origen).filter(n => origen[n] === eq);
-  const enCampo = [...(data[dia][eq]?.campo || [])];
+  const enCampo = [...(data[diaP][eq]?.campo || [])];
   // Quitar del campo
-  data[dia][eq].campo = [];
+  data[diaP][eq].campo = [];
   // Limpiar posiciones
-  enCampo.forEach(n => delete pos[key(dia, eq, n)]);
+  enCampo.forEach(n => delete pos[key(diaP, eq, n)]);
   // Quitar también de campos de otros equipos donde estuvieran prestados
   EQUIPOS.forEach(otroEq => {
     if(otroEq === eq) return;
-    const arr = data[dia][otroEq]?.campo;
+    const arr = data[diaP][otroEq]?.campo;
     if(!arr) return;
     enCampo.filter(n=>origen[n]===eq).forEach(n=>{
-      const i = arr.indexOf(n); if(i>=0){ arr.splice(i,1); delete pos[key(dia,otroEq,n)]; }
+      const i = arr.indexOf(n); if(i>=0){ arr.splice(i,1); delete pos[key(diaP,otroEq,n)]; }
     });
   });
   // Volver a disponibles del propio equipo (solo los que no están ya en otra zona)
@@ -138,20 +142,20 @@ function resetearSoloCampo(eq){
     const eqPropio = origen[n] || eq;
     if(eqPropio !== eq) return; // prestado — lo dejamos en su equipo
     const enOtraZona = ['banquillo','lesionados','promovidos_1er','otros','extra']
-      .some(z=>(data[dia][eq]?.[z]||[]).includes(n));
-    const disp = data[dia][eq].disponibles;
+      .some(z=>(data[diaP][eq]?.[z]||[]).includes(n));
+    const disp = data[diaP][eq].disponibles;
     if(!enOtraZona && !disp.includes(n)) disp.push(n);
   });
   // Limpiar multiEq del campo
   enCampo.forEach(n=>{
-    if(multiEq[dia]?.[n]){
-      multiEq[dia][n] = multiEq[dia][n].filter(e=>e!==eq);
-      if(multiEq[dia][n].length<=1) delete multiEq[dia][n];
+    if(multiEq[diaP]?.[n]){
+      multiEq[diaP][n] = multiEq[diaP][n].filter(e=>e!==eq);
+      if(multiEq[diaP][n].length<=1) delete multiEq[diaP][n];
     }
   });
   autoGuardar();
   render();
-  toast(`⬜ Campo de ${eq} reseteado — ${enCampo.length} jugadores a disponibles`);
+  toast(`⬜ Campo de ${eq} reseteado (${diaP}) — ${enCampo.length} jugadores a disponibles`);
 }
 // ── Toggle modo partido/entrenamiento
 function togglePartido(eq, diaParam){
