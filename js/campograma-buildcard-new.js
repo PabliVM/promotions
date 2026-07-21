@@ -364,45 +364,21 @@ function buildCard(eq){
   zDisp.dataset.eq=eq; zDisp.dataset.zona='disponibles'; zDisp.dataset.dia=dia;
   const lblD=mk('div','zona-lbl');
   zDisp.appendChild(lblD);
-  lblD.textContent='DISPONIBLES ('+(d.disponibles||[]).length+')';
   const cwD=mk('div','chips-wrap');
-  // En modo UYL (JA): mostrar SOLO la plantilla Youth League como disponibles
   if(eq==='JUVENIL A' && esUYL()){
-    // Cambiar label
-    // Contar los que no están en cancha en ningún equipo hoy
-    const enCanchaTotal=new Set();
-    EQUIPOS.forEach(eqX=>{ (data[dia][eqX].campo||[]).forEach(n=>enCanchaTotal.add(n)); (data[dia][eqX].banquillo||[]).forEach(n=>enCanchaTotal.add(n)); });
-    lblD.textContent='PLANTILLA JA YOUTH ('+getPlantillaUYL().filter(n=>!enCanchaTotal.has(n)).length+')';
+    lblD.textContent='DISPONIBLES · YOUTH LEAGUE ('+(d.disponibles||[]).length+')';
     lblD.style.color='#60b4ff';
-    // Jugadores UYL no ya en campo/banquillo
-    // Excluir los que ya están en campo/banquillo de cualquier equipo
-    const enCancha=new Set();
-    EQUIPOS.forEach(eqX=>{ (data[dia][eqX].campo||[]).forEach(n=>enCancha.add(n)); (data[dia][eqX].banquillo||[]).forEach(n=>enCancha.add(n)); });
-    const uylDisp=getPlantillaUYL().filter(n=>!enCancha.has(n));
-    uylDisp.forEach(n=>{
-      const eqO=origen[n]||eq;
-      // Color según equipo de origen (igual que chips prestados en otros campos)
-      const colorCls = eqO===eq ? 'c-verde' : (EQ_COLORS[eqO]||'c-azul');
-      const ch=chip(n,eqO,'disponibles',colorCls,'cz');
-      ch.dataset.eq=eq; // siempre vuelve a JA al soltar
-      // Badge equipo si es de otro equipo
-      if(eqO && eqO!==eq){
-        const eqsShort={'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
-        const eqTag=mk('span','chip-dest');
-        eqTag.textContent=eqsShort[eqO]||eqO;
-        ch.appendChild(eqTag);
-      }
-      cwD.appendChild(ch);
-    });
   } else {
-    // Modo normal: disponibles propios del equipo, ordenados según Plantillas
-    const ordenPlant = plantillas[eq] || [];
-    const dispOrdenados = [...d.disponibles].sort((a,b)=>{
-      const ia = ordenPlant.indexOf(a), ib = ordenPlant.indexOf(b);
-      return (ia===-1?999:ia) - (ib===-1?999:ib);
-    });
-    dispOrdenados.forEach(n=>cwD.appendChild(chip(n,eq,'disponibles','c-verde','cz')));
+    lblD.textContent='DISPONIBLES ('+(d.disponibles||[]).length+')';
   }
+  // Disponibles propios del equipo (ya incluye a los extras de Youth League promocionados
+  // de verdad al activar YL), ordenados según Plantillas
+  const ordenPlant = plantillas[eq] || [];
+  const dispOrdenados = [...d.disponibles].sort((a,b)=>{
+    const ia = ordenPlant.indexOf(a), ib = ordenPlant.indexOf(b);
+    return (ia===-1?999:ia) - (ib===-1?999:ib);
+  });
+  dispOrdenados.forEach(n=>cwD.appendChild(chip(n,eq,'disponibles','c-verde','cz')));
   zDisp.appendChild(cwD);
   zDisp.appendChild(buildAddInput(eq,'disponibles'));
   card.appendChild(zDisp);
