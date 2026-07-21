@@ -163,7 +163,7 @@ function distMinOcupadas(t, l, ocupadas){
   return Math.min(...ocupadas.map(([ot,ol]) => Math.hypot(t-ot, l-ol)));
 }
 // Radio de exclusión — los chips no se solapan si están al menos RADIO_MIN % separados
-var RADIO_MIN = 6; // % del campo
+var RADIO_MIN = 11; // % del campo
 function snapToGrid(eq, nombre, rawTop, rawLeft){
   const ocupadas = posOcupadas(eq, nombre);
   // 1. Si el punto exacto de drop está libre, usarlo tal cual
