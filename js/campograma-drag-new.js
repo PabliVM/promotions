@@ -539,24 +539,32 @@ function alinearSeleccionados(direccion){
   const tops = _campoSeleccion.map(s=>parseFloat(s.pof.style.top||'50'));
   const lefts = _campoSeleccion.map(s=>parseFloat(s.pof.style.left||'50'));
   if(direccion === 'v'){
-    // Vertical: todos a la línea del que está MÁS A LA DERECHA (left máximo)
+    // Vertical: todos a la línea del que está MÁS A LA DERECHA (left máximo).
+    // Cada uno se queda en la ALTURA que ya tenía — solo se separan si dos quedan
+    // demasiado pegados (mínimo RADIO_MIN entre ellos).
     const targetLeft = Math.max(...lefts);
-    let minT = Math.min(...tops), maxT = Math.max(...tops);
-    if(maxT - minT < 6){ minT = tops[0]-6; maxT = tops[0]+6; }
-    const orden = [..._campoSeleccion].sort((a,b)=>parseFloat(a.pof.style.top||'50')-parseFloat(b.pof.style.top||'50'));
-    orden.forEach((s, i)=>{
-      const top = n === 1 ? tops[0] : minT + ((maxT-minT) * i / (n-1));
-      savePos(diaSel, eq, s.nombre, top, targetLeft);
+    const orden = _campoSeleccion.map((s,i)=>({s, top:tops[i]})).sort((a,b)=>a.top-b.top);
+    for(let i=1;i<orden.length;i++){
+      if(orden[i].top - orden[i-1].top < RADIO_MIN){
+        orden[i].top = orden[i-1].top + RADIO_MIN;
+      }
+    }
+    orden.forEach(({s,top})=>{
+      savePos(diaSel, eq, s.nombre, clamp(top,0,100), targetLeft);
     });
   } else {
-    // Horizontal: todos al nivel del que está MÁS BAJO (top máximo)
+    // Horizontal: todos al nivel del que está MÁS BAJO (top máximo).
+    // Cada uno se queda en la POSICIÓN HORIZONTAL que ya tenía — solo se separan si
+    // dos quedan demasiado pegados (mínimo RADIO_MIN entre ellos).
     const targetTop = Math.max(...tops);
-    let minL = Math.min(...lefts), maxL = Math.max(...lefts);
-    if(maxL - minL < 6){ minL = lefts[0]-6; maxL = lefts[0]+6; }
-    const orden = [..._campoSeleccion].sort((a,b)=>parseFloat(a.pof.style.left||'50')-parseFloat(b.pof.style.left||'50'));
-    orden.forEach((s, i)=>{
-      const left = n === 1 ? lefts[0] : minL + ((maxL-minL) * i / (n-1));
-      savePos(diaSel, eq, s.nombre, targetTop, left);
+    const orden = _campoSeleccion.map((s,i)=>({s, left:lefts[i]})).sort((a,b)=>a.left-b.left);
+    for(let i=1;i<orden.length;i++){
+      if(orden[i].left - orden[i-1].left < RADIO_MIN){
+        orden[i].left = orden[i-1].left + RADIO_MIN;
+      }
+    }
+    orden.forEach(({s,left})=>{
+      savePos(diaSel, eq, s.nombre, targetTop, clamp(left,0,100));
     });
   }
   limpiarSeleccionCampo();
@@ -613,7 +621,30 @@ function endGroupDrag(e){
   off('touchmove', moveGroupDrag); off('touchend', endGroupDrag);
   if(!_groupDrag) return;
   const items = _groupDrag.items;
+  const diaG = items[0]?.dia || dia;
+  const eqG = items[0]?.eq;
   _groupDrag = null;
+  // Comprobar que ninguno del grupo invade a un jugador que NO está en el grupo
+  const nombresGrupo = new Set(items.map(it=>it.nombre));
+  const ocupadasExternas = (data[diaG]?.[eqG]?.campo || [])
+    .filter(n => !nombresGrupo.has(n))
+    .map(n => pos[key(diaG,eqG,n)] || [50,50]);
+  const cabe = items.every(it=>{
+    const top = parseFloat(it.pof.style.top);
+    const left = parseFloat(it.pof.style.left);
+    return distMinOcupadas(top, left, ocupadasExternas) >= RADIO_MIN;
+  });
+  if(!cabe){
+    // No cabe sin solapar a alguien de fuera del grupo: volver a la posición inicial
+    items.forEach(it=>{
+      it.pof.style.top = it.startTop + '%';
+      it.pof.style.left = it.startLeft + '%';
+    });
+    limpiarSeleccionCampo();
+    toast('⚠️ No caben ahí sin solaparse con otro jugador — movimiento cancelado');
+    render();
+    return;
+  }
   items.forEach(it=>{
     const top = parseFloat(it.pof.style.top);
     const left = parseFloat(it.pof.style.left);
