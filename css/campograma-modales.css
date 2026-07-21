@@ -601,21 +601,21 @@
 /* ── Modal Reset ── */
 #reset-modal-overlay{position:fixed;inset:0;z-index:10100;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
 #reset-modal-overlay.open{display:flex;}
-#reset-modal-box{width:100%;max-width:520px;background:#111827;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.1);padding:0 0 calc(16px + env(safe-area-inset-bottom,0px));}
-#reset-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;border-bottom:1px solid rgba(255,255,255,.08);}
-#reset-modal-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#fff;}
-#reset-modal-sub{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,255,255,.4);padding:8px 20px 2px;text-transform:uppercase;letter-spacing:.5px;}
+#reset-modal-box{width:100%;max-width:520px;background:#fff;border-radius:20px 20px 0 0;border:1px solid #e8eef8;padding:0 0 calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 32px rgba(0,0,0,.12);}
+#reset-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;border-bottom:1px solid #e8eef8;}
+#reset-modal-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#1a1d23;}
+#reset-modal-sub{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#9ca3af;padding:8px 20px 2px;text-transform:uppercase;letter-spacing:.5px;}
 #reset-modal-opts{display:flex;flex-direction:column;gap:8px;padding:10px 16px;}
-.reset-opt-btn{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);cursor:pointer;transition:all .15s;text-align:left;width:100%;}
-.reset-opt-btn:hover{background:rgba(255,255,255,.08);}
-.reset-opt-campo{border-color:rgba(59,130,246,.3);}
-.reset-opt-campo:hover{border-color:#3b82f6;background:rgba(59,130,246,.1);}
+.reset-opt-btn{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid #e8eef8;background:#f8fafd;cursor:pointer;transition:all .15s;text-align:left;width:100%;}
+.reset-opt-btn:hover{background:#f0f4fa;}
+.reset-opt-campo{border-color:rgba(37,99,235,.3);}
+.reset-opt-campo:hover{border-color:#2563eb;background:rgba(37,99,235,.06);}
 .reset-opt-todo{border-color:rgba(239,68,68,.3);}
-.reset-opt-todo:hover{border-color:#ef4444;background:rgba(239,68,68,.1);}
+.reset-opt-todo:hover{border-color:#ef4444;background:rgba(239,68,68,.06);}
 .reset-opt-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
-.reset-opt-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#fff;margin-bottom:3px;}
-.reset-opt-desc{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:400;color:rgba(255,255,255,.4);letter-spacing:.2px;line-height:1.4;}
-#reset-modal-cancel{margin:4px 16px 0;width:calc(100% - 32px);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.reset-opt-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1a1d23;margin-bottom:3px;}
+.reset-opt-desc{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:400;color:#5a6170;letter-spacing:.2px;line-height:1.4;}
+#reset-modal-cancel{margin:4px 16px 0;width:calc(100% - 32px);padding:10px;border-radius:10px;border:1px solid #e8eef8;background:transparent;color:#5a6170;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
 /* CAMPO */
 .campo-wrap{position:relative;width:100%;padding-bottom:118%;background:linear-gradient(180deg,#1a6b2a 0%,#0f5220 12.5%,#1a6b2a 12.5%,#1a6b2a 25%,#0f5220 25%,#0f5220 37.5%,#1a6b2a 37.5%,#1a6b2a 50%,#0f5220 50%,#0f5220 62.5%,#1a6b2a 62.5%,#1a6b2a 75%,#0f5220 75%,#0f5220 87.5%,#1a6b2a 87.5%,#1a6b2a 100%);overflow:visible;}
 .campo-wrap.dz-active{outline:3px solid var(--verde);outline-offset:-3px;overflow:visible;}
