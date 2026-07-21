@@ -198,3 +198,22 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
     letter-spacing: normal !important;
   }
 }
+
+/* ── FIX DEFINITIVO: botón de reset SIEMPRE visible, pase lo que pase ── */
+.card-hdr .card-hdr-right .reset-btn,
+.reset-btn {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-width: 22px !important;
+  min-height: 20px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #dc2626 !important;
+  color: #fff !important;
+  border: none !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  padding: 3px 6px !important;
+  border-radius: 6px !important;
+}
