@@ -66,11 +66,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
 body:has(.cards-grid.view-semana) #app-wrap {
   overflow-x: visible;
 }
-/* ── Tablet (≥768px): 2 cols fijo, botones vista ocultos ── */
+/* ── Tablet (≥768px): usar todo el ancho disponible, sin franjas laterales ── */
 @media(min-width:768px){
-  #app-wrap{ max-width:900px; }
+  #app-wrap{ max-width:100%; box-shadow:none; }
   .cards-grid{ grid-template-columns:repeat(2,1fr)!important; gap:12px; padding:12px; }
-  #bottom-nav{ max-width:900px; }
+  #bottom-nav{ max-width:100%; }
   #season-box,#cfg-tipos-box,#uyl-box,#reg-box,#plant-box,#fb-box{ max-width:600px; }
   #view-bar{ display:none; }
   /* multi-eq-bar gestionada por setView */
