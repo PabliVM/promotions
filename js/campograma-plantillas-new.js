@@ -114,6 +114,25 @@ function renderPlantBody(){
       const num = mk('span','plant-num'); num.textContent = (i+1);
       const nm  = mk('span','plant-name');
       nm.innerHTML = nombre + (eqO !== 'JUVENIL A' ? '<span class="plant-uyl-origin" style="color:#60b4ff">'+eqO+'</span>' : '');
+      // Checkbox portero — reconoce a los porteros ya marcados, sean de JA o traídos de otro equipo
+      const porLabel = mk('label','plant-portero-chk');
+      const porInput = mk('input','');
+      porInput.type = 'checkbox';
+      porInput.checked = porteros.includes(nombre);
+      porInput.title = 'Marcar como portero';
+      porInput.onchange = ()=>{
+        if(porInput.checked){
+          if(!porteros.includes(nombre)) porteros.push(nombre);
+        } else {
+          const idx = porteros.indexOf(nombre);
+          if(idx>=0) porteros.splice(idx,1);
+        }
+        autoGuardar();
+        if(typeof window.fbTogglePortero === 'function') window.fbTogglePortero(nombre, porInput.checked);
+      };
+      const porTxt = document.createElement('span');
+      porTxt.textContent = 'POR';
+      porLabel.appendChild(porInput); porLabel.appendChild(porTxt);
       const del = mk('button','plant-del'); del.textContent = '×';
       del.title = 'Quitar de JA Youth';
       del.onclick = ()=>{
@@ -121,7 +140,7 @@ function renderPlantBody(){
         if(idx>=0) listaUYL.splice(idx,1);
         renderPlantTabs(); renderPlantBody(); autoGuardar();
       };
-      row.appendChild(num); row.appendChild(nm); row.appendChild(del);
+      row.appendChild(num); row.appendChild(nm); row.appendChild(porLabel); row.appendChild(del);
       list.appendChild(row);
     });
     return;
