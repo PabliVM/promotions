@@ -199,7 +199,7 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   }
 }
 
-/* ── FIX DEFINITIVO: botón de reset SIEMPRE visible, pase lo que pase ── */
+/* ── FIX DEFINITIVO: botón de reset visible, mismo estilo que DESCANSA/ENTRENO ── */
 .card-hdr .card-hdr-right .reset-btn,
 .reset-btn {
   display: inline-flex !important;
@@ -209,11 +209,15 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   min-height: 20px !important;
   align-items: center !important;
   justify-content: center !important;
-  background: #dc2626 !important;
-  color: #fff !important;
-  border: none !important;
+  background: #fff !important;
+  color: #5a6170 !important;
+  border: 1.5px solid #dfe1e6 !important;
   font-size: 12px !important;
   line-height: 1 !important;
-  padding: 3px 6px !important;
-  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  border-radius: 20px !important;
+}
+.reset-btn:hover {
+  border-color: #2563eb !important;
+  color: #2563eb !important;
 }
