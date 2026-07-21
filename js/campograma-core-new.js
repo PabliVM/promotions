@@ -187,8 +187,9 @@ function snapToGrid(eq, nombre, rawTop, rawLeft){
   return [rawTop, rawLeft];
 }
 // Reordenar todos los jugadores del campo — garantiza sin solapamientos
-function autoAlinear(eq){
-  const campo = data[dia][eq].campo;
+function autoAlinear(eq, diaP){
+  diaP = diaP || dia;
+  const campo = data[diaP][eq].campo;
   if(campo.length === 0) return;
   // Asignar slots en orden estricto: cada jugador al siguiente slot libre
   const asignados = new Set();
@@ -198,8 +199,11 @@ function autoAlinear(eq){
     while(idx < SNAP_SLOTS.length && asignados.has(idx)) idx++;
     const [t,l] = SNAP_SLOTS[idx] || [50, 50];
     asignados.add(idx);
-    savePos(dia, eq, nombre, t, l);
+    savePos(diaP, eq, nombre, t, l);
   });
+  autoGuardar();
+  render();
+  toast('⊞ '+eq+' reordenado sin solapes ('+diaP+')');
 }
 // ══════════════════════════════════════════════════
 // AUTOCOMPLETE — desplegable para añadir jugadores
