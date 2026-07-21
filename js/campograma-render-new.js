@@ -448,9 +448,12 @@ function buildListaView(eq, d){
         const esPor = porteros.includes(n);
         let linea = '  - ' + n + (esPor ? ' (POR)' : '');
         if(key === 'promovidos_1er'){
-          const destino = promInfo[diaKey]?.[eq]?.[n];
+          const destinos = getDestinos(diaKey, eq, n);
           const siglas = {'CASTILLA':'CAST','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
-          if(destino) linea += '  → ' + (destino === '1ER EQUIPO' ? '1ER' : (siglas[destino]||destino));
+          destinos.forEach(destino=>{
+            if(destino === '1ER EQUIPO') linea += '  A 1ER EQUIPO';
+            else linea += '  → ' + (siglas[destino]||destino);
+          });
         }
         texto += linea + '\n';
       });
