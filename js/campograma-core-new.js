@@ -1667,6 +1667,10 @@ function iniciarEscuchaEnVivo(){
   if(typeof window.fbEscucharSesion !== 'function') return;
   window.fbEscucharSesion('principal', (payload)=>{
     try{
+      // Si tengo un cambio local sin confirmar todavía (p.ej. acabo de mover un jugador y
+      // el guardado con retraso aún no ha salido), NO aplicar este eco: podría ser el
+      // estado de ANTES de mi cambio y me lo desharía.
+      if(window._hayGuardadoPendiente) return;
       // Evitar reprocesar el eco de nuestro propio guardado ya confirmado
       const tsNum = payload._ts && payload._ts.toMillis ? payload._ts.toMillis() : null;
       if(tsNum !== null){
