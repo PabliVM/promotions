@@ -64,7 +64,10 @@ function renderPlantTabs(){
     wrap.appendChild(btn);
   });
   // Pestaña especial JA Youth
-  const uylN = getPlantillaUYL().length;
+  const uylLista = getPlantillaUYL();
+  const uylPor = uylLista.filter(n => porteros.includes(n)).length;
+  const uylNorm = uylLista.length - uylPor;
+  const uylN = uylPor > 0 ? uylNorm+'+'+uylPor : uylLista.length;
   const btnUYL = mk('button','plant-eq-tab uyl-tab'+('JA_YOUTH'===plantEqActivo?' active':''));
   btnUYL.innerHTML = 'JA Youth <span style="font-size:9px;opacity:.7">('+uylN+')</span>';
   btnUYL.onclick = ()=>{ plantEqActivo='JA_YOUTH'; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
@@ -91,7 +94,9 @@ function renderPlantBody(){
       listaUYL = Object.keys(origen).filter(n=>origen[n]==='JUVENIL A').sort();
       autoGuardar();
     }
-    document.getElementById('plant-count').textContent = listaUYL.length + ' jugadores';
+    const _uylNumPor = listaUYL.filter(n => porteros.includes(n)).length;
+    const _uylNumNorm = listaUYL.length - _uylNumPor;
+    document.getElementById('plant-count').textContent = (_uylNumPor > 0 ? _uylNumNorm + '+' + _uylNumPor : listaUYL.length) + ' jugadores';
     // Botón para re-sincronizar con JA actual
     const syncBtn = mk('button','');
     syncBtn.textContent = '↺ Sincronizar con JA actual';
@@ -111,28 +116,41 @@ function renderPlantBody(){
     listaUYL.forEach((nombre, i)=>{
       const eqO = origen[nombre] || 'JA';
       const row = mk('div','plant-row');
+      row.draggable = true;
+      row.dataset.nombre = nombre;
+      // Drag para reordenar (reordena listaUYL)
+      row.ondragstart = (e) => {
+        e.dataTransfer.setData('text/plain', nombre);
+        e.dataTransfer.effectAllowed = 'move';
+        row.classList.add('dragging-row');
+      };
+      row.ondragend = () => row.classList.remove('dragging-row');
+      row.ondragover = (e) => { e.preventDefault(); row.classList.add('drag-over-row'); };
+      row.ondragleave = () => row.classList.remove('drag-over-row');
+      row.ondrop = (e) => {
+        e.preventDefault();
+        row.classList.remove('drag-over-row');
+        const nombreMovido = e.dataTransfer.getData('text/plain');
+        if(nombreMovido && nombreMovido !== nombre){
+          const fromIdx = listaUYL.indexOf(nombreMovido);
+          const toIdx = listaUYL.indexOf(nombre);
+          if(fromIdx >= 0 && toIdx >= 0){
+            listaUYL.splice(fromIdx, 1);
+            const newToIdx = listaUYL.indexOf(nombre);
+            listaUYL.splice(newToIdx, 0, nombreMovido);
+            autoGuardar();
+            renderPlantBody();
+          }
+        }
+      };
       const num = mk('span','plant-num'); num.textContent = (i+1);
+      const dragHandle = mk('span','plant-drag-handle'); dragHandle.textContent = '⠿';
       const nm  = mk('span','plant-name');
       nm.innerHTML = nombre + (eqO !== 'JUVENIL A' ? '<span class="plant-uyl-origin" style="color:#60b4ff">'+eqO+'</span>' : '');
-      // Checkbox portero — reconoce a los porteros ya marcados, sean de JA o traídos de otro equipo
-      const porLabel = mk('label','plant-portero-chk');
-      const porInput = mk('input','');
-      porInput.type = 'checkbox';
-      porInput.checked = porteros.includes(nombre);
-      porInput.title = 'Marcar como portero';
-      porInput.onchange = ()=>{
-        if(porInput.checked){
-          if(!porteros.includes(nombre)) porteros.push(nombre);
-        } else {
-          const idx = porteros.indexOf(nombre);
-          if(idx>=0) porteros.splice(idx,1);
-        }
-        autoGuardar();
-        if(typeof window.fbTogglePortero === 'function') window.fbTogglePortero(nombre, porInput.checked);
-      };
-      const porTxt = document.createElement('span');
-      porTxt.textContent = 'POR';
-      porLabel.appendChild(porInput); porLabel.appendChild(porTxt);
+      // Indicador de portero AUTOMÁTICO (de solo lectura) — se reconoce solo, sin tocar nada aquí
+      const porTag = mk('span','plant-portero-tag');
+      porTag.textContent = 'POR';
+      porTag.style.display = porteros.includes(nombre) ? '' : 'none';
       const del = mk('button','plant-del'); del.textContent = '×';
       del.title = 'Quitar de JA Youth';
       del.onclick = ()=>{
@@ -140,7 +158,7 @@ function renderPlantBody(){
         if(idx>=0) listaUYL.splice(idx,1);
         renderPlantTabs(); renderPlantBody(); autoGuardar();
       };
-      row.appendChild(num); row.appendChild(nm); row.appendChild(porLabel); row.appendChild(del);
+      row.appendChild(dragHandle); row.appendChild(num); row.appendChild(nm); row.appendChild(porTag); row.appendChild(del);
       list.appendChild(row);
     });
     return;
