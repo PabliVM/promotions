@@ -362,6 +362,12 @@ function plantEliminar(nombre){
   plantillas[plantEqActivo].splice(idx,1);
   // Quitar de origen si era de este equipo
   if(origen[nombre]===plantEqActivo) delete origen[nombre];
+  // Quitar de porteros si lo era (local y Firebase)
+  const pIdx = porteros.indexOf(nombre);
+  if(pIdx >= 0){
+    porteros.splice(pIdx,1);
+    if(typeof window.fbTogglePortero === 'function') window.fbTogglePortero(nombre, false);
+  }
   if(plantEqActivo !== '1ER EQUIPO'){
     // Quitar de data en todos los días
     DIAS.forEach(d=>{
