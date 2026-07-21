@@ -1651,7 +1651,7 @@ async function arrancarDesdeFirebase(){
       autoGuardar();
       console.log('ℹ️ Sesión principal creada en Firebase');
     }
-    iniciarEscuchaEnVivo();
+    // iniciarEscuchaEnVivo(); // DESACTIVADO — causaba que jugadores volvieran solos a su sitio anterior
   }catch(e){
     console.warn('[arranque] Firebase no disponible, usando datos locales:', e);
     if(!cargado){ initTiposConfig(); render(); }
