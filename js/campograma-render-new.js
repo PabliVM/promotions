@@ -7,12 +7,16 @@ if (window.__rmRenderLoaded) {
 window.__rmRenderLoaded = true;
 (function(){
 let _diaElegidoManualmente = false; // en móvil, ningún día se marca hasta que el usuario toque uno
+let _yaSubidoInicial = false; // para no forzar scroll arriba en CADA acción, solo al arrancar
 function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
 function render(){
   renderDias(); renderEqs(); renderCards();
   autoGuardar();
   if(esMovilVista()){
-    window.scrollTo(0,0); // móvil: la página siempre arriba, sin autoscroll de días
+    if(!_yaSubidoInicial){
+      _yaSubidoInicial = true;
+      window.scrollTo(0,0); // móvil: solo al ARRANCAR la app sube arriba, no en cada acción
+    }
   } else {
     centrarDiaEnEscritorio();
   }
