@@ -10,12 +10,15 @@ let _diaElegidoManualmente = false; // en móvil, ningún día se marca hasta qu
 let _yaSubidoInicial = false; // para no forzar scroll arriba en CADA acción, solo al arrancar
 function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
 function render(){
+  const _scrollYPrevio = window.scrollY;
   renderDias(); renderEqs(); renderCards();
   autoGuardar();
   if(esMovilVista()){
     if(!_yaSubidoInicial){
       _yaSubidoInicial = true;
-      window.scrollTo(0,0); // móvil: solo al ARRANCAR la app sube arriba, no en cada acción
+      window.scrollTo(0,0); // móvil: solo al ARRANCAR la app sube arriba
+    } else {
+      window.scrollTo(0,_scrollYPrevio); // resto de veces: mantener donde estabas
     }
   } else {
     centrarDiaEnEscritorio();
