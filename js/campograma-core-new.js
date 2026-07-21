@@ -1651,12 +1651,73 @@ async function arrancarDesdeFirebase(){
       autoGuardar();
       console.log('ℹ️ Sesión principal creada en Firebase');
     }
+    iniciarEscuchaEnVivo();
   }catch(e){
     console.warn('[arranque] Firebase no disponible, usando datos locales:', e);
     if(!cargado){ initTiposConfig(); render(); }
   }
 }
 arrancarDesdeFirebase();
+
+// ══════════════════════════════════════════════════
+// SINCRONIZACIÓN EN VIVO — aplica cambios de otras personas sin recargar
+// ══════════════════════════════════════════════════
+var _ultimoTsRemoto = null;
+function iniciarEscuchaEnVivo(){
+  if(typeof window.fbEscucharSesion !== 'function') return;
+  window.fbEscucharSesion('principal', (payload)=>{
+    try{
+      // Evitar reprocesar el eco de nuestro propio guardado ya confirmado
+      const tsNum = payload._ts && payload._ts.toMillis ? payload._ts.toMillis() : null;
+      if(tsNum !== null){
+        if(tsNum === _ultimoTsRemoto) return;
+        _ultimoTsRemoto = tsNum;
+      }
+      aplicarPayloadRemoto(payload);
+    }catch(err){
+      console.error('[escucha en vivo] error aplicando cambio remoto:', err);
+    }
+  });
+}
+// Aplica un payload que llegó de OTRA persona. Solo actualiza variables y repinta —
+// NO llama a autoGuardar() (evitaríamos escribir de vuelta algo que ya está guardado).
+function aplicarPayloadRemoto(payload){
+  if(!payload || typeof payload !== 'object' || !payload.plantillas) return;
+  // ── Cosas GLOBALES (no dependen de qué semana estés viendo tú ni el otro) ──
+  if(payload.plantillas  && typeof payload.plantillas==='object')  plantillas  = payload.plantillas;
+  if(payload.origen      && typeof payload.origen==='object')      origen      = payload.origen;
+  if(payload.colNames    && typeof payload.colNames==='object')    colNames    = payload.colNames;
+  if(payload.porteros    && Array.isArray(payload.porteros))       porteros    = payload.porteros;
+  if(payload.movimientos && typeof payload.movimientos==='object') movimientos = payload.movimientos;
+  if(payload.extraZonas  && typeof payload.extraZonas==='object')  extraZonas  = payload.extraZonas;
+  if(payload.tiposConfig && typeof payload.tiposConfig==='object') tiposConfig = payload.tiposConfig;
+  if(payload.listaUYL    && Array.isArray(payload.listaUYL))       listaUYL    = payload.listaUYL;
+  if(Array.isArray(payload.listaUYLExcl)) window.listaUYLExcl = payload.listaUYLExcl;
+  if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
+  if(payload.semanasGuardadas && typeof payload.semanasGuardadas==='object'){
+    // Fusionar (no pisar) las fotos de semanas que el otro tenga y yo no
+    Object.keys(payload.semanasGuardadas).forEach(k=>{
+      if(k !== _semanaKeyActual) _semanasGuardadas[k] = payload.semanasGuardadas[k];
+    });
+  }
+  // ── Cosas de la semana EN CURSO — solo si es la MISMA semana que yo tengo abierta ──
+  if(payload.ultimaSemanaKey === _semanaKeyActual){
+    if(payload.data        && typeof payload.data==='object')        data        = payload.data;
+    if(payload.pos         && typeof payload.pos==='object')         pos         = payload.pos;
+    if(payload.promInfo    && typeof payload.promInfo==='object')    promInfo    = payload.promInfo;
+    if(payload.tipoPartido && typeof payload.tipoPartido==='object') tipoPartido = payload.tipoPartido;
+    if(payload.modoPartido && typeof payload.modoPartido==='object') modoPartido = payload.modoPartido;
+    if(payload.modoDescanso&& typeof payload.modoDescanso==='object')modoDescanso= payload.modoDescanso;
+    if(payload.multiEq     && typeof payload.multiEq==='object')     multiEq     = payload.multiEq;
+    if(Array.isArray(payload.primerEquipoJugadores)) primerEquipoJugadores = payload.primerEquipoJugadores;
+  } else if(payload.semanasGuardadas && payload.semanasGuardadas[_semanaKeyActual]){
+    // El otro está en otra semana, pero SÍ tiene guardada una foto de la MI semana — usarla
+    cargarFotoSemana(_semanaKeyActual);
+  }
+  // FECHAS/semana activa NUNCA se toma de otra persona: cada uno navega su propia semana
+  render();
+  toast('☁️ Actualizado con cambios de otra persona');
+}
 // Un jugador puede tener 1 o varios destinos duplicados a la vez. Internamente
 // promInfo guarda un string (1 destino) o un array (2+). Este helper siempre
 // devuelve un array, sea cual sea el caso.
