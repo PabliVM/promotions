@@ -437,6 +437,9 @@ function buildListaView(eq, d){
         labelOut += ' (' + jugs.length + ')';
       }
       // Promocionados y demás zonas: sin número
+      if(key === 'promovidos_1er' && eq === 'CASTILLA'){
+        labelOut += ' A 1ER EQUIPO';
+      }
       texto += '\n*' + labelOut + ':*\n';
       // Porteros primero, luego el resto, manteniendo orden relativo dentro de cada grupo
       const jugsOrdenados = [...jugs].sort((a, b) => {
@@ -447,7 +450,7 @@ function buildListaView(eq, d){
       jugsOrdenados.forEach(n => {
         const esPor = porteros.includes(n);
         let linea = '  - ' + n + (esPor ? ' (POR)' : '');
-        if(key === 'promovidos_1er'){
+        if(key === 'promovidos_1er' && eq !== 'CASTILLA'){
           const destinos = getDestinos(diaKey, eq, n);
           const siglas = {'CASTILLA':'CAST','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
           destinos.forEach(destino=>{
