@@ -601,9 +601,9 @@
 /* ── Modal Reset ── */
 #reset-modal-overlay{position:fixed;inset:0;z-index:10100;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);}
 #reset-modal-overlay.open{display:flex;}
-#reset-modal-box{width:100%;max-width:420px;background:#fff;border-radius:16px;border:1px solid #e8eef8;padding:0;box-shadow:0 8px 32px rgba(0,0,0,.15);}
-#reset-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;border-bottom:1px solid #e8eef8;}
-#reset-modal-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#1a1d23;}
+#reset-modal-box{width:100%;max-width:420px;background:#fff;border-radius:16px;border:1px solid #e8eef8;padding:0;box-shadow:0 8px 32px rgba(0,0,0,.15);overflow:hidden;}
+#reset-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#2563eb;border-radius:16px 16px 0 0;}
+#reset-modal-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#fff;}
 #reset-modal-sub{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#9ca3af;padding:8px 20px 2px;text-transform:uppercase;letter-spacing:.5px;}
 #reset-modal-opts{display:flex;flex-direction:column;gap:8px;padding:10px 16px;}
 .reset-opt-btn{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid #e8eef8;background:#f8fafd;cursor:pointer;transition:all .15s;text-align:left;width:100%;}
