@@ -204,6 +204,8 @@ function renderPlantBody(){
         if(idx>=0) porteros.splice(idx,1);
       }
       autoGuardar();
+      // Escritura directa e independiente: no se pisa aunque otra persona guarde algo a la vez
+      if(typeof window.fbTogglePortero === 'function') window.fbTogglePortero(nombre, porInput.checked);
     };
     const porTxt = document.createElement('span');
     porTxt.textContent = 'POR';
@@ -391,6 +393,7 @@ function borrarTodosLosJugadores(){
       EQUIPOS.concat(['1ER EQUIPO']).forEach(eq=>{ plantillas[eq] = []; });
       origen = {};
       porteros = [];
+      if(typeof window.fbSetPorterosCompleto === 'function') window.fbSetPorterosCompleto([]);
       listaUYL = [];
       if(window.listaUYLExcl) window.listaUYLExcl = [];
       primerEquipoJugadores = {};
