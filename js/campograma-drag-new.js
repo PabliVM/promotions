@@ -277,6 +277,19 @@ function moveChip(e){
   const t=document.elementFromPoint(ev.clientX,ev.clientY);
   if(t){const dz=t.closest('.dz');if(dz)dz.classList.add('dz-active');}
 }
+// Mide el tamaño REAL (en % del contenedor) de una ficha ya existente en el campo,
+// para poder exigir un margen mínimo que tenga sentido en píxeles reales, no un
+// porcentaje fijo que puede quedarse corto en pantallas grandes o sobrar en pequeñas.
+function medirGapReal(containerEl){
+  const cr = containerEl.getBoundingClientRect();
+  const chipEj = containerEl.querySelector('.pof .chip');
+  if(!chipEj || !cr.width || !cr.height) return null;
+  const chipR = chipEj.getBoundingClientRect();
+  const margenExtra = 4; // px de aire extra para que se note un hueco, no solo "justo"
+  const gapH = ((chipR.width  + margenExtra) / cr.width ) * 100;
+  const gapV = ((chipR.height + margenExtra) / cr.height) * 100;
+  return { gapH, gapV };
+}
 function endChip(e){
   const _diaOrigDrop = dia;
   try {
@@ -326,7 +339,8 @@ function endChip(e){
         if(inside){
           const rawT=clamp(((ev.clientY-dOff.y-cr.top   )/cr.height)*100,0,100);
           const rawL=clamp(((ev.clientX-dOff.x-cr.left  )/cr.width )*100,0,100);
-          const [snapT,snapL]=snapToGrid(drag.eq,drag.nombre,rawT,rawL);
+          const gaps = medirGapReal(drag.campo);
+          const [snapT,snapL]=snapToGrid(drag.eq,drag.nombre,rawT,rawL,gaps);
           savePos(dia,drag.eq,drag.nombre,snapT,snapL);
           drag.pof.style.top=snapT+'%'; drag.pof.style.left=snapL+'%';
           updateCount(drag.eq); autoGuardar();
@@ -349,7 +363,8 @@ function endChip(e){
       const cr=dz.getBoundingClientRect();
       const rawT=clamp(((ev.clientY-cr.top )/cr.height)*100,0,100);
       const rawL=clamp(((ev.clientX-cr.left)/cr.width )*100,0,100);
-      const [snapT,snapL]=snapToGrid(toEq,drag.nombre,rawT,rawL);
+      const gaps = medirGapReal(dz);
+      const [snapT,snapL]=snapToGrid(toEq,drag.nombre,rawT,rawL,gaps);
       savePos(dia,toEq,drag.nombre,snapT,snapL);
       // Caso especial: campo del Primer Equipo
       if(toEq==='1ER EQUIPO'){
