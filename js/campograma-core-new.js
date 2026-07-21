@@ -60,6 +60,8 @@ function cargarFotoSemana(key){
   window._notasData = foto.notas || {};
   // El equipo de cada jugador se recuerda TAL COMO ERA esa semana (histórico real para stats)
   if(foto.origen) origen = foto.origen;
+  // 'porteros' NO se guarda por semana a propósito: es un rasgo del jugador (como su posición
+  // real), no algo que cambie semana a semana — se queda igual pase lo que pase con las semanas.
   return true;
 }
 function crearSemanaVacia(){
@@ -933,6 +935,11 @@ function renderControl(){
 // ══════════════════════════════════════════════════
 var _promoCallback = null; // fn a llamar con el destino elegido
 function abrirPromoDestModal(nombre, eqOrigen, callback){
+  // Castilla es el paso justo antes del Primer Equipo: no hace falta preguntar, va directo
+  if(eqOrigen === 'CASTILLA'){
+    callback('1ER EQUIPO');
+    return;
+  }
   _promoCallback = callback;
   document.getElementById('promo-dest-title').textContent = '¿A qué equipo va '+nombre+'?';
   document.getElementById('promo-dest-sub').textContent = 'Equipo de origen: '+eqOrigen;
