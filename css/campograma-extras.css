@@ -130,6 +130,7 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 .ctrl-lesion{ background: #fee2e2; color: #dc2626; }
 .ctrl-promo { background: #ede9fe; color: #7c3aed; }
 .ctrl-otros { background: #f1f5f9; color: #64748b; }
+.ctrl-descansa { background: #dbeafe; color: #2563eb; }
 .ctrl-multi { background: #fee2e2; color: #dc2626; }
 .td-jugador { font-size: 11px; font-weight: 600; padding: 5px 8px !important; }
 .td-estado-cel { padding: 4px 6px !important; text-align: center; }
