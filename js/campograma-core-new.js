@@ -1679,6 +1679,13 @@ async function arrancarDesdeFirebase(){
       });
       initTiposConfig();
       _fbSesionActiva = 'principal';
+      // [diagnóstico] Ver qué hay en el campo de cada equipo/día justo tras cargar
+      DIAS.forEach(d=>{
+        EQUIPOS.forEach(eq=>{
+          const c = data[d]?.[eq]?.campo;
+          if(c && c.length) console.log('[diagnóstico campo]', d, eq, '→', c.join(', '));
+        });
+      });
       // Guardar en local como caché
       // localStorage desactivado
       render(); renderDias(); renderEqs(); renderCards(); renderMultiEqBar();
