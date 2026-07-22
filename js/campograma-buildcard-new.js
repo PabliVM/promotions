@@ -365,11 +365,16 @@ function buildCard(eq){
   const lblD=mk('div','zona-lbl');
   zDisp.appendChild(lblD);
   const cwD=mk('div','chips-wrap');
-  if(eq==='JUVENIL A' && esUYL()){
-    lblD.textContent='DISPONIBLES · YOUTH LEAGUE ('+(d.disponibles||[]).length+')';
+  const numPorD = (d.disponibles||[]).filter(n=>porteros.includes(n)).length;
+  const numNormD = (d.disponibles||[]).length - numPorD;
+  const countTxtD = '(' + numNormD + (numPorD>0 ? '+'+numPorD : '') + ')';
+  if(esDescanso(eq, dia)){
+    lblD.textContent = 'DESCANSAN ' + countTxtD;
+  } else if(eq==='JUVENIL A' && esUYL()){
+    lblD.textContent='DISPONIBLES · YOUTH LEAGUE '+countTxtD;
     lblD.style.color='#60b4ff';
   } else {
-    lblD.textContent='DISPONIBLES ('+(d.disponibles||[]).length+')';
+    lblD.textContent='DISPONIBLES '+countTxtD;
   }
   // Disponibles propios del equipo (ya incluye a los extras de Youth League promocionados
   // de verdad al activar YL), ordenados según Plantillas
