@@ -327,8 +327,16 @@ function plantCambiarEquipo(nombre, nuevoEq){
       }
     });
   }
-  autoGuardar();
+  // Corregir el histórico de HOY EN ADELANTE con el equipo nuevo (el cambio se hace
+  // efectivo desde hoy). Los días YA PASADOS se quedan tal cual estaban — inmutables.
+  const idxHoy = diaHoyIdx();
+  DIAS.forEach((d, i)=>{
+    if(i < idxHoy) return; // día ya pasado — no tocar su histórico
+    if(historicoJugador[d]) delete historicoJugador[d][nombre]; // se recreará con el equipo nuevo
+  });
+  DIAS.forEach(d=>asegurarHistoricoJugador(d));
   renderPlantBody();
+  render(); // refrescar también el campograma de fondo, no solo el modal (ya guarda internamente)
   toast('✓ '+nombre+' movido a '+(EQ_LABEL[nuevoEq]||nuevoEq));
 }
 function _normalizarNombre(s){
