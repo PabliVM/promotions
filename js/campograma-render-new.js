@@ -11,6 +11,7 @@ let _yaSubidoInicial = false; // para no forzar scroll arriba en CADA acción, s
 function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
 let _yaCentradoEscritorio = false; // el centrado en "hoy" de escritorio, solo una vez al arrancar
 function render(){
+  DIAS.forEach(d=>asegurarHistoricoJugador(d));
   renderDias(); renderEqs(); renderCards();
   autoGuardar();
   if(esMovilVista()){
