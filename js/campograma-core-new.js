@@ -980,6 +980,8 @@ function getEstadoJugador(nombre, eq, diaP){
   // Devuelve {estado, multi} donde estado es dónde está en su equipo
   const d = data[diaC][eq];
   if(!d) return {estado:'vacio', multi:false};
+  // Si el equipo está en día de descanso, todos aparecen como "Descansa"
+  if(esDescanso(eq, diaC)) return {estado:'descansa', multi:false};
   // ¿Está en otro equipo además del suyo?
   const eqsActivos = eqsDeNombre(diaC, nombre);
   const multi = eqsActivos.length > 1;
@@ -1000,6 +1002,7 @@ function estadoLabel(estado){
     case 'lesion':    return '⬤ Lesión';
     case 'promo':     return '⬤ Promoc.';
     case 'otros':     return '⬤ Otros';
+    case 'descansa':  return '💤 Descansa';
     case 'disponible':return '—';
     default:          return '';
   }
@@ -1114,7 +1117,8 @@ function renderControl(){
             banquillo:'<span class="ctrl-badge ctrl-banco">Banco</span>',
             lesion:   '<span class="ctrl-badge ctrl-lesion">Lesión</span>',
             promo:    '<span class="ctrl-badge ctrl-promo">↑ PROMO</span>',
-            otros:    '<span class="ctrl-badge ctrl-otros">Otros</span>'
+            otros:    '<span class="ctrl-badge ctrl-otros">Otros</span>',
+            descansa: '<span class="ctrl-badge ctrl-descansa">💤 Descansa</span>'
           };
           let lbl = badges[estado] || estado;
           if(estado==='promo' && promInfo[diaC]?.[eq]?.[nombre]){
