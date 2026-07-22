@@ -11,58 +11,7 @@ let _yaSubidoInicial = false; // para no forzar scroll arriba en CADA acción, s
 function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
 let _yaCentradoEscritorio = false; // el centrado en "hoy" de escritorio, solo una vez al arrancar
 function render(){
-  // Anclar el scroll a la FILA de equipo que está visible ahora mismo (más fiable que
-  // guardar solo el número de píxeles, que se desajusta si algo de arriba cambia de alto)
-  let _anclaIdx = -1, _anclaTop = 0;
-  if(vistaActual==='semana'){
-    const filas = document.querySelectorAll('.semana-tr-eq');
-    for(let i=0; i<filas.length; i++){
-      const r = filas[i].getBoundingClientRect();
-      if(r.bottom > 0 && r.top < window.innerHeight){ _anclaIdx = i; _anclaTop = r.top; break; }
-    }
-  }
-  const _scrollXPrevio = window.scrollX, _scrollYPrevio = window.scrollY;
-  function restaurarScroll(){
-    if(_anclaIdx >= 0){
-      const filasNuevas = document.querySelectorAll('.semana-tr-eq');
-      if(filasNuevas[_anclaIdx]){
-        const rNuevo = filasNuevas[_anclaIdx].getBoundingClientRect();
-        const delta = rNuevo.top - _anclaTop;
-        window.scrollBy(0, delta);
-      } else if(document.scrollingElement){
-        document.scrollingElement.scrollTop = _scrollYPrevio;
-      }
-    } else if(document.scrollingElement){
-      document.scrollingElement.scrollLeft = _scrollXPrevio;
-      document.scrollingElement.scrollTop = _scrollYPrevio;
-    }
-  }
   renderDias(); renderEqs(); renderCards();
-  // 1ª corrección: inmediata, antes de pintar
-  restaurarScroll();
-  // Vigilar cambios de tamaño REALES en el grid (p.ej. igualarZonasSemana ajustando
-  // alturas) y corregir el scroll cada vez que ocurran, durante una ventana breve tras
-  // el render. Más fiable que temporizadores fijos, que pueden no coincidir con el
-  // tiempo real que tarda cada navegador/sistema operativo en re-maquetar.
-  if(vistaActual==='semana'){
-    const grid = document.getElementById('grid');
-    if(grid && window.ResizeObserver){
-      const ro = new ResizeObserver(()=>{ restaurarScroll(); });
-      ro.observe(grid);
-      setTimeout(()=>ro.disconnect(), 1000); // dejar de vigilar tras 1s (ya estable)
-    }
-    if(grid && window.MutationObserver){
-      // Vigilar CUALQUIER cambio en el grid (reconstrucción de cards, ajustes de altura,
-      // lo que sea) y corregir el scroll cada vez, venga la causa de donde venga.
-      const mo = new MutationObserver(()=>{ restaurarScroll(); });
-      mo.observe(grid, { childList:true, subtree:true, attributes:true });
-      setTimeout(()=>mo.disconnect(), 1000);
-    }
-    requestAnimationFrame(()=>requestAnimationFrame(restaurarScroll));
-    setTimeout(restaurarScroll, 120);
-    setTimeout(restaurarScroll, 300);
-    setTimeout(restaurarScroll, 600);
-  }
   autoGuardar();
   if(esMovilVista()){
     if(!_yaSubidoInicial){
@@ -610,15 +559,68 @@ function capturarLista(eq, diaKey, zonas, eqData){
 }
 
 function renderCards(){
+  // Guardar posición vertical y horizontal antes de reconstruir el grid
+  const scrollYPrevio = window.scrollY;
+  const scrollXPrevio = window.scrollX;
+
+  // Guardar la primera fila visible y su posición exacta (vista semana)
+  let anclaIdx = -1;
+  let anclaTop = 0;
+  if(vistaActual === 'semana'){
+    const filasActuales = document.querySelectorAll('.semana-tr-eq');
+    for(let i = 0; i < filasActuales.length; i++){
+      const rect = filasActuales[i].getBoundingClientRect();
+      if(rect.bottom > 0 && rect.top < window.innerHeight){
+        anclaIdx = i;
+        anclaTop = rect.top;
+        break;
+      }
+    }
+  }
+  function restaurarPosicion(){
+    if(vistaActual === 'semana' && anclaIdx >= 0){
+      const filasNuevas = document.querySelectorAll('.semana-tr-eq');
+      const filaNueva = filasNuevas[anclaIdx];
+      if(filaNueva){
+        const nuevoTop = filaNueva.getBoundingClientRect().top;
+        const diferencia = nuevoTop - anclaTop;
+        if(Math.abs(diferencia) > 1){
+          window.scrollBy(0, diferencia);
+        }
+        return;
+      }
+    }
+    window.scrollTo(scrollXPrevio, scrollYPrevio);
+  }
+
   const grid=document.getElementById('grid'); grid.innerHTML='';
   grid.className='cards-grid view-'+vistaActual;
   if(vistaActual==='semana'){
     renderFiltrosSemana();
     renderCardsSemana(grid);
     initDrag();
+    // Vigilar CUALQUIER cambio posterior (igualarZonasSemana, etc.) y corregir el
+    // scroll cada vez, venga la causa de donde venga (más fiable que temporizadores).
+    if(window.ResizeObserver){
+      const ro = new ResizeObserver(()=>{ restaurarPosicion(); });
+      ro.observe(grid);
+      setTimeout(()=>ro.disconnect(), 1000);
+    }
+    if(window.MutationObserver){
+      const mo = new MutationObserver(()=>{ restaurarPosicion(); });
+      mo.observe(grid, { childList:true, subtree:true, attributes:true });
+      setTimeout(()=>mo.disconnect(), 1000);
+    }
     requestAnimationFrame(() => {
       igualarZonasSemana(grid);
       sincronizarScrollBar(grid);
+      // Restaurar después de modificar las alturas
+      restaurarPosicion();
+      // Segunda corrección cuando el navegador termine la maquetación
+      requestAnimationFrame(restaurarPosicion);
+      setTimeout(restaurarPosicion, 120);
+      setTimeout(restaurarPosicion, 300);
+      setTimeout(restaurarPosicion, 600);
     });
     return;
   }
@@ -633,7 +635,11 @@ function renderCards(){
     lista.forEach(eq=>grid.appendChild(buildCard(eq)));
   }
   initDrag();
-  requestAnimationFrame(equalizarCards);
+  requestAnimationFrame(() => {
+    equalizarCards();
+    restaurarPosicion();
+    requestAnimationFrame(restaurarPosicion);
+  });
 }
 
 function sincronizarScrollBar(grid){
