@@ -188,6 +188,67 @@ function diaHoyIdx(){
   const d = new Date().getDay(); // 0=domingo
   return d===0 ? 6 : d-1;
 }
+// Modal para elegir desde qué día aplica un cambio de equipo (por defecto, hoy — pero
+// permite elegir otro día para tapar huecos si se te olvidó hacerlo a tiempo).
+function abrirDiaAplicaModal(nombre, eqViejo, nuevoEq, onConfirmar, onCancelar){
+  const idxHoy = diaHoyIdx();
+  const overlay = mk('div','');
+  overlay.id = 'dia-aplica-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10400;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);';
+  const box = mk('div','');
+  box.style.cssText = 'width:100%;max-width:380px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.15);';
+  const hdr = mk('div','');
+  hdr.style.cssText = 'background:#2563eb;padding:14px 18px;';
+  hdr.innerHTML = `<div style="font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:800;color:#fff;">${nombre}: ${eqViejo} → ${nuevoEq}</div>`;
+  const body = mk('div','');
+  body.style.cssText = 'padding:16px 18px;';
+  const sub = mk('div','');
+  sub.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:12px;color:#5a6170;margin-bottom:12px;';
+  sub.textContent = '¿Desde qué día aplica este cambio? Los días anteriores no se tocan.';
+  body.appendChild(sub);
+  const grid = mk('div','');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;';
+  const diaAbrev = {'LUNES':'L','MARTES':'M','MIÉRCOLES':'X','JUEVES':'J','VIERNES':'V','SÁBADO':'S','DOMINGO':'D'};
+  let diaElegidoIdx = idxHoy;
+  const botones = [];
+  DIAS.forEach((d,i)=>{
+    const btn = document.createElement('button');
+    const esPasado = i < idxHoy;
+    btn.textContent = (diaAbrev[d]||d) + ' ' + (FECHAS[d]||'');
+    btn.disabled = esPasado;
+    btn.style.cssText = `padding:8px 4px;border-radius:8px;border:1.5px solid ${i===idxHoy?'#2563eb':'#dfe1e6'};background:${i===idxHoy?'#2563eb':(esPasado?'#f0f4fa':'#fff')};color:${i===idxHoy?'#fff':(esPasado?'#b4b9c4':'#1a1d23')};font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:700;cursor:${esPasado?'not-allowed':'pointer'};`;
+    if(!esPasado){
+      btn.onclick = ()=>{
+        diaElegidoIdx = i;
+        botones.forEach((b,bi)=>{
+          b.style.borderColor = bi===i ? '#2563eb' : '#dfe1e6';
+          b.style.background = bi===i ? '#2563eb' : '#fff';
+          b.style.color = bi===i ? '#fff' : '#1a1d23';
+        });
+      };
+    }
+    botones.push(btn);
+    grid.appendChild(btn);
+  });
+  body.appendChild(grid);
+  const btnRow = mk('div','');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:1px solid #dfe1e6;background:transparent;color:#5a6170;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  const okBtn = document.createElement('button');
+  okBtn.textContent = 'Aplicar';
+  okBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
+  body.appendChild(btnRow);
+  box.appendChild(hdr); box.appendChild(body);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  function cerrar(){ overlay.remove(); }
+  cancelBtn.onclick = ()=>{ cerrar(); if(onCancelar) onCancelar(); };
+  okBtn.onclick = ()=>{ cerrar(); if(onConfirmar) onConfirmar(diaElegidoIdx); };
+  overlay.onclick = (e)=>{ if(e.target===overlay){ cerrar(); if(onCancelar) onCancelar(); } };
+}
 function countLabel(eq,campo){
   let p=0,j=0;
   campo.forEach((n,i)=>{ if(esPortero(eq,n,i)) p++; else j++; });
@@ -1728,10 +1789,13 @@ async function arrancarDesdeFirebase(){
         for(const z of ZONAS) if(!data[d][e][z]) data[d][e][z]=[];
       }
       DIAS.forEach(d=>{if(!promInfo[d])promInfo[d]={};EQUIPOS.forEach(eq=>{if(!promInfo[d][eq])promInfo[d][eq]={};});});
-      // Sincronizar plantillas → disponibles
+      // Sincronizar plantillas → disponibles (solo HOY en adelante, nunca días pasados —
+      // si no, un fichaje nuevo aparecería retroactivamente en días anteriores a su alta)
+      const _idxHoyBoot = diaHoyIdx();
       EQUIPOS.forEach(eq=>{
         (plantillas[eq]||[]).forEach(nombre=>{
-          DIAS.forEach(d=>{
+          DIAS.forEach((d,i)=>{
+            if(i < _idxHoyBoot) return;
             const enAlgunaZona=ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre));
             if(!enAlgunaZona && !data[d][eq].disponibles.includes(nombre))
               data[d][eq].disponibles.push(nombre);
