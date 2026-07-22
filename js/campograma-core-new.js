@@ -1640,7 +1640,9 @@ async function arrancarDesdeFirebase(){
       // 'data' recién restaurado pertenece a la semana 'payload.ultimaSemanaKey' (la última que se guardó).
       // 'FECHAS'/'_semanaKeyActual' ya están forzados a la semana de HOY (más arriba).
       // Si no coinciden, hay que guardar esa foto y cargar (o crear) la de esta semana.
+      console.log('[diagnóstico semana] guardado como:', payload.ultimaSemanaKey, '| semana actual:', _semanaKeyActual, '| coinciden:', payload.ultimaSemanaKey === _semanaKeyActual);
       if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
+        console.warn('[diagnóstico semana] ¡NO coinciden! Se archiva el campo cargado y se crea/carga otra semana.');
         _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
           data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
           primerEquipoJugadores, notas: window._notasData || {}, origen
