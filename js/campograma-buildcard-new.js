@@ -502,7 +502,15 @@ function chip(nombre,eq,zona,color,type){
   const eqO=historicoJugador[dia]?.[nombre]?.equipoOrigen || origen[nombre];
   const prueba   = eqO === 'PRUEBA';
   const prestado = !prueba && eqO && eqO!==eq;
-  let cf = prueba ? 'c-prueba' : (prestado ? (EQ_COLORS[eqO]||'c-prestado') : color);
+  let cf;
+  if(zona === 'promovidos_1er'){
+    // La columna "Promocionados" es SIEMPRE del equipo propio (el jugador que aparece
+    // aquí pertenece a este equipo, esté donde esté promocionado) — nunca se pinta con
+    // el color de otro equipo, sea el destino o el que sea.
+    cf = color;
+  } else {
+    cf = prueba ? 'c-prueba' : (prestado ? (EQ_COLORS[eqO]||'c-prestado') : color);
+  }
   const numEqs = esMulti(nombre);
   const multi = numEqs > 1;
   const claseMulti = numEqs >= 3 ? 'c-triple' : (numEqs === 2 ? 'c-multi' : '');
