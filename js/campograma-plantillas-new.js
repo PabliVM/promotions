@@ -274,14 +274,20 @@ function renderPlantBody(){
       eqSel.appendChild(opt);
     });
     eqSel.onclick = (e)=> e.stopPropagation();
-    eqSel.onchange = ()=> plantCambiarEquipo(nombre, eqSel.value);
+    eqSel.onchange = ()=>{
+      const nuevoEq = eqSel.value;
+      const eqViejo = plantEqActivo;
+      abrirDiaAplicaModal(nombre, eqViejo, nuevoEq, (diaIdx)=>{
+        plantCambiarEquipo(nombre, nuevoEq, diaIdx);
+      }, ()=>{ eqSel.value = eqViejo; }); // si cancela, el desplegable vuelve al equipo actual
+    };
 
     row.appendChild(dragHandle); row.appendChild(num); row.appendChild(nm);
     row.appendChild(editBtn); row.appendChild(porLabel); row.appendChild(eqSel); row.appendChild(del);
     list.appendChild(row);
   });
 }
-function plantCambiarEquipo(nombre, nuevoEq){
+function plantCambiarEquipo(nombre, nuevoEq, diaAplicaIdx){
   if(!nuevoEq || nuevoEq === plantEqActivo) return;
   const arr = plantillas[plantEqActivo];
   const idx = arr.indexOf(nombre);
@@ -289,18 +295,22 @@ function plantCambiarEquipo(nombre, nuevoEq){
   if(!plantillas[nuevoEq]) plantillas[nuevoEq] = [];
   if(!plantillas[nuevoEq].includes(nombre)) plantillas[nuevoEq].push(nombre);
   origen[nombre] = nuevoEq;
-  // Limpiar cualquier duplicado que estuviera archivado bajo el equipo ANTIGUO
-  // (si no, se queda "fantasma": ya no se puede gestionar desde ningún sitio)
-  DIAS.forEach(d=>{
+  // A PARTIR DE AQUÍ: todo lo que sigue solo toca el día elegido EN ADELANTE (por defecto,
+  // hoy). Los días ANTERIORES a ese no se tocan para nada — se quedan exactamente como
+  // estaban (equipo viejo, promociones de entonces, todo).
+  const idxHoy = (typeof diaAplicaIdx === 'number') ? diaAplicaIdx : diaHoyIdx();
+  const diasFuturos = DIAS.filter((d,i)=>i>=idxHoy);
+  // Limpiar cualquier duplicado archivado bajo el equipo ANTIGUO (solo hoy en adelante)
+  diasFuturos.forEach(d=>{
     if(promInfo[d]?.[plantEqActivo]?.[nombre]){
       const destinos = getDestinos(d, plantEqActivo, nombre);
       destinos.forEach(destino=>limpiarUnDestino(d, destino, nombre));
       delete promInfo[d][plantEqActivo][nombre];
     }
   });
-  // Quitar cualquier rastro del jugador en el equipo ANTERIOR (todas las zonas, todos los días)
+  // Quitar cualquier rastro del jugador en el equipo ANTERIOR (solo hoy en adelante)
   if(plantEqActivo !== '1ER EQUIPO'){
-    DIAS.forEach(d=>{
+    diasFuturos.forEach(d=>{
       ZONAS.forEach(z=>{
         const a = data[d][plantEqActivo]?.[z];
         if(!a) return;
@@ -309,18 +319,18 @@ function plantCambiarEquipo(nombre, nuevoEq){
       });
     });
   }
-  // Si entra en un equipo de cantera, que aparezca en Disponibles (si no está ya en otra zona)
+  // Si entra en un equipo de cantera, que aparezca en Disponibles (solo hoy en adelante)
   if(nuevoEq !== '1ER EQUIPO'){
-    DIAS.forEach(d=>{
+    diasFuturos.forEach(d=>{
       if(!data[d][nuevoEq].disponibles.includes(nombre) &&
          !ZONAS.some(z=>data[d][nuevoEq][z].includes(nombre))){
         data[d][nuevoEq].disponibles.push(nombre);
       }
     });
   }
-  // Si sale del Primer Equipo, quitarlo también de su campo (si estaba puesto ahí algún día)
+  // Si sale del Primer Equipo, quitarlo también de su campo (solo hoy en adelante)
   if(plantEqActivo === '1ER EQUIPO'){
-    DIAS.forEach(d=>{
+    diasFuturos.forEach(d=>{
       if(primerEquipoJugadores[d]){
         const i = primerEquipoJugadores[d].indexOf(nombre);
         if(i>=0) primerEquipoJugadores[d].splice(i,1);
@@ -329,9 +339,7 @@ function plantCambiarEquipo(nombre, nuevoEq){
   }
   // Corregir el histórico de HOY EN ADELANTE con el equipo nuevo (el cambio se hace
   // efectivo desde hoy). Los días YA PASADOS se quedan tal cual estaban — inmutables.
-  const idxHoy = diaHoyIdx();
-  DIAS.forEach((d, i)=>{
-    if(i < idxHoy) return; // día ya pasado — no tocar su histórico
+  diasFuturos.forEach(d=>{
     if(historicoJugador[d]) delete historicoJugador[d][nombre]; // se recreará con el equipo nuevo
   });
   DIAS.forEach(d=>asegurarHistoricoJugador(d));
@@ -398,7 +406,10 @@ function _plantAñadirConfirmado(nombre){
   plantillas[plantEqActivo].sort((a,b)=>a.localeCompare(b,'es'));
   origen[nombre] = plantEqActivo;
   if(plantEqActivo !== '1ER EQUIPO'){
-    DIAS.forEach(d=>{
+    // Solo HOY en adelante: un fichaje nuevo no debe aparecer en días anteriores a su alta
+    const idxHoy = diaHoyIdx();
+    DIAS.forEach((d,i)=>{
+      if(i < idxHoy) return;
       if(!data[d][plantEqActivo].disponibles.includes(nombre) &&
          !ZONAS.some(z=>data[d][plantEqActivo][z].includes(nombre))){
         data[d][plantEqActivo].disponibles.push(nombre);
