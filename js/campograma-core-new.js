@@ -1640,9 +1640,7 @@ async function arrancarDesdeFirebase(){
       // 'data' recién restaurado pertenece a la semana 'payload.ultimaSemanaKey' (la última que se guardó).
       // 'FECHAS'/'_semanaKeyActual' ya están forzados a la semana de HOY (más arriba).
       // Si no coinciden, hay que guardar esa foto y cargar (o crear) la de esta semana.
-      console.log('[diagnóstico semana] guardado como:', payload.ultimaSemanaKey, '| semana actual:', _semanaKeyActual, '| coinciden:', payload.ultimaSemanaKey === _semanaKeyActual);
       if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
-        console.warn('[diagnóstico semana] ¡NO coinciden! Se archiva el campo cargado y se crea/carga otra semana.');
         _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
           data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
           primerEquipoJugadores, notas: window._notasData || {}, origen
@@ -1650,7 +1648,7 @@ async function arrancarDesdeFirebase(){
         if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
       }
       // FECHAS no se restaura del guardado: la app siempre abre en la semana actual
-      if(Array.isArray(payload.primerEquipoJugadores)) primerEquipoJugadores = payload.primerEquipoJugadores;
+      if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
       // Normalizar colNames
       EQUIPOS.forEach(eq=>{
@@ -1679,13 +1677,6 @@ async function arrancarDesdeFirebase(){
       });
       initTiposConfig();
       _fbSesionActiva = 'principal';
-      // [diagnóstico] Ver qué hay en el campo de cada equipo/día justo tras cargar
-      DIAS.forEach(d=>{
-        EQUIPOS.forEach(eq=>{
-          const c = data[d]?.[eq]?.campo;
-          if(c && c.length) console.log('[diagnóstico campo]', d, eq, '→', c.join(', '));
-        });
-      });
       // Guardar en local como caché
       // localStorage desactivado
       render(); renderDias(); renderEqs(); renderCards(); renderMultiEqBar();
@@ -1779,7 +1770,7 @@ function aplicarPayloadRemoto(payload){
     if(payload.modoPartido && typeof payload.modoPartido==='object') modoPartido = payload.modoPartido;
     if(payload.modoDescanso&& typeof payload.modoDescanso==='object')modoDescanso= payload.modoDescanso;
     if(payload.multiEq     && typeof payload.multiEq==='object')     multiEq     = payload.multiEq;
-    if(Array.isArray(payload.primerEquipoJugadores)) primerEquipoJugadores = payload.primerEquipoJugadores;
+    if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
   } else if(payload.semanasGuardadas && payload.semanasGuardadas[_semanaKeyActual]){
     // El otro está en otra semana, pero SÍ tiene guardada una foto de la MI semana — usarla
     cargarFotoSemana(_semanaKeyActual);
