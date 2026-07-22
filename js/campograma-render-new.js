@@ -51,6 +51,13 @@ function render(){
       ro.observe(grid);
       setTimeout(()=>ro.disconnect(), 1000); // dejar de vigilar tras 1s (ya estable)
     }
+    if(grid && window.MutationObserver){
+      // Vigilar CUALQUIER cambio en el grid (reconstrucción de cards, ajustes de altura,
+      // lo que sea) y corregir el scroll cada vez, venga la causa de donde venga.
+      const mo = new MutationObserver(()=>{ restaurarScroll(); });
+      mo.observe(grid, { childList:true, subtree:true, attributes:true });
+      setTimeout(()=>mo.disconnect(), 1000);
+    }
     requestAnimationFrame(()=>requestAnimationFrame(restaurarScroll));
     setTimeout(restaurarScroll, 120);
     setTimeout(restaurarScroll, 300);
