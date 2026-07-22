@@ -40,14 +40,21 @@ function render(){
   renderDias(); renderEqs(); renderCards();
   // 1ª corrección: inmediata, antes de pintar
   restaurarScroll();
-  // 2ª y 3ª corrección: después de que igualarZonasSemana (vía rAF) termine de ajustar
-  // alturas, que es lo que desplazaba la página otra vez tras la primera corrección.
-  // En algunos navegadores (Windows) el reflow tarda más que en otros, así que se repite
-  // la comprobación varias veces con más margen.
+  // Vigilar cambios de tamaño REALES en el grid (p.ej. igualarZonasSemana ajustando
+  // alturas) y corregir el scroll cada vez que ocurran, durante una ventana breve tras
+  // el render. Más fiable que temporizadores fijos, que pueden no coincidir con el
+  // tiempo real que tarda cada navegador/sistema operativo en re-maquetar.
   if(vistaActual==='semana'){
+    const grid = document.getElementById('grid');
+    if(grid && window.ResizeObserver){
+      const ro = new ResizeObserver(()=>{ restaurarScroll(); });
+      ro.observe(grid);
+      setTimeout(()=>ro.disconnect(), 1000); // dejar de vigilar tras 1s (ya estable)
+    }
     requestAnimationFrame(()=>requestAnimationFrame(restaurarScroll));
     setTimeout(restaurarScroll, 120);
     setTimeout(restaurarScroll, 300);
+    setTimeout(restaurarScroll, 600);
   }
   autoGuardar();
   if(esMovilVista()){
