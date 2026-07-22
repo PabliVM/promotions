@@ -22,6 +22,7 @@ function buildPayload(manualSave=false){
   if(manualSave) _lastManualTS = new Date().toISOString();
   return {
     data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,notas:window._notasData||{},movimientos,
+    historicoJugador,
     modoUYL, listaUYL, listaUYLExcl: window.listaUYLExcl||[], tipoPartido, tiposConfig, modoDescanso,
     modoPartido, primerEquipoJugadores, rivales: window.rivales||{},
     semanasGuardadas: _semanasGuardadas,
