@@ -36,6 +36,10 @@ var FECHAS = calcFechasSemana();
   });
 })();
 var origen = {};
+// Histórico INMUTABLE por día: una vez que un jugador tiene "foto" guardada para un día
+// concreto, esa foto NUNCA se toca aunque su equipo/promoción actual cambie después.
+// historicoJugador[dia][nombre] = { equipoOrigen, entrenoCon, promocionado, promocionadoDesde }
+var historicoJugador = {};
 var movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
 var porteros = []; // array de nombres marcados como portero
 // ══════════════════════════════════════════════════
@@ -48,7 +52,7 @@ function guardarFotoSemanaActual(){
   if(!_semanaKeyActual) return;
   _semanasGuardadas[_semanaKeyActual] = JSON.parse(JSON.stringify({
     data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
-    primerEquipoJugadores, notas: window._notasData || {}, origen
+    primerEquipoJugadores, notas: window._notasData || {}, origen, historicoJugador
   }));
 }
 function cargarFotoSemana(key){
@@ -60,6 +64,8 @@ function cargarFotoSemana(key){
   window._notasData = foto.notas || {};
   // El equipo de cada jugador se recuerda TAL COMO ERA esa semana (histórico real para stats)
   if(foto.origen) origen = foto.origen;
+  // El histórico inmutable por día viaja con su semana — cada semana tiene sus propias fotos
+  historicoJugador = foto.historicoJugador || {};
   // 'porteros' NO se guarda por semana a propósito: es un rasgo del jugador (como su posición
   // real), no algo que cambie semana a semana — se queda igual pase lo que pase con las semanas.
   return true;
@@ -68,6 +74,7 @@ function crearSemanaVacia(){
   data = JSON.parse(JSON.stringify(RAW));
   pos = {}; promInfo = {}; multiEq = {}; modoPartido = {}; modoDescanso = {};
   tipoPartido = {}; primerEquipoJugadores = {}; window._notasData = {};
+  historicoJugador = {}; // semana nueva → fotos históricas nuevas, empieza de cero
   // Una semana NUEVA parte de los equipos actuales de cada jugador (no toca 'origen':
   // se queda con el valor vivo de ahora mismo, que es lo correcto para una semana que empieza hoy)
   // Rellenar disponibles con la plantilla de cada equipo
@@ -134,6 +141,46 @@ var savePos= (d,e,n,t,l) => pos[key(d,e,n)] = [clamp(t,0,100), clamp(l,0,100)];
 function esPortero(eq,nombre,i){
   const [t,l]=getPos(dia,eq,nombre,i);
   return t>84 && l>=24 && l<=76;
+}
+// Asegura que TODOS los jugadores presentes en un día concreto (en cualquier equipo/zona)
+// tengan su "foto" histórica guardada. Si ya la tienen, NO se toca — es inmutable.
+// Solo se rellena la primera vez que se detecta al jugador ese día.
+function asegurarHistoricoJugador(diaP){
+  if(!diaP || !data[diaP]) return;
+  if(!historicoJugador[diaP]) historicoJugador[diaP] = {};
+  const registro = historicoJugador[diaP];
+  EQUIPOS.forEach(eq=>{
+    ZONAS.forEach(z=>{
+      (data[diaP][eq]?.[z]||[]).forEach(nombre=>{
+        if(registro[nombre]) return; // ya tiene foto ese día — inmutable, no tocar
+        const eqOrigen = origen[nombre] || eq;
+        const promocionado = eq !== eqOrigen;
+        registro[nombre] = {
+          equipoOrigen: eqOrigen,
+          entrenoCon: eq,
+          promocionado: promocionado,
+          promocionadoDesde: promocionado ? eqOrigen : null
+        };
+      });
+    });
+  });
+  // 1ER EQUIPO tiene su propia estructura (no usa data[dia][eq])
+  (primerEquipoJugadores[diaP]||[]).forEach(nombre=>{
+    if(registro[nombre]) return;
+    const eqOrigen = origen[nombre] || '1ER EQUIPO';
+    const promocionado = eqOrigen !== '1ER EQUIPO';
+    registro[nombre] = {
+      equipoOrigen: eqOrigen,
+      entrenoCon: '1ER EQUIPO',
+      promocionado: promocionado,
+      promocionadoDesde: promocionado ? eqOrigen : null
+    };
+  });
+}
+// Devuelve el equipo con el que un jugador entrenó un día concreto, según su foto
+// histórica si existe; si no (días muy antiguos sin foto todavía), usa el equipo actual.
+function equipoHistorico(diaP, nombre){
+  return historicoJugador[diaP]?.[nombre]?.entrenoCon || origen[nombre];
 }
 function countLabel(eq,campo){
   let p=0,j=0;
@@ -822,6 +869,15 @@ function renderControlEqsRow(){
 function cerrarControl(){
   document.getElementById('control-overlay').classList.remove('open');
 }
+// Devuelve la lista de jugadores que PERTENECÍAN a un equipo en un día concreto, según
+// su foto histórica — no la plantilla actual (que puede haber cambiado desde entonces).
+function jugadoresHistoricosDeEquipo(diaP, eq){
+  const historico = historicoJugador[diaP];
+  if(historico && Object.keys(historico).length){
+    return Object.keys(historico).filter(n => historico[n].equipoOrigen === eq);
+  }
+  return plantillas[eq] || []; // sin foto histórica todavía (no debería pasar tras el arranque)
+}
 function getEstadoJugador(nombre, eq, diaP){
   const diaC = diaP || dia;
   // Devuelve {estado, multi} donde estado es dónde está en su equipo
@@ -908,11 +964,11 @@ function renderControl(){
   });
   thead.appendChild(trH2);
   // ── FILAS de datos
-  const maxJug = Math.max(...eqsVisibles.map(eq=>(plantillas[eq]||[]).length), 0);
+  const maxJug = Math.max(...eqsVisibles.map(eq=>eq==='1ER EQUIPO' ? (plantillas[eq]||[]).length : jugadoresHistoricosDeEquipo(diaC,eq).length), 0);
   for(let i=0; i<maxJug; i++){
     const tr = document.createElement('tr');
     eqsVisibles.forEach(eq=>{
-      const jugs = plantillas[eq]||[];
+      const jugs = eq==='1ER EQUIPO' ? (plantillas[eq]||[]) : jugadoresHistoricosDeEquipo(diaC,eq);
       const tdJ = document.createElement('td');
       tdJ.className = 'td-jugador';
       const tdE = document.createElement('td');
@@ -1650,6 +1706,7 @@ async function arrancarDesdeFirebase(){
       // FECHAS no se restaura del guardado: la app siempre abre en la semana actual
       if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
+      if(payload.historicoJugador && typeof payload.historicoJugador==='object') historicoJugador = payload.historicoJugador;
       // Normalizar colNames
       EQUIPOS.forEach(eq=>{
         if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
@@ -1675,6 +1732,10 @@ async function arrancarDesdeFirebase(){
           });
         });
       });
+      // Rellenar la foto histórica de días ya existentes que aún no la tengan
+      // (backfill: solo la primera vez que se detecta cada jugador en cada día;
+      // los días que YA tengan foto no se tocan, quedan tal y como estaban)
+      DIAS.forEach(d=>asegurarHistoricoJugador(d));
       initTiposConfig();
       _fbSesionActiva = 'principal';
       // Guardar en local como caché
