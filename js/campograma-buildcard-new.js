@@ -181,7 +181,7 @@ function buildCard(eq){
   const nm=mk('div','card-hdr-name');
   nm.id='count-'+eq.replace(/ /g,'_');
   const countTxt = d.campo.length ? countLabel(eq,d.campo) : '';
-  nm.innerHTML = (EQ_LABEL[eq]||eq) + (countTxt ? `<span style="margin-left:8px;font-size:12px;color:rgba(255,255,255,.45);font-weight:700;">${countTxt}</span>` : '');
+  nm.innerHTML = (EQ_LABEL[eq]||eq) + (countTxt ? `<span style="margin-left:8px;font-size:12px;color:#9ca3af;font-weight:700;">${countTxt}</span>` : '');
   hdr.appendChild(nm);
   const right=mk('div','card-hdr-right');
   // Botón descanso
