@@ -96,6 +96,12 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 .plant-portero-chk span { font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 11px; font-weight: 700; color: #5a6170; letter-spacing: .3px; }
 .plant-portero-chk:has(input:checked) { background: rgba(37,99,235,.1); border-color: #2563eb; }
 .plant-portero-chk:has(input:checked) span { color: #2563eb; }
+.plant-portero-tag {
+  font-family: 'Segoe UI',-apple-system,sans-serif;
+  font-size: 10px; font-weight: 700; color: #2563eb;
+  background: rgba(37,99,235,.1); border: 1px solid rgba(37,99,235,.25);
+  border-radius: 10px; padding: 2px 7px; flex-shrink: 0;
+}
 
 /* Edición listado */
 .card-lista-edit-btn { background: none; border: none; cursor: pointer; font-size: 13px; opacity: .8; padding: 4px 6px; flex-shrink: 0; }
@@ -220,4 +226,13 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 .reset-btn:hover {
   border-color: #2563eb !important;
   color: #2563eb !important;
+}
+
+/* Desactivar el ajuste automático de scroll del navegador mientras se reconstruye
+   el grid (destruir+reconstruir con innerHTML='' puede hacer que el navegador intente
+   "ayudar" moviendo el scroll solo, chocando con nuestra propia corrección manual) */
+#grid,
+.cards-grid,
+.semana-tr-eq {
+  overflow-anchor: none;
 }
