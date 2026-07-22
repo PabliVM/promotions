@@ -23,6 +23,10 @@ try {
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+  // Safari (y algunas redes/navegadores restrictivos) fallan con el canal de conexión
+  // en tiempo real por defecto de Firestore ("access control checks" en el WebChannel).
+  // Esto detecta el problema y usa long-polling en su lugar, mucho más compatible.
+  db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
   const auth = firebase.auth();
   window._db = db;
   window._auth = auth;
@@ -65,27 +69,11 @@ try {
   window.fbGuardarSesion = async function(nombre, payload){
     try{
       const clean = JSON.parse(JSON.stringify(payload));
-      const doc = { ...clean, _nombre: nombre, _ts: firebase.firestore.FieldValue.serverTimestamp() };
-      // 'data' y 'promInfo' se mandan EQUIPO POR EQUIPO (con rutas tipo "data_por_eq.LUNES.CASTILLA")
-      // en vez de como un bloque único: así Firestore fusiona cada equipo por separado, y dos
-      // personas tocando equipos DISTINTOS a la vez nunca se pisan entre sí.
-      if(doc.data && typeof doc.data === 'object'){
-        Object.keys(doc.data).forEach(dia=>{
-          Object.keys(doc.data[dia]||{}).forEach(eq=>{
-            doc['data_por_eq.' + dia + '.' + eq] = doc.data[dia][eq];
-          });
-        });
-        delete doc.data;
-      }
-      if(doc.promInfo && typeof doc.promInfo === 'object'){
-        Object.keys(doc.promInfo).forEach(dia=>{
-          Object.keys(doc.promInfo[dia]||{}).forEach(eq=>{
-            doc['prominfo_por_eq.' + dia + '.' + eq] = doc.promInfo[dia][eq];
-          });
-        });
-        delete doc.promInfo;
-      }
-      await db.collection('sesiones').doc(nombre).set(doc, { merge: true });
+      await db.collection('sesiones').doc(nombre).set({
+        ...clean,
+        _nombre: nombre,
+        _ts: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
       return { ok:true };
     }catch(e){
       console.error('fbGuardarSesion error:', e);
@@ -93,19 +81,11 @@ try {
     }
   };
   // Cargar sesión desde Firebase
+  // (Revertido: ya no se usa el guardado dividido por equipo — ignorar cualquier campo
+  // 'data_por_eq'/'prominfo_por_eq' residual que hubiera quedado guardado antes; usar
+  // siempre los campos normales 'data'/'promInfo' del documento.)
   function _reconstruirDesdePorEq(raw){
-    // Reconstruye 'data' y 'promInfo' normales a partir de los campos aplanados
-    // (data_por_eq / prominfo_por_eq), para que el resto de la app no note el cambio.
-    const out = { ...raw };
-    if(raw.data_por_eq && typeof raw.data_por_eq === 'object'){
-      out.data = raw.data_por_eq;
-      delete out.data_por_eq;
-    }
-    if(raw.prominfo_por_eq && typeof raw.prominfo_por_eq === 'object'){
-      out.promInfo = raw.prominfo_por_eq;
-      delete out.prominfo_por_eq;
-    }
-    return out;
+    return raw;
   }
   window.fbCargarSesion = async function(nombre){
     try{
