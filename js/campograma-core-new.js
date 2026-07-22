@@ -149,25 +149,55 @@ function asegurarHistoricoJugador(diaP){
   if(!diaP || !data[diaP]) return;
   if(!historicoJugador[diaP]) historicoJugador[diaP] = {};
   const registro = historicoJugador[diaP];
+  // Recopilar evidencia de promociones de ESE día usando promInfo (que sobrevive a
+  // cambios de equipo posteriores) — más fiable que el equipo actual del jugador.
+  // promEvidencia[nombre] = { origenReal, destino }
+  const promEvidencia = {};
+  EQUIPOS.forEach(eqOrigenPosible=>{
+    const infoEq = promInfo[diaP]?.[eqOrigenPosible];
+    if(!infoEq) return;
+    Object.keys(infoEq).forEach(nombre=>{
+      if(promEvidencia[nombre]) return;
+      const destinos = getDestinos(diaP, eqOrigenPosible, nombre);
+      if(destinos.length) promEvidencia[nombre] = { origenReal: eqOrigenPosible, destino: destinos[0] };
+    });
+  });
   EQUIPOS.forEach(eq=>{
     ZONAS.forEach(z=>{
       (data[diaP][eq]?.[z]||[]).forEach(nombre=>{
         if(registro[nombre]) return; // ya tiene foto ese día — inmutable, no tocar
-        const eqOrigen = origen[nombre] || eq;
-        const promocionado = eq !== eqOrigen;
-        registro[nombre] = {
-          equipoOrigen: eqOrigen,
-          entrenoCon: eq,
-          promocionado: promocionado,
-          promocionadoDesde: promocionado ? eqOrigen : null
-        };
+        let eqOrigen, entrenoCon, promocionado, promocionadoDesde;
+        const ev = promEvidencia[nombre];
+        if(z === 'promovidos_1er'){
+          // Aparece en la columna "Promocionados" de SU PROPIO equipo (eq es su origen real)
+          eqOrigen = eq;
+          entrenoCon = (ev && ev.origenReal===eq) ? ev.destino : eq;
+          promocionado = true;
+          promocionadoDesde = eq;
+        } else if(ev && ev.destino === eq){
+          // Está en el equipo DESTINO de una promoción registrada — el origen real es
+          // el de promInfo, NO el equipo actual del jugador (que puede haber cambiado)
+          eqOrigen = ev.origenReal;
+          entrenoCon = eq;
+          promocionado = true;
+          promocionadoDesde = ev.origenReal;
+        } else {
+          // Sin evidencia de promoción ese día: usar el equipo actual como mejor
+          // aproximación (caso normal, jugador no promocionado)
+          eqOrigen = origen[nombre] || eq;
+          entrenoCon = eq;
+          promocionado = eq !== eqOrigen;
+          promocionadoDesde = promocionado ? eqOrigen : null;
+        }
+        registro[nombre] = { equipoOrigen: eqOrigen, entrenoCon, promocionado, promocionadoDesde };
       });
     });
   });
   // 1ER EQUIPO tiene su propia estructura (no usa data[dia][eq])
   (primerEquipoJugadores[diaP]||[]).forEach(nombre=>{
     if(registro[nombre]) return;
-    const eqOrigen = origen[nombre] || '1ER EQUIPO';
+    const ev = promEvidencia[nombre];
+    const eqOrigen = (ev && ev.destino==='1ER EQUIPO') ? ev.origenReal : (origen[nombre] || '1ER EQUIPO');
     const promocionado = eqOrigen !== '1ER EQUIPO';
     registro[nombre] = {
       equipoOrigen: eqOrigen,
@@ -1160,6 +1190,17 @@ function ejecutarPromocion(nombre, eqOrigen, destino, diaP){
   }
   // Si va a 1ER EQUIPO → aparece en Disponibles del 1er equipo (vía promInfo);
   // solo se añade al campo cuando se arrastra ahí manualmente.
+  // Registrar la foto histórica AHORA MISMO (no esperar al backfill pasivo) — así queda
+  // fijada la promoción real de este día, sobreviva o no promInfo a cambios posteriores.
+  if(!historicoJugador[diaP]) historicoJugador[diaP] = {};
+  if(!historicoJugador[diaP][nombre]){
+    historicoJugador[diaP][nombre] = {
+      equipoOrigen: eqOrigen,
+      entrenoCon: destino,
+      promocionado: true,
+      promocionadoDesde: eqOrigen
+    };
+  }
   autoGuardar();
   render();
 }
