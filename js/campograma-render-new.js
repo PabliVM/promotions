@@ -29,7 +29,6 @@ function render(){
         const rNuevo = filasNuevas[_anclaIdx].getBoundingClientRect();
         const delta = rNuevo.top - _anclaTop;
         window.scrollBy(0, delta);
-        if(Math.abs(delta) > 3) toast('↕ ajuste scroll: '+Math.round(delta)+'px (fila '+_anclaIdx+')');
       } else if(document.scrollingElement){
         document.scrollingElement.scrollTop = _scrollYPrevio;
       }
@@ -41,11 +40,14 @@ function render(){
   renderDias(); renderEqs(); renderCards();
   // 1ª corrección: inmediata, antes de pintar
   restaurarScroll();
-  // 2ª corrección: después de que igualarZonasSemana (vía rAF) termine de ajustar alturas,
-  // que es lo que desplazaba la página otra vez tras la primera corrección
+  // 2ª y 3ª corrección: después de que igualarZonasSemana (vía rAF) termine de ajustar
+  // alturas, que es lo que desplazaba la página otra vez tras la primera corrección.
+  // En algunos navegadores (Windows) el reflow tarda más que en otros, así que se repite
+  // la comprobación varias veces con más margen.
   if(vistaActual==='semana'){
     requestAnimationFrame(()=>requestAnimationFrame(restaurarScroll));
-    setTimeout(restaurarScroll, 120); // red de seguridad si el navegador tarda más de 2 frames
+    setTimeout(restaurarScroll, 120);
+    setTimeout(restaurarScroll, 300);
   }
   autoGuardar();
   if(esMovilVista()){
