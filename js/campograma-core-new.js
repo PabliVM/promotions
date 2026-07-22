@@ -182,6 +182,12 @@ function asegurarHistoricoJugador(diaP){
 function equipoHistorico(diaP, nombre){
   return historicoJugador[diaP]?.[nombre]?.entrenoCon || origen[nombre];
 }
+// Índice de HOY dentro de DIAS (0=LUNES...6=DOMINGO), para saber qué días son "pasado"
+// (antes de hoy → históricos, inmutables) y cuáles son "hoy en adelante" (se actualizan).
+function diaHoyIdx(){
+  const d = new Date().getDay(); // 0=domingo
+  return d===0 ? 6 : d-1;
+}
 function countLabel(eq,campo){
   let p=0,j=0;
   campo.forEach((n,i)=>{ if(esPortero(eq,n,i)) p++; else j++; });
