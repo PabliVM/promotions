@@ -497,7 +497,9 @@ function chipHTML(nombre, isCampo){
   return nombre; // texto plano siempre
 }
 function chip(nombre,eq,zona,color,type){
-  const eqO=origen[nombre];
+  // Usar el equipo de origen HISTÓRICO de este día concreto (si existe) — nunca el
+  // equipo actual del jugador, que puede haber cambiado desde entonces.
+  const eqO=historicoJugador[dia]?.[nombre]?.equipoOrigen || origen[nombre];
   const prueba   = eqO === 'PRUEBA';
   const prestado = !prueba && eqO && eqO!==eq;
   let cf = prueba ? 'c-prueba' : (prestado ? (EQ_COLORS[eqO]||'c-prestado') : color);
