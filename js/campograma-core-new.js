@@ -145,7 +145,7 @@ function updateCount(eq){
   if(!el) return;
   const campo = data[dia][eq]?.campo||[];
   const countTxt = campo.length ? countLabel(eq,campo) : '';
-  el.innerHTML = eq + (countTxt ? `<span style="margin-left:8px;font-size:12px;color:rgba(255,255,255,.45);font-weight:700;">${countTxt}</span>` : '');
+  el.innerHTML = eq + (countTxt ? `<span style="margin-left:8px;font-size:12px;color:#9ca3af;font-weight:700;">${countTxt}</span>` : '');
 }
 // ══════════════════════════════════════════════════
 // SNAP AL SLOT MÁS CERCANO
@@ -1560,11 +1560,20 @@ function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel='',on
   const okBtn=document.getElementById('alert-ok-btn');
   if(okLabel==='Eliminar'){ okBtn.style.background='#ef4444'; okBtn.style.borderColor='#ef4444'; }
   else { okBtn.style.background=''; okBtn.style.borderColor=''; }
+  // Quitar el foco de cualquier botón ANTES de cerrar el modal: en algunos navegadores
+  // (Windows), ocultar un elemento que tiene el foco hace que la página salte de scroll
+  // sola buscando un nuevo elemento al que enfocar.
+  function cerrarSinSaltoScroll(){
+    const _sy = window.scrollY, _sx = window.scrollX;
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    closeAlert();
+    window.scrollTo(_sx, _sy);
+  }
   const extraBtn=document.getElementById('alert-extra-btn');
   if(onExtra){
     extraBtn.textContent=extraLabel;
     extraBtn.style.display='';
-    extraBtn.onclick=()=>{closeAlert();onExtra();};
+    extraBtn.onclick=()=>{cerrarSinSaltoScroll();onExtra();};
   } else {
     extraBtn.style.display='none';
     extraBtn.onclick=null;
@@ -1573,14 +1582,14 @@ function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel='',on
   if(onExtra2){
     extra2Btn.textContent=extra2Label;
     extra2Btn.style.display='';
-    extra2Btn.onclick=()=>{closeAlert();onExtra2();};
+    extra2Btn.onclick=()=>{cerrarSinSaltoScroll();onExtra2();};
   } else {
     extra2Btn.style.display='none';
     extra2Btn.onclick=null;
   }
   document.getElementById('alert-overlay').classList.add('show');
   alertCb=onConfirm;
-  okBtn.onclick=()=>{const cb=alertCb;closeAlert();if(cb)cb();};
+  okBtn.onclick=()=>{const cb=alertCb;cerrarSinSaltoScroll();if(cb)cb();};
 }
 function closeAlert(){
   document.getElementById('alert-overlay').classList.remove('show');
