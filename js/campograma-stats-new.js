@@ -58,7 +58,7 @@ function calcDesgloseExternos(eq){
   let total = 0;
   DIAS.forEach(d=>{
     (data[d][eq]?.campo||[]).forEach(n=>{
-      const eqO = origen[n];
+      const eqO = historicoJugador[d]?.[n]?.equipoOrigen || origen[n];
       if(eqO && eqO!==eq){ contador[eqO]=(contador[eqO]||0)+1; total++; }
     });
   });
@@ -110,7 +110,8 @@ function calcStatsEquipo(eq){
     if(esP) sesionesPartido++; else sesionesEntreno++;
     let propios=0, externos=0, porterosSesion=0;
     campo.forEach(n=>{
-      if(origen[n]===eq) propios++; else externos++;
+      const eqOD = historicoJugador[d]?.[n]?.equipoOrigen || origen[n];
+      if(eqOD===eq) propios++; else externos++;
       if(porteros.includes(n)) porterosSesion++;
       conteoJugador[n]=(conteoJugador[n]||0)+1;
     });
