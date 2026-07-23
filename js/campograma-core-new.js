@@ -16,11 +16,37 @@ function calcFechasSemana(lunesBase){
   })();
   _semanaKeyActual = base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0');
   const fechas = {};
+  // FECHAS_COMPLETAS[dia] = "AAAA-MM-DD" — la fecha real y única de cada día de esta
+  // semana (con año), en paralelo a FECHAS (que solo da "DD/M" para mostrar en pantalla).
+  // Es la base para identificar cada día sin ambigüedad, sin tener que cambiar cómo se
+  // guardan internamente los datos (que siguen usando "LUNES"/"MARTES" como clave).
+  window.FECHAS_COMPLETAS = window.FECHAS_COMPLETAS || {};
   DIAS.forEach((dia,i)=>{
     const f = new Date(base); f.setDate(base.getDate()+i);
     fechas[dia] = f.getDate()+'/'+(f.getMonth()+1);
+    window.FECHAS_COMPLETAS[dia] = f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0')+'-'+String(f.getDate()).padStart(2,'0');
   });
   return fechas;
+}
+// Devuelve la fecha real completa ("AAAA-MM-DD") de un día de la semana ACTIVA.
+// Si se pasa una semana distinta (lunesKey), la calcula para esa semana en concreto
+// sin alterar la semana activa actual.
+function fechaCompletaDeDia(diaNombre, lunesKey){
+  if(!lunesKey) return (window.FECHAS_COMPLETAS||{})[diaNombre] || '';
+  const idx = DIAS.indexOf(diaNombre);
+  if(idx < 0) return '';
+  const base = new Date(lunesKey);
+  const f = new Date(base); f.setDate(base.getDate()+idx);
+  return f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0')+'-'+String(f.getDate()).padStart(2,'0');
+}
+// Devuelve la letra abreviada (L/M/X/J/V/S/D) del día de la semana que corresponde a
+// una fecha completa "AAAA-MM-DD", calculándolo directamente (no depende de qué nombre
+// de día se use internamente).
+function abrevDiaDesdeFecha(fechaCompleta){
+  const ABREV = ['D','L','M','X','J','V','S']; // getDay(): 0=domingo...6=sábado
+  const f = new Date(fechaCompleta+'T00:00:00');
+  if(isNaN(f.getTime())) return '?';
+  return ABREV[f.getDay()];
 }
 var dia   = sessionStorage.getItem("rm_dia") || "LUNES"; // día activo global (se corrige abajo al de hoy)
 var FECHAS = calcFechasSemana();
@@ -292,7 +318,7 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
     const botones = [];
     DIAS.forEach(d=>{
       const btn = document.createElement('button');
-      btn.textContent = (diaAbrev[d]||d) + ' ' + (FECHAS[d]||'');
+      const _fc = (window.FECHAS_COMPLETAS||{})[d]; const _anio = _fc ? _fc.slice(2,4) : ''; btn.textContent = (diaAbrev[d]||d) + ' ' + (FECHAS[d]||'') + (FECHAS[d] && _anio ? '/'+_anio : '');
       const marcar = ()=>{
         botones.forEach((b,i)=>{
           const sel = DIAS[i]===actual();
@@ -324,13 +350,15 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
   modoLbl.textContent = 'Qué copiar';
   body.appendChild(modoLbl);
   const modoRow = mk('div','');
-  modoRow.style.cssText = 'display:flex;gap:8px;margin-bottom:14px;';
+  modoRow.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:14px;';
   const btnTodo = document.createElement('button');
   btnTodo.textContent = 'Todo el equipo';
   const btnCampo = document.createElement('button');
   btnCampo.textContent = 'Solo el campo';
-  [btnTodo, btnCampo].forEach(b=>{
-    b.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:1.5px solid #dfe1e6;background:#fff;color:#1a1d23;font-family:\'Segoe UI\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;';
+  const btnInferiores = document.createElement('button');
+  btnInferiores.textContent = 'Solo cuadros inferiores (lesionados/otros/promocionados)';
+  [btnTodo, btnCampo, btnInferiores].forEach(b=>{
+    b.style.cssText = 'padding:10px;border-radius:10px;border:1.5px solid #dfe1e6;background:#fff;color:#1a1d23;font-family:\'Segoe UI\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;';
   });
   function marcarModo(){
     btnTodo.style.background  = modo==='todo' ? '#2563eb' : '#fff';
@@ -339,11 +367,15 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
     btnCampo.style.background  = modo==='campo' ? '#2563eb' : '#fff';
     btnCampo.style.color       = modo==='campo' ? '#fff' : '#1a1d23';
     btnCampo.style.borderColor = modo==='campo' ? '#2563eb' : '#dfe1e6';
+    btnInferiores.style.background  = modo==='inferiores' ? '#2563eb' : '#fff';
+    btnInferiores.style.color       = modo==='inferiores' ? '#fff' : '#1a1d23';
+    btnInferiores.style.borderColor = modo==='inferiores' ? '#2563eb' : '#dfe1e6';
   }
   btnTodo.onclick = ()=>{ modo='todo'; marcarModo(); };
   btnCampo.onclick = ()=>{ modo='campo'; marcarModo(); };
+  btnInferiores.onclick = ()=>{ modo='inferiores'; marcarModo(); };
   marcarModo();
-  modoRow.appendChild(btnTodo); modoRow.appendChild(btnCampo);
+  modoRow.appendChild(btnTodo); modoRow.appendChild(btnCampo); modoRow.appendChild(btnInferiores);
   body.appendChild(modoRow);
 
   const aviso = mk('div','');
@@ -382,8 +414,10 @@ function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
   const origenData = data[diaOrigen]?.[eq];
   if(!origenData){ toast('❌ No hay datos de '+eq+' en '+diaOrigen); return; }
 
-  // Recopilar TODOS los nombres que vamos a copiar, para limpiarlos antes de otros equipos
-  const zonasACopiar = modo === 'campo' ? ['campo'] : ZONAS.slice();
+  // Qué zonas se copian según el modo elegido
+  const zonasACopiar = modo === 'campo' ? ['campo']
+    : modo === 'inferiores' ? ['lesionados','otros','promovidos_1er','extra']
+    : ZONAS.slice(); // 'todo'
   const nombresACopiar = new Set();
   zonasACopiar.forEach(z=>(origenData[z]||[]).forEach(n=>nombresACopiar.add(n)));
 
@@ -412,6 +446,23 @@ function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
       const p = pos[key(diaOrigen,eq,n)];
       if(p) pos[key(diaDestino,eq,n)] = [...p];
     });
+  } else if(modo === 'inferiores'){
+    // Solo cuadros inferiores: NO se toca campo/disponibles/banquillo del destino —
+    // los que estaban en campo de origen se quedan disponibles en destino, tal cual estén
+    zonasACopiar.forEach(z=>{
+      data[diaDestino][eq][z] = [...(origenData[z]||[])];
+    });
+    if(!promInfo[diaDestino]) promInfo[diaDestino] = {};
+    promInfo[diaDestino][eq] = JSON.parse(JSON.stringify(promInfo[diaOrigen]?.[eq] || {}));
+    // Quitar de Disponibles del destino a quien acabe de entrar en un cuadro inferior
+    // (para no dejarlo duplicado en las dos zonas a la vez)
+    const disp = data[diaDestino][eq].disponibles;
+    if(Array.isArray(disp)){
+      nombresACopiar.forEach(n=>{
+        const i = disp.indexOf(n);
+        if(i>=0) disp.splice(i,1);
+      });
+    }
   } else {
     // Todo el equipo: sustituir TODAS las zonas + posiciones del campo + promociones
     ZONAS.forEach(z=>{
@@ -426,7 +477,8 @@ function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
   }
   autoGuardar();
   render();
-  toast('⧉ '+eq+' copiado de '+diaOrigen+' a '+diaDestino+' ('+(modo==='campo'?'solo campo':'todo')+')');
+  const etiquetaModo = modo==='campo' ? 'solo campo' : (modo==='inferiores' ? 'solo cuadros inferiores' : 'todo');
+  toast('⧉ '+eq+' copiado de '+diaOrigen+' a '+diaDestino+' ('+etiquetaModo+')');
 }
 function abrirDiaAplicaModal(nombre, eqViejo, nuevoEq, onConfirmar, onCancelar){
   const idxHoy = diaHoyIdx();
@@ -452,7 +504,7 @@ function abrirDiaAplicaModal(nombre, eqViejo, nuevoEq, onConfirmar, onCancelar){
   DIAS.forEach((d,i)=>{
     const btn = document.createElement('button');
     const esPasado = i < idxHoy;
-    btn.textContent = (diaAbrev[d]||d) + ' ' + (FECHAS[d]||'');
+    const _fc = (window.FECHAS_COMPLETAS||{})[d]; const _anio = _fc ? _fc.slice(2,4) : ''; btn.textContent = (diaAbrev[d]||d) + ' ' + (FECHAS[d]||'') + (FECHAS[d] && _anio ? '/'+_anio : '');
     btn.disabled = esPasado;
     btn.style.cssText = `padding:8px 4px;border-radius:8px;border:1.5px solid ${i===idxHoy?'#2563eb':'#dfe1e6'};background:${i===idxHoy?'#2563eb':(esPasado?'#f0f4fa':'#fff')};color:${i===idxHoy?'#fff':(esPasado?'#b4b9c4':'#1a1d23')};font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:700;cursor:${esPasado?'not-allowed':'pointer'};`;
     if(!esPasado){
@@ -1147,7 +1199,9 @@ function renderControlDiaBtns(){
   DIAS.forEach(d=>{
     const b = document.createElement('button');
     b.className = 'filtro-eq-btn'+(d===_controlDia?' activo':'');
-    b.textContent = DIA_INICIAL[d] + (FECHAS[d] ? ' ' + FECHAS[d] : '');
+    const _fc = (window.FECHAS_COMPLETAS||{})[d];
+    const _anio = _fc ? _fc.slice(2,4) : new Date().getFullYear().toString().slice(2);
+    b.textContent = DIA_INICIAL[d] + (FECHAS[d] ? ' ' + FECHAS[d] + '/' + _anio : '');
     b.onclick = ()=>{ cambiarControlDia(d); renderControlDiaBtns(); };
     wrap.appendChild(b);
   });
@@ -1332,7 +1386,12 @@ function renderControl(){
           if(estado==='promo' && promInfo[diaC]?.[eq]?.[nombre]){
             const dest=promInfo[diaC][eq][nombre];
             const destCorto = dest==='1ER EQUIPO'?'1ER':(eqsShort[dest]||dest);
-            lbl = `<span class="ctrl-badge ctrl-promo">↑ ${destCorto}</span>`;
+            // 14.2: si es dinámica Youth League (destino JA con YL activa ese día), no
+            // se identifica como "promoción" normal — se marca como YL, aparte
+            const esYL = dest==='JUVENIL A' && typeof esUYL==='function' && esUYL(diaC);
+            lbl = esYL
+              ? `<span class="ctrl-badge ctrl-uyl">⚽ YOUTH LEAGUE</span>`
+              : `<span class="ctrl-badge ctrl-promo">↑ ${destCorto}</span>`;
           }
           tdE.innerHTML = lbl;
         }
@@ -1979,6 +2038,24 @@ function closeAlert(){
 }
 var tT=null;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),2200);}
+// ── Modo oscuro — el botón existía pero no llamaba a nada; se conecta aquí ──
+function toggleDarkMaestro(){
+  const activo = document.body.classList.toggle('dark');
+  try{ localStorage.setItem('rm_dark', activo ? '1' : '0'); }catch(e){}
+  const btn = document.getElementById('darkBtnMaestro');
+  if(btn) btn.textContent = activo ? '☀' : '☾';
+}
+(function aplicarModoOscuroGuardado(){
+  try{
+    if(localStorage.getItem('rm_dark') === '1'){
+      document.body.classList.add('dark');
+      document.addEventListener('DOMContentLoaded', ()=>{
+        const btn = document.getElementById('darkBtnMaestro');
+        if(btn) btn.textContent = '☀';
+      });
+    }
+  }catch(e){}
+})();
 // Intentar cargar guardado previo
 // ── ARRANQUE: cargar sesión principal desde Firebase ──
 // Firebase es la fuente de verdad. localStorage solo como fallback mientras carga.
@@ -2012,6 +2089,7 @@ async function arrancarDesdeFirebase(){
       if(payload.modoDescanso&& typeof payload.modoDescanso==='object')modoDescanso= payload.modoDescanso;
       if(payload.multiEq     && typeof payload.multiEq==='object')     multiEq     = payload.multiEq;
       if(payload.semanasGuardadas && typeof payload.semanasGuardadas==='object') _semanasGuardadas = payload.semanasGuardadas;
+      if(payload.historicoJugador && typeof payload.historicoJugador==='object') historicoJugador = payload.historicoJugador;
       // ── Independencia entre semanas ──
       // 'data' recién restaurado pertenece a la semana 'payload.ultimaSemanaKey' (la última que se guardó).
       // 'FECHAS'/'_semanaKeyActual' ya están forzados a la semana de HOY (más arriba).
@@ -2019,14 +2097,20 @@ async function arrancarDesdeFirebase(){
       if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
         _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
           data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
-          primerEquipoJugadores, notas: window._notasData || {}, origen
+          primerEquipoJugadores, notas: window._notasData || {}, origen, historicoJugador
         }));
         if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
+      }
+      // Comprobación de seguridad (solo aviso, no bloquea nada): si el payload traía sus
+      // propias fechas y no coinciden con las de la semana activa, avisar en consola —
+      // ayuda a detectar antes cualquier futuro problema de semanas cruzadas.
+      if(payload.fechas && typeof payload.fechas === 'object'){
+        const distintas = Object.keys(FECHAS).some(d=>payload.fechas[d] && payload.fechas[d] !== FECHAS[d] && payload.ultimaSemanaKey === _semanaKeyActual);
+        if(distintas) console.warn('[aviso semana] Las fechas guardadas no coinciden con las de la semana activa aunque la clave de semana sí — revisar.');
       }
       // FECHAS no se restaura del guardado: la app siempre abre en la semana actual
       if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
-      if(payload.historicoJugador && typeof payload.historicoJugador==='object') historicoJugador = payload.historicoJugador;
       // Normalizar colNames
       EQUIPOS.forEach(eq=>{
         if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
