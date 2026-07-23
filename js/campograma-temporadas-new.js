@@ -43,8 +43,10 @@ function autoGuardar(){
   _autoSaveTimer=setTimeout(async ()=>{
     const miVersion = _guardadoVersion; // versión en el momento de EMPEZAR a guardar esto
     try{
+      const _saltarFreno = window._saltarFrenoGuardado;
+      window._saltarFrenoGuardado = false; // se consume una sola vez
       // ── FRENO DE EMERGENCIA (memoria local de esta pestaña) ──
-      if(typeof hayQueFrenarGuardado === 'function' && hayQueFrenarGuardado()){
+      if(!_saltarFreno && typeof hayQueFrenarGuardado === 'function' && hayQueFrenarGuardado()){
         if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
         if(!window._frenoYaAvisado){
           window._frenoYaAvisado = true;
@@ -65,7 +67,7 @@ function autoGuardar(){
       // servidor tiene bastantes MÁS jugadores que los que esta pestaña va a guardar,
       // parar y avisar en vez de pisarlos.
       const totalASalvar = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
-      if(typeof window.fbContarJugadoresServidor === 'function' && totalASalvar >= 0){
+      if(!_saltarFreno && typeof window.fbContarJugadoresServidor === 'function' && totalASalvar >= 0){
         const chk = await window.fbContarJugadoresServidor();
         if(chk && chk.ok && chk.total > 5 && totalASalvar < chk.total * 0.5){
           if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
