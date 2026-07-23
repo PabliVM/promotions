@@ -1849,8 +1849,10 @@ async function arrancarDesdeFirebase(){
       // jugadores) pero 'data' SÍ tiene contenido real, reconstruir plantillas/origen
       // escaneando quién aparece en las zonas de cada equipo, y con qué equipo aparece
       // más veces (su equipo real más probable).
-      const _plantillasVacias = EQUIPOS.every(eq => !(plantillas[eq]||[]).length);
-      if(_plantillasVacias){
+      // Reconstruir SIEMPRE que haya jugadores en 'data' que no estén ya en 'plantillas'
+      // en NINGÚN equipo — así no hace falta que TODO esté vacío (si solo metiste un
+      // nombre de prueba en un equipo, el resto se recupera igual).
+      {
         // Prioridad 1: si un jugador aparece en "Promocionados" de un equipo, ESE es su
         // equipo real (solo tu propio equipo te lista ahí cuando estás promocionado a otro
         // sitio) — más fiable que contar dónde aparece más, que daría el equipo DESTINO.
@@ -1875,7 +1877,10 @@ async function arrancarDesdeFirebase(){
             });
           });
         });
-        const _todosNombres = new Set([...Object.keys(_origenReal), ...Object.keys(_conteoPorEquipo)]);
+        const _yaEnPlantilla = new Set();
+        EQUIPOS.forEach(eq=>(plantillas[eq]||[]).forEach(n=>_yaEnPlantilla.add(n)));
+        const _todosNombres = new Set([...Object.keys(_origenReal), ...Object.keys(_conteoPorEquipo)]
+          .filter(n=>!_yaEnPlantilla.has(n)));
         _todosNombres.forEach(nombre=>{
           let mejorEq = _origenReal[nombre] || null;
           if(!mejorEq){
