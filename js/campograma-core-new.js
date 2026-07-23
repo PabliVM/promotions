@@ -1797,6 +1797,13 @@ async function arrancarDesdeFirebase(){
     }
     // 1. Cargar sesión principal
     const res = await window.fbCargarSesion('principal');
+    console.log('[diag] res.ok:', res.ok);
+    console.log('[diag] res.data existe:', !!res.data);
+    console.log('[diag] res.data.plantillas:', res.data && res.data.plantillas);
+    console.log('[diag] res.data.data existe:', !!(res.data && res.data.data));
+    if(res.data && res.data.data){
+      console.log('[diag] res.data.data MARTES CASTILLA campo:', res.data.data['MARTES']?.['CASTILLA']?.campo);
+    }
     if(res.ok && res.data && res.data.plantillas){
       const payload = res.data;
       // Aplicar payload de Firebase (misma lógica que fbCargar pero silenciosa)
