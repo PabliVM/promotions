@@ -2115,6 +2115,17 @@ async function arrancarDesdeFirebase(){
       // (backfill: solo la primera vez que se detecta cada jugador en cada día;
       // los días que YA tengan foto no se tocan, quedan tal y como estaban)
       DIAS.forEach(d=>asegurarHistoricoJugador(d));
+      // Limpieza puntual: 'origen' de un jugador que ya no está en la plantilla del
+      // equipo al que apunta (por ejemplo, se le borró de esa plantilla antes de que
+      // existiera la corrección de plantEliminar) — corregir apuntando a donde SÍ esté,
+      // o borrar origen si ya no está en ninguna plantilla.
+      Object.keys(origen).forEach(nombre=>{
+        const eqApuntado = origen[nombre];
+        if(eqApuntado && (plantillas[eqApuntado]||[]).includes(nombre)) return; // correcto, no tocar
+        const otroEqConEl = EQUIPOS.find(e=>(plantillas[e]||[]).includes(nombre));
+        if(otroEqConEl) origen[nombre] = otroEqConEl;
+        else delete origen[nombre];
+      });
       initTiposConfig();
       _fbSesionActiva = 'principal';
       // Guardar en local como caché
