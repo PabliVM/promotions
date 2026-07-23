@@ -55,6 +55,7 @@ function autoGuardar(){
             ()=>{
               window._frenoYaAvisado = false;
               fijarTotalJugadoresConocido(); // aceptar el nuevo estado como bueno
+              window._saltarFrenoGuardado = true; // el reintento SÍ debe guardar de verdad
               autoGuardar(); // reintentar ya sin freno
             },
             'Guardar igualmente'
@@ -78,6 +79,7 @@ function autoGuardar(){
               ()=>{
                 window._frenoYaAvisado = false;
                 fijarTotalJugadoresConocido();
+                window._saltarFrenoGuardado = true; // el reintento SÍ debe guardar de verdad
                 autoGuardar();
               },
               'Guardar igualmente'
