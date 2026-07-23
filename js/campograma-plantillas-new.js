@@ -426,8 +426,14 @@ function plantEliminar(nombre){
   const idx = plantillas[plantEqActivo].indexOf(nombre);
   if(idx<0) return;
   plantillas[plantEqActivo].splice(idx,1);
-  // Quitar de origen si era de este equipo
-  if(origen[nombre]===plantEqActivo) delete origen[nombre];
+  // Corregir 'origen': si apuntaba a este equipo, buscar si el jugador SIGUE en otra
+  // plantilla (estaba metido en 2 a la vez, un caso raro pero posible) y apuntar ahí;
+  // si no está en ninguna otra, limpiar origen del todo.
+  if(origen[nombre]===plantEqActivo || !EQUIPOS.some(e=>(plantillas[e]||[]).includes(nombre) && origen[nombre]===e)){
+    const otroEqConEl = EQUIPOS.find(e=>e!==plantEqActivo && (plantillas[e]||[]).includes(nombre));
+    if(otroEqConEl) origen[nombre] = otroEqConEl;
+    else delete origen[nombre];
+  }
   // Quitar de porteros si lo era (local y Firebase)
   const pIdx = porteros.indexOf(nombre);
   if(pIdx >= 0){
