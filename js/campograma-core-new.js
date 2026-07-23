@@ -2055,6 +2055,28 @@ async function arrancarDesdeFirebase(){
           });
         });
       });
+      // Limpieza de "huérfanos": jugadores que aparecen en Disponibles/Campo/Banquillo de
+      // un equipo sin ser de ese equipo NI estar prestados ahí de verdad (con un registro
+      // real en promInfo) — sobras de reconstrucciones o borrados de antes de este arreglo.
+      DIAS.forEach(d=>{
+        EQUIPOS.forEach(eq=>{
+          ['disponibles','campo','banquillo'].forEach(z=>{
+            const arr = data[d]?.[eq]?.[z];
+            if(!Array.isArray(arr)) return;
+            for(let i=arr.length-1; i>=0; i--){
+              const nombre = arr[i];
+              const esPropio = origen[nombre] === eq;
+              const estaPrestadoDeVerdad = EQUIPOS.some(otroEq=>
+                otroEq!==eq && getDestinos(d, otroEq, nombre).includes(eq)
+              );
+              if(!esPropio && !estaPrestadoDeVerdad){
+                arr.splice(i,1);
+                if(z==='campo') delete pos[key(d,eq,nombre)];
+              }
+            }
+          });
+        });
+      });
       // Rellenar la foto histórica de días ya existentes que aún no la tengan
       // (backfill: solo la primera vez que se detecta cada jugador en cada día;
       // los días que YA tengan foto no se tocan, quedan tal y como estaban)
