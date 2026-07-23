@@ -2042,62 +2042,6 @@ async function arrancarDesdeFirebase(){
         for(const z of ZONAS) if(!data[d][e][z]) data[d][e][z]=[];
       }
       DIAS.forEach(d=>{if(!promInfo[d])promInfo[d]={};EQUIPOS.forEach(eq=>{if(!promInfo[d][eq])promInfo[d][eq]={};});});
-      // RECUPERACIÓN DE EMERGENCIA: si 'plantillas' viene vacía (todos los equipos sin
-      // jugadores) pero 'data' SÍ tiene contenido real, reconstruir plantillas/origen
-      // escaneando quién aparece en las zonas de cada equipo, y con qué equipo aparece
-      // más veces (su equipo real más probable).
-      // Reconstruir SIEMPRE que haya jugadores en 'data' que no estén ya en 'plantillas'
-      // en NINGÚN equipo — así no hace falta que TODO esté vacío (si solo metiste un
-      // nombre de prueba en un equipo, el resto se recupera igual).
-      {
-        // Prioridad 1: si un jugador aparece en "Promocionados" de un equipo, ESE es su
-        // equipo real (solo tu propio equipo te lista ahí cuando estás promocionado a otro
-        // sitio) — más fiable que contar dónde aparece más, que daría el equipo DESTINO.
-        const _origenReal = {}; // nombre -> equipo real (por promovidos_1er)
-        DIAS.forEach(d=>{
-          EQUIPOS.forEach(eq=>{
-            (data[d]?.[eq]?.promovidos_1er||[]).forEach(nombre=>{
-              if(!_origenReal[nombre]) _origenReal[nombre] = eq;
-            });
-          });
-        });
-        // Prioridad 2: para el resto (sin evidencia de promoción), contar en qué equipo
-        // aparece más veces en sus zonas normales — su equipo real más probable.
-        const _conteoPorEquipo = {}; // nombre -> {eq: nºapariciones}
-        DIAS.forEach(d=>{
-          EQUIPOS.forEach(eq=>{
-            ['disponibles','campo','banquillo','lesionados','otros'].forEach(z=>{
-              (data[d]?.[eq]?.[z]||[]).forEach(nombre=>{
-                if(!_conteoPorEquipo[nombre]) _conteoPorEquipo[nombre] = {};
-                _conteoPorEquipo[nombre][eq] = (_conteoPorEquipo[nombre][eq]||0) + 1;
-              });
-            });
-          });
-        });
-        const _yaEnPlantilla = new Set();
-        EQUIPOS.forEach(eq=>(plantillas[eq]||[]).forEach(n=>_yaEnPlantilla.add(n)));
-        const _todosNombres = new Set([...Object.keys(_origenReal), ...Object.keys(_conteoPorEquipo)]
-          .filter(n=>!_yaEnPlantilla.has(n)));
-        _todosNombres.forEach(nombre=>{
-          let mejorEq = _origenReal[nombre] || null;
-          if(!mejorEq){
-            let mejorCount = -1;
-            Object.entries(_conteoPorEquipo[nombre]||{}).forEach(([eq,c])=>{
-              if(c > mejorCount){ mejorCount = c; mejorEq = eq; }
-            });
-          }
-          if(mejorEq){
-            if(!plantillas[mejorEq]) plantillas[mejorEq] = [];
-            if(!plantillas[mejorEq].includes(nombre)) plantillas[mejorEq].push(nombre);
-            if(!origen[nombre]) origen[nombre] = mejorEq;
-          }
-        });
-        const _numRecuperados = _todosNombres.size;
-        if(_numRecuperados > 0){
-          toast('🧩 Recuperados '+_numRecuperados+' jugadores en plantillas desde el campograma');
-          console.log('[recuperación] plantillas reconstruidas desde data:', _numRecuperados, 'jugadores');
-        }
-      }
       // Sincronizar plantillas → disponibles (solo HOY en adelante, nunca días pasados —
       // si no, un fichaje nuevo aparecería retroactivamente en días anteriores a su alta)
       const _idxHoyBoot = diaHoyIdx();
