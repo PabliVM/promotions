@@ -129,6 +129,21 @@ try {
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
     }
   };
+  // Lectura rápida SOLO para comparar cuántos jugadores hay ahora mismo en el servidor,
+  // justo antes de guardar — así se detecta si OTRA pestaña/dispositivo tiene datos más
+  // completos que los que esta pestaña está a punto de guardar (y evitar pisarlos).
+  window.fbContarJugadoresServidor = async function(){
+    try{
+      const snap = await db.collection('sesiones').doc('principal').get();
+      if(!snap.exists) return { ok:true, total: 0 };
+      const plantillasSrv = snap.data().plantillas || {};
+      const total = Object.values(plantillasSrv).reduce((acc,arr)=>acc+(Array.isArray(arr)?arr.length:0), 0);
+      return { ok:true, total };
+    }catch(e){
+      console.error('fbContarJugadoresServidor error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
   // Copia de seguridad DIARIA automática — independiente del guardado normal, en una
   // colección aparte ('backups'). Si algo rompe la sesión principal, aquí queda un
   // punto de recuperación de cada día. Se sobreescribe si se llama varias veces el
@@ -222,6 +237,7 @@ try {
   window.fbCargarSesion = _fbStub(MSG);
   window.fbListarSesiones = _fbStub(MSG);
   window.fbEliminarSesion = _fbStub(MSG);
+  window.fbContarJugadoresServidor = _fbStub(MSG);
   window.fbGuardarBackupDiario = _fbStub(MSG);
   window.fbListarBackups = _fbStub(MSG);
   window.fbCargarBackup = _fbStub(MSG);
