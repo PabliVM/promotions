@@ -81,11 +81,21 @@ try {
     }
   };
   // Cargar sesión desde Firebase
-  // (Revertido: ya no se usa el guardado dividido por equipo — ignorar cualquier campo
-  // 'data_por_eq'/'prominfo_por_eq' residual que hubiera quedado guardado antes; usar
-  // siempre los campos normales 'data'/'promInfo' del documento.)
+  // Puede haber quedado un residuo del guardado dividido por equipo (data_por_eq /
+  // prominfo_por_eq) de una versión anterior que luego se revirtió. Si existe y tiene
+  // contenido, hay que RECONSTRUIR 'data'/'promInfo' a partir de ahí — es la copia real
+  // y más reciente de los datos; el campo plano 'data' puede haber quedado vacío/desfasado.
   function _reconstruirDesdePorEq(raw){
-    return raw;
+    const out = { ...raw };
+    if(raw.data_por_eq && typeof raw.data_por_eq === 'object' && Object.keys(raw.data_por_eq).length){
+      out.data = raw.data_por_eq;
+      delete out.data_por_eq;
+    }
+    if(raw.prominfo_por_eq && typeof raw.prominfo_por_eq === 'object' && Object.keys(raw.prominfo_por_eq).length){
+      out.promInfo = raw.prominfo_por_eq;
+      delete out.prominfo_por_eq;
+    }
+    return out;
   }
   window.fbCargarSesion = async function(nombre){
     try{
