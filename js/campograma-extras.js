@@ -78,17 +78,30 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   #filtro-dias-row, #filtro-eqs-row, .filtros-sep { flex-shrink: 0; }
   /* Nombres de jugador más pequeños en móvil */
   .chip { font-size: 7px !important; padding: 1px 2px !important; }
-  .pof .chip { font-size: 5.5px !important; padding: 1px 2px !important; letter-spacing: -.2px !important; line-height: 1.1 !important; }
-  .pof { width: 15% !important; }
+  /* Cabecera de cada card: compactar botones para que quepan TODOS en una sola línea */
+  .card-hdr { padding: 6px 8px !important; }
+  .card-hdr-right { gap: 2px !important; flex-wrap: nowrap !important; }
+  .card-hdr-right .modo-btn { font-size: 7px !important; padding: 2px 4px !important; }
+  .card-hdr-right .reset-btn { font-size: 10px !important; padding: 1px 4px !important; }
+  .card-hdr-right .snap-btn { padding: 1px 3px !important; font-size: 10px !important; }
+  .card-hdr-name { font-size: 11px !important; }
+  .pof .chip { font-size: 7px !important; padding: 1px 2px !important; letter-spacing: normal !important; line-height: 1.1 !important; }
+  .pof { width: 22% !important; }
   .chip.chip-2l { font-size: 9px !important; }
 }
 
 /* Checkbox portero */
-.plant-portero-chk { display: flex; align-items: center; gap: 3px; flex-shrink: 0; cursor: pointer; padding: 2px 6px; border-radius: 10px; background: #f0f4fa; border: 1px solid #e8eef8; }
-.plant-portero-chk input[type="checkbox"] { accent-color: #2563eb; cursor: pointer; width: 13px; height: 13px; }
-.plant-portero-chk span { font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 9px; font-weight: 700; color: #5a6170; letter-spacing: .3px; }
+.plant-portero-chk { display: flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer; padding: 4px 8px; border-radius: 10px; background: #f0f4fa; border: 1px solid #e8eef8; }
+.plant-portero-chk input[type="checkbox"] { accent-color: #2563eb; cursor: pointer; width: 15px; height: 15px; }
+.plant-portero-chk span { font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 11px; font-weight: 700; color: #5a6170; letter-spacing: .3px; }
 .plant-portero-chk:has(input:checked) { background: rgba(37,99,235,.1); border-color: #2563eb; }
 .plant-portero-chk:has(input:checked) span { color: #2563eb; }
+.plant-portero-tag {
+  font-family: 'Segoe UI',-apple-system,sans-serif;
+  font-size: 10px; font-weight: 700; color: #2563eb;
+  background: rgba(37,99,235,.1); border: 1px solid rgba(37,99,235,.25);
+  border-radius: 10px; padding: 2px 7px; flex-shrink: 0;
+}
 
 /* Edición listado */
 .card-lista-edit-btn { background: none; border: none; cursor: pointer; font-size: 13px; opacity: .8; padding: 4px 6px; flex-shrink: 0; }
@@ -117,6 +130,7 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 .ctrl-lesion{ background: #fee2e2; color: #dc2626; }
 .ctrl-promo { background: #ede9fe; color: #7c3aed; }
 .ctrl-otros { background: #f1f5f9; color: #64748b; }
+.ctrl-descansa { background: #dbeafe; color: #2563eb; }
 .ctrl-multi { background: #fee2e2; color: #dc2626; }
 .td-jugador { font-size: 11px; font-weight: 600; padding: 5px 8px !important; }
 .td-estado-cel { padding: 4px 6px !important; text-align: center; }
@@ -147,12 +161,12 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 /* Selector cambiar equipo en Plantillas */
 .plant-eq-sel {
   font-family: 'Segoe UI',-apple-system,sans-serif;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: #5a6170;
   border: 1px solid #dfe1e6;
   border-radius: 6px;
-  padding: 3px 4px;
+  padding: 4px 6px;
   background: #f8fafd;
   cursor: pointer;
   flex-shrink: 0;
@@ -178,4 +192,60 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── FIX DEFINITIVO: fichas del campo en móvil, igual tamaño que Disponibles ── */
+@media (max-width: 640px) {
+  #grid.cards-grid .semana-td-card .campo-wrap .pof .chip,
+  #grid .cards-grid.view-semana .pof .chip,
+  #grid .pof .chip {
+    font-size: 7px !important;
+    padding: 1px 2px !important;
+    line-height: 1.1 !important;
+    letter-spacing: normal !important;
+  }
+}
+
+/* ── FIX DEFINITIVO: botón de reset visible, mismo estilo que DESCANSA/ENTRENO ── */
+.card-hdr .card-hdr-right .reset-btn,
+.reset-btn {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-width: 22px !important;
+  min-height: 20px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #fff !important;
+  color: #5a6170 !important;
+  border: 1.5px solid #dfe1e6 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  padding: 3px 8px !important;
+  border-radius: 20px !important;
+}
+.reset-btn:hover {
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+}
+
+/* Desactivar el ajuste automático de scroll del navegador mientras se reconstruye
+   el grid (destruir+reconstruir con innerHTML='' puede hacer que el navegador intente
+   "ayudar" moviendo el scroll solo, chocando con nuestra propia corrección manual) */
+#grid,
+.cards-grid,
+.semana-tr-eq {
+  overflow-anchor: none;
+}
+
+/* Ficha "armada" para mover tras elegir Mover/Meter en campo — el siguiente toque
+   desbloquea el arrastre libre */
+.chip-armado-mover {
+  outline: 3px solid #2563eb !important;
+  outline-offset: 2px;
+  animation: chipArmadoPulso 1s ease-in-out infinite;
+}
+@keyframes chipArmadoPulso {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,.5); }
+  50% { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
 }
