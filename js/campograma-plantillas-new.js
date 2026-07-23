@@ -480,7 +480,11 @@ function borrarTodosLosJugadores(){
       multiEq = {};
       movimientos = {};
       data = JSON.parse(JSON.stringify(RAW));
+      // Este vaciado es INTENCIONAL y ya se ha confirmado arriba — saltarse el freno de
+      // emergencia (que si no, bloquearía el guardado al ver "muchos menos jugadores de golpe")
+      window._saltarFrenoGuardado = true;
       autoGuardar();
+      if(typeof fijarTotalJugadoresConocido === 'function') fijarTotalJugadoresConocido();
       renderPlantTabs();
       renderPlantBody();
       render();
