@@ -149,6 +149,17 @@ function asegurarHistoricoJugador(diaP){
   if(!diaP || !data[diaP]) return;
   if(!historicoJugador[diaP]) historicoJugador[diaP] = {};
   const registro = historicoJugador[diaP];
+  // Salida rápida: si TODOS los jugadores presentes ese día ya tienen foto, no hace
+  // falta recalcular nada (evita repetir un cálculo caro en cada acción/render).
+  let hayAlguienSinFoto = false;
+  EQUIPOS.forEach(eq=>{
+    if(hayAlguienSinFoto) return;
+    ZONAS.forEach(z=>{
+      if(hayAlguienSinFoto) return;
+      if((data[diaP][eq]?.[z]||[]).some(n=>!registro[n])) hayAlguienSinFoto = true;
+    });
+  });
+  if(!hayAlguienSinFoto && (primerEquipoJugadores[diaP]||[]).every(n=>registro[n])) return;
   // Recopilar evidencia de promociones de ESE día usando promInfo (que sobrevive a
   // cambios de equipo posteriores) — más fiable que el equipo actual del jugador.
   // promEvidencia[nombre] = { origenReal, destino }
