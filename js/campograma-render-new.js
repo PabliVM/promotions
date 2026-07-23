@@ -602,14 +602,21 @@ function renderCards(){
     initDrag();
     // Vigilar CUALQUIER cambio posterior (igualarZonasSemana, etc.) y corregir el
     // scroll cada vez, venga la causa de donde venga (más fiable que temporizadores).
+    // Los avisos se agrupan (debounce) para no disparar la corrección decenas de veces
+    // seguidas durante la reconstrucción inicial del grid, que ralentizaría la carga.
+    let _obsDebounce = null;
+    const _restaurarAgrupado = ()=>{
+      clearTimeout(_obsDebounce);
+      _obsDebounce = setTimeout(restaurarPosicion, 50);
+    };
     if(window.ResizeObserver){
-      const ro = new ResizeObserver(()=>{ restaurarPosicion(); });
+      const ro = new ResizeObserver(_restaurarAgrupado);
       ro.observe(grid);
       setTimeout(()=>ro.disconnect(), 1000);
     }
     if(window.MutationObserver){
-      const mo = new MutationObserver(()=>{ restaurarPosicion(); });
-      mo.observe(grid, { childList:true, subtree:true, attributes:true });
+      const mo = new MutationObserver(_restaurarAgrupado);
+      mo.observe(grid, { childList:true, attributes:true }); // sin subtree: mucho más barato
       setTimeout(()=>mo.disconnect(), 1000);
     }
     requestAnimationFrame(() => {
