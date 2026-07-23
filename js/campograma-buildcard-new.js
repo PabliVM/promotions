@@ -222,6 +222,13 @@ function buildCard(eq){
   const _diaAlinear = dia;
   alinearBtn.onclick=(e)=>{ e.stopPropagation(); autoAlinear(eq, _diaAlinear); };
   right.appendChild(alinearBtn);
+  // Botón copiar este equipo de un día a otro
+  const copiarDiaBtn=mk('button','snap-btn');
+  copiarDiaBtn.innerHTML='⧉';
+  copiarDiaBtn.title='Copiar este equipo a otro día';
+  const _diaCopiar = dia;
+  copiarDiaBtn.onclick=(e)=>{ e.stopPropagation(); abrirCopiarDiaModal(eq, _diaCopiar); };
+  right.appendChild(copiarDiaBtn);
   const listaBtn=mk('button','snap-btn');
   listaBtn.textContent='📋';
   listaBtn.title='Foto de la lista de jugadores';
