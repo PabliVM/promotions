@@ -86,9 +86,6 @@ try {
   // contenido, hay que RECONSTRUIR 'data'/'promInfo' a partir de ahí — es la copia real
   // y más reciente de los datos; el campo plano 'data' puede haber quedado vacío/desfasado.
   function _reconstruirDesdePorEq(raw){
-    console.log('[diag2] tiene data_por_eq:', !!raw.data_por_eq);
-    if(raw.data_por_eq) console.log('[diag2] claves de data_por_eq:', Object.keys(raw.data_por_eq));
-    if(raw.data_por_eq?.MARTES?.CASTILLA) console.log('[diag2] data_por_eq.MARTES.CASTILLA:', raw.data_por_eq.MARTES.CASTILLA);
     const out = { ...raw };
     if(raw.data_por_eq && typeof raw.data_por_eq === 'object' && Object.keys(raw.data_por_eq).length){
       out.data = raw.data_por_eq;
@@ -129,6 +126,46 @@ try {
       return { ok:true };
     }catch(e){
       console.error('fbEliminarSesion error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
+  // Copia de seguridad DIARIA automática — independiente del guardado normal, en una
+  // colección aparte ('backups'). Si algo rompe la sesión principal, aquí queda un
+  // punto de recuperación de cada día. Se sobreescribe si se llama varias veces el
+  // mismo día (no crece sin límite), pero los días anteriores NUNCA se tocan.
+  window.fbGuardarBackupDiario = async function(payload){
+    try{
+      const hoy = new Date().toISOString().slice(0,10); // 'YYYY-MM-DD'
+      const clean = JSON.parse(JSON.stringify(payload));
+      await db.collection('backups').doc(hoy).set({
+        ...clean,
+        _fecha: hoy,
+        _ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return { ok:true };
+    }catch(e){
+      console.error('fbGuardarBackupDiario error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
+  // Listar backups disponibles (para poder restaurar uno concreto si hace falta)
+  window.fbListarBackups = async function(){
+    try{
+      const snap = await db.collection('backups').orderBy('_fecha','desc').limit(30).get();
+      return { ok:true, data: snap.docs.map(d=>d.id) };
+    }catch(e){
+      console.error('fbListarBackups error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e), data:[] };
+    }
+  };
+  // Cargar un backup concreto por fecha ('YYYY-MM-DD')
+  window.fbCargarBackup = async function(fecha){
+    try{
+      const snap = await db.collection('backups').doc(fecha).get();
+      if(!snap.exists) return { ok:false, reason:'not_found', message:'No hay backup de ese día.' };
+      return { ok:true, data: snap.data() };
+    }catch(e){
+      console.error('fbCargarBackup error:', e);
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
     }
   };
@@ -185,6 +222,9 @@ try {
   window.fbCargarSesion = _fbStub(MSG);
   window.fbListarSesiones = _fbStub(MSG);
   window.fbEliminarSesion = _fbStub(MSG);
+  window.fbGuardarBackupDiario = _fbStub(MSG);
+  window.fbListarBackups = _fbStub(MSG);
+  window.fbCargarBackup = _fbStub(MSG);
   window.fbEscucharSesion = function(){ return function(){}; }; // no-op: devuelve un "cancelar" vacío
   window.fbTogglePortero = _fbStub(MSG);
   window.fbSetPorterosCompleto = _fbStub(MSG);
