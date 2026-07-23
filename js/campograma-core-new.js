@@ -1866,7 +1866,7 @@ async function arrancarDesdeFirebase(){
       _fbSesionActiva = 'principal';
       // Guardar en local como caché
       // localStorage desactivado
-      render(); renderDias(); renderEqs(); renderCards(); renderMultiEqBar();
+      render(); renderMultiEqBar();
       console.log('✅ Sesión principal cargada desde Firebase');
     } else {
       // No existe sesión principal todavía — crearla con los datos actuales
