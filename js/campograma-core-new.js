@@ -439,6 +439,7 @@ function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
   });
 
   if(!data[diaDestino][eq]) data[diaDestino][eq] = {};
+  ZONAS.forEach(z=>{ if(!data[diaDestino][eq][z]) data[diaDestino][eq][z] = []; });
   if(modo === 'campo'){
     // Solo el campo: sustituir el campo destino por el de origen, con sus posiciones
     data[diaDestino][eq].campo = [...(origenData.campo||[])];
