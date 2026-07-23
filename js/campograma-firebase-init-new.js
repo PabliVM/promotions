@@ -86,10 +86,11 @@ try {
     });
     return mapa;
   }
-  function _aplicarFechaAClaves(payload){
-    if(!payload.fechas) return payload;
-    const mapa = _mapaDiaConFecha(payload.fechas);
-    const out = { ...payload };
+  // Aplica el sellado de fecha (día->clave con fecha) a un objeto "tipo snapshot de
+  // semana" (data/promInfo/historicoJugador/... + pos), usando el mapa de fechas dado.
+  // Reutilizable tanto para la semana activa como para cada semana archivada.
+  function _sellarSnapshot(obj, mapa){
+    const out = { ...obj };
     _CAMPOS_POR_DIA.forEach(campo=>{
       if(!out[campo] || typeof out[campo] !== 'object') return;
       const nuevo = {};
@@ -98,7 +99,6 @@ try {
       });
       out[campo] = nuevo;
     });
-    // 'pos' usa claves tipo "dia|eq|nombre" (string plano, no anidado)
     if(out.pos && typeof out.pos === 'object'){
       const nuevoPos = {};
       Object.keys(out.pos).forEach(k=>{
@@ -113,13 +113,30 @@ try {
     }
     return out;
   }
-  function _quitarFechaDeClaves(raw){
-    const out = { ...raw };
+  function _aplicarFechaAClaves(payload){
+    if(!payload.fechas) return payload;
+    const mapa = _mapaDiaConFecha(payload.fechas);
+    let out = _sellarSnapshot(payload, mapa);
+    // Semanas archivadas: cada una tiene sus propias fechas reales (distintas de la
+    // semana activa) — se calculan a partir de su propia clave (el lunes de esa semana)
+    // usando fechaCompletaDeDia(), y se sella cada una con SU mapa correspondiente.
+    if(out.semanasGuardadas && typeof out.semanasGuardadas === 'object' && typeof fechaCompletaDeDia === 'function'){
+      const nuevasSemanas = {};
+      Object.keys(out.semanasGuardadas).forEach(weekKey=>{
+        const mapaSemana = {};
+        DIAS.forEach(dia=>{ mapaSemana[dia] = fechaCompletaDeDia(dia, weekKey)+'_'+dia; });
+        nuevasSemanas[weekKey] = _sellarSnapshot(out.semanasGuardadas[weekKey], mapaSemana);
+      });
+      out.semanasGuardadas = nuevasSemanas;
+    }
+    return out;
+  }
+  function _desellarSnapshot(obj){
+    const out = { ...obj };
     _CAMPOS_POR_DIA.forEach(campo=>{
       if(!out[campo] || typeof out[campo] !== 'object') return;
       const nuevo = {};
       Object.keys(out[campo]).forEach(k=>{
-        // Claves con fecha tienen forma "AAAA-MM-DD_DIA" — quedarnos con lo de después del "_"
         const idx = k.indexOf('_');
         const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx))) ? k.slice(idx+1) : k;
         nuevo[diaLimpio] = out[campo][k];
@@ -139,6 +156,17 @@ try {
         }
       });
       out.pos = nuevoPos;
+    }
+    return out;
+  }
+  function _quitarFechaDeClaves(raw){
+    let out = _desellarSnapshot(raw);
+    if(out.semanasGuardadas && typeof out.semanasGuardadas === 'object'){
+      const nuevasSemanas = {};
+      Object.keys(out.semanasGuardadas).forEach(weekKey=>{
+        nuevasSemanas[weekKey] = _desellarSnapshot(out.semanasGuardadas[weekKey]);
+      });
+      out.semanasGuardadas = nuevasSemanas;
     }
     return out;
   }
@@ -250,6 +278,32 @@ try {
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e), data:[] };
     }
   };
+  // ── Temporadas: guardar/cargar la lista completa (nombre, activa, payload de cada una) ──
+  window.fbGuardarTemporadas = async function(temporadasArr, temporadaActualId){
+    try{
+      const clean = JSON.parse(JSON.stringify(temporadasArr));
+      await db.collection('config').doc('temporadas').set({
+        temporadas: clean,
+        temporadaActual: temporadaActualId,
+        _ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return { ok:true };
+    }catch(e){
+      console.error('fbGuardarTemporadas error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
+  window.fbCargarTemporadas = async function(){
+    try{
+      const snap = await db.collection('config').doc('temporadas').get();
+      if(!snap.exists) return { ok:true, temporadas: [], temporadaActual: null };
+      const d = snap.data();
+      return { ok:true, temporadas: d.temporadas||[], temporadaActual: d.temporadaActual||null };
+    }catch(e){
+      console.error('fbCargarTemporadas error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e), temporadas:[], temporadaActual:null };
+    }
+  };
   // Cargar un backup concreto por fecha ('YYYY-MM-DD')
   window.fbCargarBackup = async function(fecha){
     try{
@@ -317,6 +371,8 @@ try {
   window.fbContarJugadoresServidor = _fbStub(MSG);
   window.fbGuardarBackupDiario = _fbStub(MSG);
   window.fbListarBackups = _fbStub(MSG);
+  window.fbGuardarTemporadas = _fbStub(MSG);
+  window.fbCargarTemporadas = async function(){ return { ok:false, temporadas:[], temporadaActual:null, message:MSG }; };
   window.fbCargarBackup = _fbStub(MSG);
   window.fbEscucharSesion = function(){ return function(){}; }; // no-op: devuelve un "cancelar" vacío
   window.fbTogglePortero = _fbStub(MSG);
