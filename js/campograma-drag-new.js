@@ -57,6 +57,14 @@ function devolverADisponibles(nombre, eq, zona, diaP){
   }
 }
 // dispararDobleTap recibe strings (no elemento DOM) — seguro tras re-render
+// "Arma" un chip para que el PRÓXIMO toque sobre él desbloquee el arrastre libre
+// (en vez de colocarlo automáticamente en un sitio fijo) — pensado para móvil, donde
+// un toque normal no debe iniciar arrastre (para no chocar con el scroll).
+function armarModoMover(nombre, eq, zona){
+  _modoMoverArmado = nombre+'|'+eq+'|'+zona;
+  render();
+  toast('👆 Toca a '+nombre+' otra vez para arrastrarlo por el campo');
+}
 function dispararDobleTap(nombre, eq, zona, diaP){
   diaP = diaP || dia;
   const eqPropio = origen[nombre] || eq;
@@ -143,10 +151,11 @@ function dispararDobleTap(nombre, eq, zona, diaP){
     });
   };
   if(esPrimario){
-    // Desde disponibles de su propio equipo solo se puede duplicar, no eliminar
-    showAlert(msg, onDuplicar, 'Duplicar');
+    // Desde disponibles de su propio equipo: Duplicar o Meter en campo (armado, sin arrastrar aún)
+    showAlert(msg, onDuplicar, 'Duplicar', ()=>armarModoMover(nombre, eq, zona), 'Meter en campo');
   } else {
-    showAlert(msg, onEliminar, 'Eliminar', onDuplicar, 'Duplicar');
+    const onMover = ()=>armarModoMover(nombre, eq, zona);
+    showAlert(msg, onEliminar, 'Eliminar', onDuplicar, 'Duplicar', onMover, 'Mover');
   }
 }
 // Alias por compatibilidad (ya no se usa pero por si acaso)
@@ -179,6 +188,7 @@ function equalizarCards(){
     campos.forEach(c=>{ c.style.height = maxOff+'px'; });
   }
 }
+var _modoMoverArmado = null; // clave nombre|eq|zona del jugador "armado" para mover tras elegir Mover/Meter en campo
 function initDrag(){
   initSeleccionCampo();
   document.querySelectorAll('.cf,.cz').forEach(c=>{
@@ -191,22 +201,32 @@ function initDrag(){
     // Touch: doble tap por clave nombre+eq+zona (no por referencia DOM)
     const _tapKey = nombre+'|'+eq+'|'+zona;
     c.addEventListener('touchstart', e=>{
-      e.preventDefault();
+      // Si este chip fue "armado" para mover (tras elegir Mover/Meter en campo en el
+      // menú), este toque desbloquea el arrastre libre AL INSTANTE — sin esperar a
+      // doble tap ni a los 200ms normales.
+      if(_modoMoverArmado === _tapKey){
+        e.preventDefault();
+        _modoMoverArmado = null;
+        c.classList.remove('chip-armado-mover');
+        const ev = e.touches[0];
+        startChip(c, {clientX: ev.clientX, clientY: ev.clientY});
+        return;
+      }
+      // Toque normal: NO bloquear el scroll y NO armar ningún arrastre — solo detectar
+      // si es un DOBLE toque (para abrir el menú). Un solo toque no hace nada especial,
+      // así el scroll de la página funciona con normalidad encima de las fichas.
       const ev = e.touches[0];
       const now = Date.now();
       const last = _globalLastClick.get(_tapKey) || 0;
       if(now - last < 400){
-        clearTimeout(_dragDelay.get(c));
+        e.preventDefault();
         _globalLastClick.set(_tapKey, 0);
         dispararDobleTap(nombre, eq, zona, diaChip);
         return;
       }
       _globalLastClick.set(_tapKey, now);
-      const saved = {clientX: ev.clientX, clientY: ev.clientY};
-      const t = setTimeout(()=>{ startChip(c, saved); }, 200);
-      _dragDelay.set(c, t);
     },{passive:false});
-    // Mouse
+    // Mouse (escritorio: sin conflicto de scroll, mantiene el comportamiento de siempre)
     c.addEventListener('mousedown', e=>{
       if(e.button) return;
       e.preventDefault();
@@ -230,6 +250,8 @@ function initDrag(){
       _globalLastClick.set(_tapKey, 0);
       dispararDobleTap(nombre, eq, zona, diaChip);
     });
+    // Si este chip está "armado" para mover, resaltarlo visualmente
+    if(_modoMoverArmado === _tapKey) c.classList.add('chip-armado-mover');
   });
 }
 function startChip(c,ev){
