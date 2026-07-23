@@ -65,10 +65,87 @@ try {
     if(!e) return 'Error desconocido';
     return e.message || String(e);
   }
+  // ── Días CON fecha real para guardar en Firebase ──
+  // Por dentro, la app usa siempre "LUNES"/"MARTES"... (sin tocar nada de eso). Pero al
+  // guardar en Firebase, las claves de día pasan a incluir la fecha real (ej.
+  // "2026-07-21_MARTES"), para que se pueda identificar la semana con solo mirar
+  // Firestore. Al cargar, se revierte automáticamente — invisible para el resto del código.
+  const _CAMPOS_POR_DIA = ['data','promInfo','historicoJugador','modoPartido','modoDescanso','tipoPartido','primerEquipoJugadores'];
+  function _mapaDiaConFecha(fechas){
+    const anio = new Date().getFullYear();
+    const mapa = {};
+    Object.keys(fechas||{}).forEach(dia=>{
+      const partes = String(fechas[dia]||'').split('/');
+      if(partes.length===2){
+        const dd = partes[0].padStart(2,'0');
+        const mm = partes[1].padStart(2,'0');
+        mapa[dia] = anio+'-'+mm+'-'+dd+'_'+dia;
+      } else {
+        mapa[dia] = dia; // sin fecha disponible: usar el nombre tal cual
+      }
+    });
+    return mapa;
+  }
+  function _aplicarFechaAClaves(payload){
+    if(!payload.fechas) return payload;
+    const mapa = _mapaDiaConFecha(payload.fechas);
+    const out = { ...payload };
+    _CAMPOS_POR_DIA.forEach(campo=>{
+      if(!out[campo] || typeof out[campo] !== 'object') return;
+      const nuevo = {};
+      Object.keys(out[campo]).forEach(dia=>{
+        nuevo[mapa[dia] || dia] = out[campo][dia];
+      });
+      out[campo] = nuevo;
+    });
+    // 'pos' usa claves tipo "dia|eq|nombre" (string plano, no anidado)
+    if(out.pos && typeof out.pos === 'object'){
+      const nuevoPos = {};
+      Object.keys(out.pos).forEach(k=>{
+        const partes = k.split('|');
+        if(partes.length===3 && mapa[partes[0]]){
+          nuevoPos[mapa[partes[0]]+'|'+partes[1]+'|'+partes[2]] = out.pos[k];
+        } else {
+          nuevoPos[k] = out.pos[k];
+        }
+      });
+      out.pos = nuevoPos;
+    }
+    return out;
+  }
+  function _quitarFechaDeClaves(raw){
+    const out = { ...raw };
+    _CAMPOS_POR_DIA.forEach(campo=>{
+      if(!out[campo] || typeof out[campo] !== 'object') return;
+      const nuevo = {};
+      Object.keys(out[campo]).forEach(k=>{
+        // Claves con fecha tienen forma "AAAA-MM-DD_DIA" — quedarnos con lo de después del "_"
+        const idx = k.indexOf('_');
+        const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx))) ? k.slice(idx+1) : k;
+        nuevo[diaLimpio] = out[campo][k];
+      });
+      out[campo] = nuevo;
+    });
+    if(out.pos && typeof out.pos === 'object'){
+      const nuevoPos = {};
+      Object.keys(out.pos).forEach(k=>{
+        const partes = k.split('|');
+        if(partes.length===3){
+          const idx = partes[0].indexOf('_');
+          const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(partes[0].slice(0,idx))) ? partes[0].slice(idx+1) : partes[0];
+          nuevoPos[diaLimpio+'|'+partes[1]+'|'+partes[2]] = out.pos[k];
+        } else {
+          nuevoPos[k] = out.pos[k];
+        }
+      });
+      out.pos = nuevoPos;
+    }
+    return out;
+  }
   // Guardar sesión en Firebase
   window.fbGuardarSesion = async function(nombre, payload){
     try{
-      const clean = JSON.parse(JSON.stringify(payload));
+      const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payload)));
       await db.collection('sesiones').doc(nombre).set({
         ...clean,
         _nombre: nombre,
@@ -95,7 +172,7 @@ try {
       out.promInfo = raw.prominfo_por_eq;
       delete out.prominfo_por_eq;
     }
-    return out;
+    return _quitarFechaDeClaves(out);
   }
   window.fbCargarSesion = async function(nombre){
     try{
@@ -151,7 +228,7 @@ try {
   window.fbGuardarBackupDiario = async function(payload){
     try{
       const hoy = new Date().toISOString().slice(0,10); // 'YYYY-MM-DD'
-      const clean = JSON.parse(JSON.stringify(payload));
+      const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payload)));
       await db.collection('backups').doc(hoy).set({
         ...clean,
         _fecha: hoy,
@@ -178,7 +255,7 @@ try {
     try{
       const snap = await db.collection('backups').doc(fecha).get();
       if(!snap.exists) return { ok:false, reason:'not_found', message:'No hay backup de ese día.' };
-      return { ok:true, data: snap.data() };
+      return { ok:true, data: _quitarFechaDeClaves(snap.data()) };
     }catch(e){
       console.error('fbCargarBackup error:', e);
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
