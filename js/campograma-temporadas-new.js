@@ -141,13 +141,31 @@ function guardarDia(){ guardarManual(); }
 // Temporadas guardadas: { id, nombre, ts, payload }
 var temporadas = [];
 var temporadaActual = null;   // id de la temporada activa
-function cargarTemporadas(){
-  // localStorage desactivado — temporadas vienen de Firebase
-  temporadas = [];
-  temporadaActual = null;
+async function cargarTemporadas(){
+  if(typeof window.fbCargarTemporadas !== 'function'){ temporadas=[]; temporadaActual=null; }
+  else{
+    try{
+      const res = await window.fbCargarTemporadas();
+      temporadas = (res && Array.isArray(res.temporadas)) ? res.temporadas : [];
+      temporadaActual = (res && res.temporadaActual) || null;
+    }catch(e){
+      console.warn('cargarTemporadas error:', e);
+      temporadas = []; temporadaActual = null;
+    }
+  }
+  // Si de verdad no hay ninguna temporada guardada (primera vez usando la app),
+  // crear la de este año automáticamente
+  if(!temporadaActual && temporadas.length===0){
+    temporadaActual = '2026_2027';
+    temporadas = [{ id:'2026_2027', nombre:'2026-2027', payload:{}, ts:Date.now() }];
+    guardarTemporadas();
+  }
+  actualizarBadgeTemporada();
 }
 function guardarTemporadas(){
-  // localStorage desactivado
+  if(typeof window.fbGuardarTemporadas === 'function'){
+    window.fbGuardarTemporadas(temporadas, temporadaActual);
+  }
 }
 // Calcular nombre siguiente temporada: "2025-2026" → "2026-2027"
 function siguienteNombreTemporada(actual){
@@ -346,13 +364,6 @@ function confirmarAscenso(){
 }
 // Inicializar temporadas al arrancar
 cargarTemporadas();
-if(!temporadaActual && temporadas.length===0){
-  // Primera vez: crear temporada 2026-27 automáticamente
-  temporadaActual = '2026_2027';
-  temporadas = [{ id:'2026_2027', nombre:'2026-2027', payload:{}, ts:Date.now() }];
-  guardarTemporadas();
-}
-actualizarBadgeTemporada();
 function cargarGuardado(){
   try{
     const raw = null; // localStorage desactivado
