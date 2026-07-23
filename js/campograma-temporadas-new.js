@@ -90,15 +90,12 @@ function autoGuardar(){
       }
       const payload=buildPayload(false);
       // localStorage desactivado — solo Firebase
-      // Sync Firebase — siempre en sesión 'principal'
+      // Sync Firebase — siempre en sesión 'principal', con reintentos si falla
+      // (por ejemplo, un corte breve de conexión) — antes, si fallaba una vez, se
+      // quedaba así sin más y el cambio podía perderse en silencio.
       if(window._fbReady){
         if(!_fbSesionActiva) _fbSesionActiva = 'principal';
-        window.fbGuardarSesion(_fbSesionActiva, payload).then(res=>{
-          if(res && res.ok) console.log('✓ Auto-sync Firebase:', _fbSesionActiva);
-          else console.warn('Auto-sync Firebase error:', res && res.message);
-          // Solo "sin pendientes" si NADA ha cambiado desde que empezamos a guardar esto
-          if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
-        });
+        intentarGuardarConReintentos(_fbSesionActiva, payload, miVersion, 0);
       } else {
         if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
       }
@@ -107,6 +104,52 @@ function autoGuardar(){
       if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
     }
   },1500); // 1.5s debounce para no saturar Firestore
+}
+// Intenta guardar en Firebase; si falla, reintenta con espera creciente (1s, 3s, 8s).
+// Si tras 3 intentos sigue fallando, avisa de forma PERSISTENTE (no un toast que
+// desaparece) para que el usuario sepa que ese cambio concreto no se ha guardado.
+function intentarGuardarConReintentos(sesion, payload, miVersion, intento){
+  window.fbGuardarSesion(sesion, payload).then(res=>{
+    if(res && res.ok){
+      console.log('✓ Auto-sync Firebase:', sesion);
+      if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+      ocultarAvisoGuardadoFallido();
+      return;
+    }
+    console.warn('Auto-sync Firebase error (intento '+(intento+1)+'):', res && res.message);
+    if(intento < 3){
+      const espera = [1000, 3000, 8000][intento] || 8000;
+      setTimeout(()=>intentarGuardarConReintentos(sesion, payload, miVersion, intento+1), espera);
+    } else {
+      if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+      mostrarAvisoGuardadoFallido();
+    }
+  }).catch(e=>{
+    console.warn('Auto-sync Firebase excepción (intento '+(intento+1)+'):', e);
+    if(intento < 3){
+      const espera = [1000, 3000, 8000][intento] || 8000;
+      setTimeout(()=>intentarGuardarConReintentos(sesion, payload, miVersion, intento+1), espera);
+    } else {
+      if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+      mostrarAvisoGuardadoFallido();
+    }
+  });
+}
+// Aviso persistente (no desaparece solo) de que el último guardado ha fallado del
+// todo tras varios reintentos — se queda fijo arriba hasta que se resuelva.
+function mostrarAvisoGuardadoFallido(){
+  let el = document.getElementById('aviso-guardado-fallido');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'aviso-guardado-fallido';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;text-align:center;padding:10px 16px;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.3);';
+    el.textContent = '⚠️ No se ha podido guardar el último cambio (sin conexión con Firebase). Revisa tu conexión — se sigue reintentando en segundo plano.';
+    document.body.appendChild(el);
+  }
+}
+function ocultarAvisoGuardadoFallido(){
+  const el = document.getElementById('aviso-guardado-fallido');
+  if(el) el.remove();
 }
 // Guardado manual — botón elegante arriba
 var _fbSesionActiva = null; // nombre de la sesión Firebase activa
