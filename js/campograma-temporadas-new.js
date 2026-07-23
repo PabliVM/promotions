@@ -43,6 +43,26 @@ function autoGuardar(){
   _autoSaveTimer=setTimeout(()=>{
     const miVersion = _guardadoVersion; // versión en el momento de EMPEZAR a guardar esto
     try{
+      // ── FRENO DE EMERGENCIA ──
+      // Si se van a guardar MUCHOS MENOS jugadores de golpe que la última vez que se
+      // cargó bien, algo probablemente ha ido mal — no guardar sin más, avisar y pedir
+      // confirmación explícita (esto es justo lo que faltó la vez que se perdieron datos).
+      if(typeof hayQueFrenarGuardado === 'function' && hayQueFrenarGuardado()){
+        if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+        if(!window._frenoYaAvisado){
+          window._frenoYaAvisado = true;
+          showAlert(
+            '⚠️ Se han detectado MUCHOS MENOS jugadores de golpe en las plantillas. Esto puede indicar un fallo — el guardado automático se ha PARADO para no sobreescribir datos buenos. ¿Guardar de todas formas?',
+            ()=>{
+              window._frenoYaAvisado = false;
+              fijarTotalJugadoresConocido(); // aceptar el nuevo estado como bueno
+              autoGuardar(); // reintentar ya sin freno
+            },
+            'Guardar igualmente'
+          );
+        }
+        return;
+      }
       const payload=buildPayload(false);
       // localStorage desactivado — solo Firebase
       // Sync Firebase — siempre en sesión 'principal'
