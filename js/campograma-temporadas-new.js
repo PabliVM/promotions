@@ -40,13 +40,10 @@ function autoGuardar(){
   _guardadoVersion++;
   window._hayGuardadoPendiente = true;
   clearTimeout(_autoSaveTimer);
-  _autoSaveTimer=setTimeout(()=>{
+  _autoSaveTimer=setTimeout(async ()=>{
     const miVersion = _guardadoVersion; // versión en el momento de EMPEZAR a guardar esto
     try{
-      // ── FRENO DE EMERGENCIA ──
-      // Si se van a guardar MUCHOS MENOS jugadores de golpe que la última vez que se
-      // cargó bien, algo probablemente ha ido mal — no guardar sin más, avisar y pedir
-      // confirmación explícita (esto es justo lo que faltó la vez que se perdieron datos).
+      // ── FRENO DE EMERGENCIA (memoria local de esta pestaña) ──
       if(typeof hayQueFrenarGuardado === 'function' && hayQueFrenarGuardado()){
         if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
         if(!window._frenoYaAvisado){
@@ -62,6 +59,30 @@ function autoGuardar(){
           );
         }
         return;
+      }
+      // ── FRENO DE EMERGENCIA (contra el SERVIDOR, no solo esta pestaña) ──
+      // Cubre el caso de tener otra pestaña/dispositivo abierto con datos buenos: si el
+      // servidor tiene bastantes MÁS jugadores que los que esta pestaña va a guardar,
+      // parar y avisar en vez de pisarlos.
+      const totalASalvar = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
+      if(typeof window.fbContarJugadoresServidor === 'function' && totalASalvar >= 0){
+        const chk = await window.fbContarJugadoresServidor();
+        if(chk && chk.ok && chk.total > 5 && totalASalvar < chk.total * 0.5){
+          if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+          if(!window._frenoYaAvisado){
+            window._frenoYaAvisado = true;
+            showAlert(
+              '⚠️ El servidor tiene bastantes MÁS jugadores ('+chk.total+') que los que esta pestaña va a guardar ('+totalASalvar+'). Puede que tengas otra pestaña/dispositivo con datos más completos. El guardado se ha PARADO para no pisarlos. ¿Guardar de todas formas?',
+              ()=>{
+                window._frenoYaAvisado = false;
+                fijarTotalJugadoresConocido();
+                autoGuardar();
+              },
+              'Guardar igualmente'
+            );
+          }
+          return;
+        }
       }
       const payload=buildPayload(false);
       // localStorage desactivado — solo Firebase
