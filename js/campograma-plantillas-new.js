@@ -392,8 +392,20 @@ function plantAñadir(){
     toast('⚠️ '+nombre+' ya está en '+plantEqActivo);
     return;
   }
-  // Avisar si hay nombres iguales o parecidos en OTRO equipo (posible duplicado) — sin bloquear
+  // Avisar si hay nombres iguales o parecidos en OTRO equipo (posible duplicado)
   const parecidos = buscarPosiblesDuplicados(nombre);
+  const nombreNorm = _normalizarNombre(nombre);
+  const exactoEnOtroEquipo = parecidos.find(n=>_normalizarNombre(n)===nombreNorm);
+  if(exactoEnOtroEquipo){
+    // Coincidencia EXACTA con otro equipo: esto crearía un jugador duplicado en 2
+    // plantillas a la vez — pedir confirmación explícita en vez de un simple toast.
+    showAlert(
+      '⚠️ "'+nombre+'" ya existe en '+(origen[exactoEnOtroEquipo]||'otro equipo')+'. Si continúas, quedará en LAS DOS plantillas a la vez. ¿Seguro que quieres añadirlo también aquí?',
+      ()=>_plantAñadirConfirmado(nombre),
+      'Añadir de todas formas'
+    );
+    return;
+  }
   _plantAñadirConfirmado(nombre);
   if(parecidos.length){
     const lista = parecidos.map(n=>n+' ('+(origen[n]||'?')+')').join(', ');
@@ -425,7 +437,20 @@ function plantEliminar(nombre){
   if(!plantillas[plantEqActivo]) return;
   const idx = plantillas[plantEqActivo].indexOf(nombre);
   if(idx<0) return;
-  plantillas[plantEqActivo].splice(idx,1);
+  showAlert(
+    '¿Cómo quieres eliminar a '+nombre+'? "Borrar todo" lo quita también del histórico de días anteriores (como si nunca hubiera existido). "Borrar desde hoy" lo quita de la plantilla a partir de hoy, pero mantiene intacto lo que pasó en días anteriores.',
+    ()=>_ejecutarBorradoJugador(nombre, 'todo'),
+    'Borrar todo',
+    ()=>_ejecutarBorradoJugador(nombre, 'desdeHoy'),
+    'Borrar desde hoy'
+  );
+}
+// alcance: 'todo' (también el histórico de días pasados) | 'desdeHoy' (solo hoy en
+// adelante, el pasado se queda tal cual estaba — no se reescribe)
+function _ejecutarBorradoJugador(nombre, alcance){
+  if(!plantillas[plantEqActivo]) return;
+  const idx = plantillas[plantEqActivo].indexOf(nombre);
+  if(idx>=0) plantillas[plantEqActivo].splice(idx,1);
   // Corregir 'origen': si apuntaba a este equipo, buscar si el jugador SIGUE en otra
   // plantilla (estaba metido en 2 a la vez, un caso raro pero posible) y apuntar ahí;
   // si no está en ninguna otra, limpiar origen del todo.
@@ -434,23 +459,24 @@ function plantEliminar(nombre){
     if(otroEqConEl) origen[nombre] = otroEqConEl;
     else delete origen[nombre];
   }
-  // Quitar de porteros si lo era (local y Firebase)
+  // Quitar de porteros si lo era (local y Firebase) — es un rasgo global, no por día
   const pIdx = porteros.indexOf(nombre);
   if(pIdx >= 0){
     porteros.splice(pIdx,1);
     if(typeof window.fbTogglePortero === 'function') window.fbTogglePortero(nombre, false);
   }
+  // Qué días tocar: TODOS si es borrado total, o solo de HOY en adelante si se
+  // mantiene el histórico pasado intacto
+  const diasATocar = alcance === 'todo' ? DIAS : DIAS.filter((d,i)=>i>=diaHoyIdx());
   if(plantEqActivo !== '1ER EQUIPO'){
-    // Quitar de data en todos los días
-    DIAS.forEach(d=>{
+    diasATocar.forEach(d=>{
       ZONAS.forEach(z=>{
         const i=(data[d][plantEqActivo][z]||[]).indexOf(nombre);
         if(i>=0) data[d][plantEqActivo][z].splice(i,1);
       });
     });
   } else {
-    // 1ER EQUIPO usa su propia lista de campo (no data[d][eq])
-    DIAS.forEach(d=>{
+    diasATocar.forEach(d=>{
       if(primerEquipoJugadores[d]){
         const i = primerEquipoJugadores[d].indexOf(nombre);
         if(i>=0) primerEquipoJugadores[d].splice(i,1);
@@ -458,10 +484,9 @@ function plantEliminar(nombre){
     });
   }
   // Limpiar también cualquier rastro en OTROS equipos (si estaba prestado/duplicado ahí)
-  // y en primerEquipoJugadores, para que desaparezca del todo, no solo de su equipo
   EQUIPOS.forEach(otroEq=>{
     if(otroEq === plantEqActivo) return;
-    DIAS.forEach(d=>{
+    diasATocar.forEach(d=>{
       ZONAS.forEach(z=>{
         const arr = data[d]?.[otroEq]?.[z];
         if(!arr) return;
@@ -472,18 +497,25 @@ function plantEliminar(nombre){
     });
   });
   if(plantEqActivo !== '1ER EQUIPO'){
-    DIAS.forEach(d=>{
+    diasATocar.forEach(d=>{
       if(primerEquipoJugadores[d]){
         const i = primerEquipoJugadores[d].indexOf(nombre);
         if(i>=0) primerEquipoJugadores[d].splice(i,1);
       }
     });
   }
+  // Histórico: solo se borra si el alcance es 'todo' — si es 'desdeHoy', el histórico
+  // de días pasados se queda exactamente como estaba (no se reescribe el pasado)
+  if(alcance === 'todo'){
+    DIAS.forEach(d=>{ if(historicoJugador[d]) delete historicoJugador[d][nombre]; });
+  }
   renderPlantTabs();
   renderPlantBody();
   window._saltarFrenoGuardado = true; // borrado explícito de un jugador concreto: acción voluntaria
   render();
-  toast('🗑️ '+nombre+' eliminado de '+plantEqActivo);
+  toast(alcance==='todo'
+    ? '🗑️ '+nombre+' eliminado por completo (incluido el histórico)'
+    : '🗑️ '+nombre+' eliminado desde hoy (histórico anterior intacto)');
 }
 // Borra TODOS los jugadores de TODOS los equipos (plantillas, orígenes, posiciones,
 // promociones, campo, etc.) para empezar de cero. Acción irreversible — pide confirmación.
