@@ -86,6 +86,9 @@ try {
   // contenido, hay que RECONSTRUIR 'data'/'promInfo' a partir de ahí — es la copia real
   // y más reciente de los datos; el campo plano 'data' puede haber quedado vacío/desfasado.
   function _reconstruirDesdePorEq(raw){
+    console.log('[diag2] tiene data_por_eq:', !!raw.data_por_eq);
+    if(raw.data_por_eq) console.log('[diag2] claves de data_por_eq:', Object.keys(raw.data_por_eq));
+    if(raw.data_por_eq?.MARTES?.CASTILLA) console.log('[diag2] data_por_eq.MARTES.CASTILLA:', raw.data_por_eq.MARTES.CASTILLA);
     const out = { ...raw };
     if(raw.data_por_eq && typeof raw.data_por_eq === 'object' && Object.keys(raw.data_por_eq).length){
       out.data = raw.data_por_eq;
