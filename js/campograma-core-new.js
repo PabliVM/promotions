@@ -263,6 +263,171 @@ function diaHoyIdx(){
 }
 // Modal para elegir desde qué día aplica un cambio de equipo (por defecto, hoy — pero
 // permite elegir otro día para tapar huecos si se te olvidó hacerlo a tiempo).
+// Modal para copiar un equipo de un día concreto a otro día: elegir origen, destino
+// (por defecto distinto al origen) y si solo el campo o todo el equipo.
+function abrirCopiarDiaModal(eq, diaOrigenDefecto){
+  const overlay = mk('div','');
+  overlay.id = 'copiar-dia-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10400;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);';
+  const box = mk('div','');
+  box.style.cssText = 'width:100%;max-width:400px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.15);';
+  const hdr = mk('div','');
+  hdr.style.cssText = 'background:#2563eb;padding:14px 18px;';
+  hdr.innerHTML = `<div style="font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:800;color:#fff;">Copiar ${eq} a otro día</div>`;
+  const body = mk('div','');
+  body.style.cssText = 'padding:16px 18px;';
+  const diaAbrev = {'LUNES':'L','MARTES':'M','MIÉRCOLES':'X','JUEVES':'J','VIERNES':'V','SÁBADO':'S','DOMINGO':'D'};
+
+  let diaOrigen = diaOrigenDefecto || dia;
+  let diaDestino = DIAS.find(d=>d!==diaOrigen) || diaOrigenDefecto;
+  let modo = 'todo'; // 'todo' | 'campo'
+
+  function filaDias(label, actual, onElegir){
+    const lbl = mk('div','');
+    lbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.4px;';
+    lbl.textContent = label;
+    body.appendChild(lbl);
+    const grid = mk('div','');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px;';
+    const botones = [];
+    DIAS.forEach(d=>{
+      const btn = document.createElement('button');
+      btn.textContent = (diaAbrev[d]||d) + ' ' + (FECHAS[d]||'');
+      const marcar = ()=>{
+        botones.forEach((b,i)=>{
+          const sel = DIAS[i]===actual();
+          b.style.borderColor = sel ? '#2563eb' : '#dfe1e6';
+          b.style.background  = sel ? '#2563eb' : '#fff';
+          b.style.color       = sel ? '#fff' : '#1a1d23';
+        });
+      };
+      btn.style.cssText = 'padding:8px 4px;border-radius:8px;border:1.5px solid #dfe1e6;background:#fff;color:#1a1d23;font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;cursor:pointer;';
+      btn.onclick = ()=>{ onElegir(d); marcar(); };
+      botones.push(btn);
+      grid.appendChild(btn);
+    });
+    body.appendChild(grid);
+    // Pintar selección inicial
+    botones.forEach((b,i)=>{
+      const sel = DIAS[i]===actual();
+      b.style.borderColor = sel ? '#2563eb' : '#dfe1e6';
+      b.style.background  = sel ? '#2563eb' : '#fff';
+      b.style.color       = sel ? '#fff' : '#1a1d23';
+    });
+  }
+
+  filaDias('Copiar DESDE (origen)', ()=>diaOrigen, (d)=>{ diaOrigen = d; });
+  filaDias('Copiar HACIA (destino)', ()=>diaDestino, (d)=>{ diaDestino = d; });
+
+  const modoLbl = mk('div','');
+  modoLbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.4px;';
+  modoLbl.textContent = 'Qué copiar';
+  body.appendChild(modoLbl);
+  const modoRow = mk('div','');
+  modoRow.style.cssText = 'display:flex;gap:8px;margin-bottom:14px;';
+  const btnTodo = document.createElement('button');
+  btnTodo.textContent = 'Todo el equipo';
+  const btnCampo = document.createElement('button');
+  btnCampo.textContent = 'Solo el campo';
+  [btnTodo, btnCampo].forEach(b=>{
+    b.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:1.5px solid #dfe1e6;background:#fff;color:#1a1d23;font-family:\'Segoe UI\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;';
+  });
+  function marcarModo(){
+    btnTodo.style.background  = modo==='todo' ? '#2563eb' : '#fff';
+    btnTodo.style.color       = modo==='todo' ? '#fff' : '#1a1d23';
+    btnTodo.style.borderColor = modo==='todo' ? '#2563eb' : '#dfe1e6';
+    btnCampo.style.background  = modo==='campo' ? '#2563eb' : '#fff';
+    btnCampo.style.color       = modo==='campo' ? '#fff' : '#1a1d23';
+    btnCampo.style.borderColor = modo==='campo' ? '#2563eb' : '#dfe1e6';
+  }
+  btnTodo.onclick = ()=>{ modo='todo'; marcarModo(); };
+  btnCampo.onclick = ()=>{ modo='campo'; marcarModo(); };
+  marcarModo();
+  modoRow.appendChild(btnTodo); modoRow.appendChild(btnCampo);
+  body.appendChild(modoRow);
+
+  const aviso = mk('div','');
+  aviso.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;color:#9ca3af;margin-bottom:14px;line-height:1.4;';
+  aviso.textContent = 'Se sobrescribirá lo que hubiera en el día destino para este equipo. Si algún jugador está prestado en otro equipo ese día, se le quitará de ahí primero.';
+  body.appendChild(aviso);
+
+  const btnRow = mk('div','');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:1px solid #dfe1e6;background:transparent;color:#5a6170;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  const okBtn = document.createElement('button');
+  okBtn.textContent = 'Copiar';
+  okBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
+  body.appendChild(btnRow);
+
+  box.appendChild(hdr); box.appendChild(body);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  function cerrar(){ overlay.remove(); }
+  cancelBtn.onclick = cerrar;
+  overlay.onclick = (e)=>{ if(e.target===overlay) cerrar(); };
+  okBtn.onclick = ()=>{
+    if(diaOrigen === diaDestino){ toast('⚠️ Elige un día destino distinto al origen'); return; }
+    cerrar();
+    copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo);
+  };
+}
+// Copia un equipo de un día a otro. modo='todo' copia todas las zonas (disponibles,
+// campo, banquillo, promocionados, lesionados, otros) + promociones; modo='campo' copia
+// solo el campo (posiciones incluidas). Si algún jugador copiado está prestado en OTRO
+// equipo el día destino, se le quita de ahí primero para no duplicarlo.
+function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
+  const origenData = data[diaOrigen]?.[eq];
+  if(!origenData){ toast('❌ No hay datos de '+eq+' en '+diaOrigen); return; }
+
+  // Recopilar TODOS los nombres que vamos a copiar, para limpiarlos antes de otros equipos
+  const zonasACopiar = modo === 'campo' ? ['campo'] : ZONAS.slice();
+  const nombresACopiar = new Set();
+  zonasACopiar.forEach(z=>(origenData[z]||[]).forEach(n=>nombresACopiar.add(n)));
+
+  // Quitar a esos jugadores de CUALQUIER OTRO equipo en el día DESTINO (evitar duplicados
+  // si estaban prestados ahí)
+  EQUIPOS.forEach(otroEq=>{
+    if(otroEq === eq) return;
+    ZONAS.forEach(z=>{
+      const arr = data[diaDestino]?.[otroEq]?.[z];
+      if(!arr) return;
+      nombresACopiar.forEach(n=>{
+        const i = arr.indexOf(n);
+        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(diaDestino,otroEq,n)]; }
+      });
+    });
+    if(promInfo[diaDestino]?.[otroEq]){
+      nombresACopiar.forEach(n=>{ delete promInfo[diaDestino][otroEq][n]; });
+    }
+  });
+
+  if(!data[diaDestino][eq]) data[diaDestino][eq] = {};
+  if(modo === 'campo'){
+    // Solo el campo: sustituir el campo destino por el de origen, con sus posiciones
+    data[diaDestino][eq].campo = [...(origenData.campo||[])];
+    (origenData.campo||[]).forEach(n=>{
+      const p = pos[key(diaOrigen,eq,n)];
+      if(p) pos[key(diaDestino,eq,n)] = [...p];
+    });
+  } else {
+    // Todo el equipo: sustituir TODAS las zonas + posiciones del campo + promociones
+    ZONAS.forEach(z=>{
+      data[diaDestino][eq][z] = [...(origenData[z]||[])];
+    });
+    (origenData.campo||[]).forEach(n=>{
+      const p = pos[key(diaOrigen,eq,n)];
+      if(p) pos[key(diaDestino,eq,n)] = [...p];
+    });
+    if(!promInfo[diaDestino]) promInfo[diaDestino] = {};
+    promInfo[diaDestino][eq] = JSON.parse(JSON.stringify(promInfo[diaOrigen]?.[eq] || {}));
+  }
+  autoGuardar();
+  render();
+  toast('⧉ '+eq+' copiado de '+diaOrigen+' a '+diaDestino+' ('+(modo==='campo'?'solo campo':'todo')+')');
+}
 function abrirDiaAplicaModal(nombre, eqViejo, nuevoEq, onConfirmar, onCancelar){
   const idxHoy = diaHoyIdx();
   const overlay = mk('div','');
