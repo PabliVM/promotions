@@ -225,6 +225,38 @@ function equipoHistorico(diaP, nombre){
 }
 // Índice de HOY dentro de DIAS (0=LUNES...6=DOMINGO), para saber qué días son "pasado"
 // (antes de hoy → históricos, inmutables) y cuáles son "hoy en adelante" (se actualizan).
+// Copia de seguridad diaria: solo una vez al día (por navegador), para no saturar
+// Firebase. Usa localStorage para recordar el último día que se hizo.
+function hacerBackupDiarioSiHaceFalta(){
+  try{
+    const hoy = new Date().toISOString().slice(0,10);
+    const ultimo = localStorage.getItem('rm_ultimo_backup');
+    if(ultimo === hoy) return; // ya se hizo hoy
+    if(typeof window.fbGuardarBackupDiario !== 'function') return;
+    const payload = buildPayload(false);
+    window.fbGuardarBackupDiario(payload).then(res=>{
+      if(res && res.ok){
+        localStorage.setItem('rm_ultimo_backup', hoy);
+        console.log('💾 Copia de seguridad diaria guardada:', hoy);
+      }
+    });
+  }catch(e){ console.warn('Error en backup diario:', e); }
+}
+// ── FRENO DE EMERGENCIA ──
+// Si la app está a punto de guardar 'plantillas' con MUCHOS MENOS jugadores de golpe
+// que la última vez que se cargó correctamente, algo probablemente ha ido mal (como
+// pasó una vez: un fallo dejó 'plantillas' vacía y se guardó por encima de la buena).
+// En vez de guardar sin más, se avisa y se pide confirmación explícita.
+var _ultimoTotalJugadoresConocido = null; // se fija justo tras cargar bien al arrancar
+function fijarTotalJugadoresConocido(){
+  _ultimoTotalJugadoresConocido = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
+}
+function hayQueFrenarGuardado(){
+  if(_ultimoTotalJugadoresConocido === null || _ultimoTotalJugadoresConocido < 5) return false; // aún no hay referencia fiable
+  const totalActual = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
+  // Frenar si se ha perdido más de la mitad de los jugadores de golpe
+  return totalActual < _ultimoTotalJugadoresConocido * 0.5;
+}
 function diaHoyIdx(){
   const d = new Date().getDay(); // 0=domingo
   return d===0 ? 6 : d-1;
@@ -1797,13 +1829,6 @@ async function arrancarDesdeFirebase(){
     }
     // 1. Cargar sesión principal
     const res = await window.fbCargarSesion('principal');
-    console.log('[diag] res.ok:', res.ok);
-    console.log('[diag] res.data existe:', !!res.data);
-    console.log('[diag] res.data.plantillas:', res.data && res.data.plantillas);
-    console.log('[diag] res.data.data existe:', !!(res.data && res.data.data));
-    if(res.data && res.data.data){
-      console.log('[diag] res.data.data MARTES CASTILLA campo:', res.data.data['MARTES']?.['CASTILLA']?.campo);
-    }
     if(res.ok && res.data && res.data.plantillas){
       const payload = res.data;
       // Aplicar payload de Firebase (misma lógica que fbCargar pero silenciosa)
@@ -1931,6 +1956,10 @@ async function arrancarDesdeFirebase(){
       // localStorage desactivado
       render(); renderMultiEqBar();
       console.log('✅ Sesión principal cargada desde Firebase');
+      // Fijar la referencia de "jugadores conocidos" para el freno de emergencia
+      fijarTotalJugadoresConocido();
+      // Copia de seguridad diaria automática (una vez al día, independiente del guardado normal)
+      hacerBackupDiarioSiHaceFalta();
     } else {
       // No existe sesión principal todavía — crearla con los datos actuales
       _fbSesionActiva = 'principal';
