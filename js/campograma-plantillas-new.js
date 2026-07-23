@@ -450,6 +450,11 @@ function plantEliminar(nombre){
 // adelante, el pasado se queda tal cual estaba — no se reescribe)
 function _ejecutarBorradoJugador(nombre, alcance){
   if(!plantillas[plantEqActivo]) return;
+  // Copia de seguridad JUSTO ANTES de borrar (sobre todo relevante si es 'todo' —
+  // borrado definitivo con histórico incluido) — un paso atrás siempre disponible.
+  if(typeof window.fbGuardarBackupPreAccion === 'function'){
+    window.fbGuardarBackupPreAccion(buildPayload(false), 'Antes de borrar a '+nombre+' ('+alcance+')');
+  }
   const idx = plantillas[plantEqActivo].indexOf(nombre);
   if(idx>=0) plantillas[plantEqActivo].splice(idx,1);
   // Corregir 'origen': si apuntaba a este equipo, buscar si el jugador SIGUE en otra
@@ -509,6 +514,44 @@ function _ejecutarBorradoJugador(nombre, alcance){
   // de días pasados se queda exactamente como estaba (no se reescribe el pasado)
   if(alcance === 'todo'){
     DIAS.forEach(d=>{ if(historicoJugador[d]) delete historicoJugador[d][nombre]; });
+    // Además, quitarlo de TODAS las semanas ya archivadas (semanas anteriores cerradas)
+    // — si no, "borrar todo" no sería realmente definitivo: seguiría en Firebase dentro
+    // de esas fotos antiguas.
+    if(typeof _semanasGuardadas === 'object' && _semanasGuardadas){
+      Object.keys(_semanasGuardadas).forEach(weekKey=>{
+        const foto = _semanasGuardadas[weekKey];
+        if(!foto) return;
+        if(foto.origen) delete foto.origen[nombre];
+        if(foto.historicoJugador){
+          Object.keys(foto.historicoJugador).forEach(d=>{ delete foto.historicoJugador[d][nombre]; });
+        }
+        if(foto.data){
+          Object.keys(foto.data).forEach(d=>{
+            EQUIPOS.forEach(eq=>{
+              ZONAS.forEach(z=>{
+                const arr = foto.data[d]?.[eq]?.[z];
+                if(!arr) return;
+                const i = arr.indexOf(nombre);
+                if(i>=0) arr.splice(i,1);
+              });
+            });
+          });
+        }
+        if(foto.primerEquipoJugadores){
+          Object.keys(foto.primerEquipoJugadores).forEach(d=>{
+            const arr = foto.primerEquipoJugadores[d];
+            if(!arr) return;
+            const i = arr.indexOf(nombre);
+            if(i>=0) arr.splice(i,1);
+          });
+        }
+        if(foto.pos){
+          Object.keys(foto.pos).forEach(k=>{
+            if(k.endsWith('|'+nombre)) delete foto.pos[k];
+          });
+        }
+      });
+    }
   }
   renderPlantTabs();
   renderPlantBody();
@@ -524,6 +567,11 @@ function borrarTodosLosJugadores(){
   showAlert(
     '⚠️ Esto borrará TODOS los jugadores de TODOS los equipos (plantillas, campo, promociones, todo) de forma irreversible. ¿Seguro que quieres empezar de cero?',
     ()=>{
+      // Copia de seguridad JUSTO ANTES de vaciar — por si acaso, un paso atrás siempre
+      // disponible además del backup diario normal.
+      if(typeof window.fbGuardarBackupPreAccion === 'function'){
+        window.fbGuardarBackupPreAccion(buildPayload(false), 'Antes de Borrar todo');
+      }
       EQUIPOS.concat(['1ER EQUIPO']).forEach(eq=>{ plantillas[eq] = []; });
       origen = {};
       porteros = [];
