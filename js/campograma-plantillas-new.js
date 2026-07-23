@@ -422,8 +422,10 @@ function _plantAñadirConfirmado(nombre){
   toast('✅ '+nombre+' añadido a '+plantEqActivo);
 }
 function plantEliminar(nombre){
-  if(!plantillas[plantEqActivo]) return;
+  console.log('[diag-borrar] llamada con:', nombre, '| equipo activo:', plantEqActivo);
+  if(!plantillas[plantEqActivo]){ console.log('[diag-borrar] no hay plantilla para', plantEqActivo); return; }
   const idx = plantillas[plantEqActivo].indexOf(nombre);
+  console.log('[diag-borrar] índice encontrado:', idx, '| lista actual:', plantillas[plantEqActivo]);
   if(idx<0) return;
   plantillas[plantEqActivo].splice(idx,1);
   // Corregir 'origen': si apuntaba a este equipo, buscar si el jugador SIGUE en otra
