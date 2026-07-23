@@ -459,6 +459,7 @@ function plantEliminar(nombre){
   }
   renderPlantTabs();
   renderPlantBody();
+  window._saltarFrenoGuardado = true; // borrado explícito de un jugador concreto: acción voluntaria
   render();
   toast('🗑️ '+nombre+' eliminado de '+plantEqActivo);
 }
