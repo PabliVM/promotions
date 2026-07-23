@@ -415,19 +415,37 @@ function buildListaView(eq, d){
       }
       texto += '\n*' + labelOut + ':*\n';
       const siglas = {'CASTILLA':'CAST','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA','1ER EQUIPO':'1ER'};
-      // Porteros primero, luego el resto, manteniendo orden relativo dentro de cada grupo
-      const jugsOrdenados = [...jugs].sort((a, b) => {
-        const aPor = porteros.includes(a) ? 0 : 1;
-        const bPor = porteros.includes(b) ? 0 : 1;
-        return aPor - bPor;
-      });
+      // En el Campo: primero los propios del equipo, externos al final. Dentro de cada
+      // grupo, porteros primero, manteniendo el orden relativo original.
+      let jugsOrdenados;
+      if(key === 'campo'){
+        jugsOrdenados = [...jugs].sort((a, b) => {
+          const aExt = (origen[a] && origen[a] !== eq) ? 1 : 0;
+          const bExt = (origen[b] && origen[b] !== eq) ? 1 : 0;
+          if(aExt !== bExt) return aExt - bExt; // propios (0) antes que externos (1)
+          const aPor = porteros.includes(a) ? 0 : 1;
+          const bPor = porteros.includes(b) ? 0 : 1;
+          return aPor - bPor;
+        });
+      } else {
+        // Resto de zonas: solo porteros primero (comportamiento igual que antes)
+        jugsOrdenados = [...jugs].sort((a, b) => {
+          const aPor = porteros.includes(a) ? 0 : 1;
+          const bPor = porteros.includes(b) ? 0 : 1;
+          return aPor - bPor;
+        });
+      }
       jugsOrdenados.forEach(n => {
         const esPor = porteros.includes(n);
         let linea = '  - ' + n + (esPor ? ' (POR)' : '');
-        // Si es prestado de otro equipo, identificarlo entre paréntesis
+        // Si es prestado de otro equipo, identificarlo entre paréntesis (Youth League
+        // se marca aparte: "JA-YL" en vez de solo "JA", para no confundirlo con una
+        // promoción normal — punto pendiente 14.2/14.4 ya decidido así)
         const eqReal = origen[n];
-        if(eqReal && eqReal !== eq){
-          linea += ' (' + (siglas[eqReal]||eqReal) + ')';
+        const esExterno = eqReal && eqReal !== eq;
+        if(esExterno){
+          const esYL = eq==='JUVENIL A' && typeof esUYL==='function' && esUYL(diaKey);
+          linea += ' (' + (esYL ? 'JA-YL' : (siglas[eqReal]||eqReal)) + ')';
         }
         if(key === 'promovidos_1er' && eq !== 'CASTILLA'){
           const destinos = getDestinos(diaKey, eq, n);
@@ -436,6 +454,8 @@ function buildListaView(eq, d){
             else linea += '  → ' + (siglas[destino]||destino);
           });
         }
+        // En Campo, los jugadores externos van en cursiva (formato WhatsApp: _texto_)
+        if(key === 'campo' && esExterno) linea = '_' + linea + '_';
         texto += linea + '\n';
       });
     });
