@@ -422,10 +422,8 @@ function _plantAñadirConfirmado(nombre){
   toast('✅ '+nombre+' añadido a '+plantEqActivo);
 }
 function plantEliminar(nombre){
-  console.log('[diag-borrar] llamada con:', nombre, '| equipo activo:', plantEqActivo);
-  if(!plantillas[plantEqActivo]){ console.log('[diag-borrar] no hay plantilla para', plantEqActivo); return; }
+  if(!plantillas[plantEqActivo]) return;
   const idx = plantillas[plantEqActivo].indexOf(nombre);
-  console.log('[diag-borrar] índice encontrado:', idx, '| lista actual:', plantillas[plantEqActivo]);
   if(idx<0) return;
   plantillas[plantEqActivo].splice(idx,1);
   // Corregir 'origen': si apuntaba a este equipo, buscar si el jugador SIGUE en otra
@@ -452,6 +450,28 @@ function plantEliminar(nombre){
     });
   } else {
     // 1ER EQUIPO usa su propia lista de campo (no data[d][eq])
+    DIAS.forEach(d=>{
+      if(primerEquipoJugadores[d]){
+        const i = primerEquipoJugadores[d].indexOf(nombre);
+        if(i>=0) primerEquipoJugadores[d].splice(i,1);
+      }
+    });
+  }
+  // Limpiar también cualquier rastro en OTROS equipos (si estaba prestado/duplicado ahí)
+  // y en primerEquipoJugadores, para que desaparezca del todo, no solo de su equipo
+  EQUIPOS.forEach(otroEq=>{
+    if(otroEq === plantEqActivo) return;
+    DIAS.forEach(d=>{
+      ZONAS.forEach(z=>{
+        const arr = data[d]?.[otroEq]?.[z];
+        if(!arr) return;
+        const i = arr.indexOf(nombre);
+        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(d,otroEq,nombre)]; }
+      });
+      if(promInfo[d]?.[otroEq]) delete promInfo[d][otroEq][nombre];
+    });
+  });
+  if(plantEqActivo !== '1ER EQUIPO'){
     DIAS.forEach(d=>{
       if(primerEquipoJugadores[d]){
         const i = primerEquipoJugadores[d].indexOf(nombre);
