@@ -422,8 +422,9 @@ function _plantAñadirConfirmado(nombre){
     const idxHoy = diaHoyIdx();
     DIAS.forEach((d,i)=>{
       if(i < idxHoy) return;
-      if(!data[d][plantEqActivo].disponibles.includes(nombre) &&
-         !ZONAS.some(z=>data[d][plantEqActivo][z].includes(nombre))){
+      if(!(data[d][plantEqActivo].disponibles||[]).includes(nombre) &&
+         !ZONAS.some(z=>(data[d][plantEqActivo][z]||[]).includes(nombre))){
+        if(!data[d][plantEqActivo].disponibles) data[d][plantEqActivo].disponibles = [];
         data[d][plantEqActivo].disponibles.push(nombre);
       }
     });
