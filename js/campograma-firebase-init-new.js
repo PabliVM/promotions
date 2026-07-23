@@ -268,6 +268,28 @@ try {
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
     }
   };
+  // Copia de seguridad justo ANTES de una acción destructiva (Borrar todo, Borrar
+  // definitivo de un jugador). Se guardan las últimas 5 en rotación (pre_accion_0..4),
+  // así siempre hay un paso atrás disponible sin esperar al backup diario.
+  window.fbGuardarBackupPreAccion = async function(payload, etiqueta){
+    try{
+      const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payload)));
+      let contador = 0;
+      try{ contador = parseInt(localStorage.getItem('rm_backup_pre_accion_contador')||'0', 10) || 0; }catch(e){}
+      const slot = 'pre_accion_' + (contador % 5);
+      try{ localStorage.setItem('rm_backup_pre_accion_contador', String(contador+1)); }catch(e){}
+      await db.collection('backups').doc(slot).set({
+        ...clean,
+        _etiqueta: etiqueta || '',
+        _fechaHora: new Date().toISOString(),
+        _ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return { ok:true };
+    }catch(e){
+      console.error('fbGuardarBackupPreAccion error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
   // Listar backups disponibles (para poder restaurar uno concreto si hace falta)
   window.fbListarBackups = async function(){
     try{
@@ -370,6 +392,7 @@ try {
   window.fbEliminarSesion = _fbStub(MSG);
   window.fbContarJugadoresServidor = _fbStub(MSG);
   window.fbGuardarBackupDiario = _fbStub(MSG);
+  window.fbGuardarBackupPreAccion = _fbStub(MSG);
   window.fbListarBackups = _fbStub(MSG);
   window.fbGuardarTemporadas = _fbStub(MSG);
   window.fbCargarTemporadas = async function(){ return { ok:false, temporadas:[], temporadaActual:null, message:MSG }; };
