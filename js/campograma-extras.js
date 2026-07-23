@@ -129,6 +129,7 @@ body.dark #login-email, body.dark #login-pass { background: #0d1117; border-colo
 .ctrl-banco { background: #fef9c3; color: #ca8a04; }
 .ctrl-lesion{ background: #fee2e2; color: #dc2626; }
 .ctrl-promo { background: #ede9fe; color: #7c3aed; }
+.ctrl-uyl { background: #dbeafe; color: #1d4ed8; }
 .ctrl-otros { background: #f1f5f9; color: #64748b; }
 .ctrl-descansa { background: #dbeafe; color: #2563eb; }
 .ctrl-multi { background: #fee2e2; color: #dc2626; }
