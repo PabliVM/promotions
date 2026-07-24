@@ -958,6 +958,26 @@ async function fbCargar(nombre){
     toast('⚠️ Datos cargados, pero hubo un error al pintar la pantalla: ' + (e.message || e));
   }
 }
+// Limpieza de campos residuales (data_por_eq.*/prominfo_por_eq.*) — restos muertos de
+// una función revertida hace tiempo, confirmados sin uso por el código actual.
+// Pide confirmación explícita antes de borrar nada.
+async function limpiarCamposResidualesConfirmar(){
+  if(!window._fbReady){ toast('⏳ Firebase no conectado'); return; }
+  showAlert(
+    '🧹 Esto borrará SOLO los campos antiguos "data_por_eq.*" y "prominfo_por_eq.*" (restos de una función ya revertida). No toca nada más: ni plantillas, ni jugadores, ni histórico, ni nada que uses ahora. ¿Confirmas?',
+    async ()=>{
+      toast('🧹 Limpiando...');
+      const res = await window.fbLimpiarCamposResiduales(_fbSesionActiva || 'principal');
+      if(res && res.ok){
+        toast(res.borrados > 0 ? '✅ '+res.borrados+' campos residuales borrados' : 'ℹ️ No había campos residuales que borrar');
+        console.log('[limpieza] campos borrados:', res.campos || []);
+      } else {
+        toast('❌ Error al limpiar: '+(res && res.message || ''));
+      }
+    },
+    'Sí, limpiar'
+  );
+}
 async function fbBorrar(nombre, btn){
   if(!confirm('¿Eliminar "'+nombre+'"? No se puede deshacer.')){ return; }
   btn.textContent = '...';
