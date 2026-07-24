@@ -414,6 +414,124 @@ function plantAñadir(){
 }
 // Igual que plantAñadir(), pero preguntando desde qué día de la semana debe aparecer
 // disponible el jugador (en vez de en toda la semana por defecto).
+// ══════════════════════════════════════════════════
+// IMPORTAR TABLA — pegar lista de jugadores (desde Excel/Sheets o a mano) y añadirlos
+// todos de golpe a sus plantillas. Formato por línea: "NOMBRE" solo (usa el equipo
+// elegido en el desplegable) o "NOMBRE, EQUIPO" / "NOMBRE [tab] EQUIPO" (equipo propio
+// por línea, ignorando el desplegable para esa línea).
+// ══════════════════════════════════════════════════
+function abrirImportarTablaModal(){
+  const overlay = mk('div','');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10410;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);';
+  const box = mk('div','');
+  box.style.cssText = 'width:100%;max-width:520px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.15);';
+  const hdr = mk('div','');
+  hdr.style.cssText = 'background:#2563eb;padding:14px 18px;';
+  hdr.innerHTML = `<div style="font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:800;color:#fff;">📋 Importar jugadores desde tabla</div>`;
+  const body = mk('div','');
+  body.style.cssText = 'padding:18px;';
+
+  const sub = mk('div','');
+  sub.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:12px;color:#5a6170;margin-bottom:12px;line-height:1.5;';
+  sub.innerHTML = 'Pega aquí, una línea por jugador. Puedes escribir solo el nombre (se usa el equipo de abajo), o "Nombre, Equipo" / "Nombre" + TAB + "Equipo" (copiado directo de Excel/Sheets, cada línea con su propio equipo).';
+  body.appendChild(sub);
+
+  const eqLbl = mk('div','');
+  eqLbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;';
+  eqLbl.textContent = 'Equipo por defecto (si una línea no trae equipo)';
+  body.appendChild(eqLbl);
+  const sel = document.createElement('select');
+  sel.style.cssText = 'width:100%;padding:9px 12px;border-radius:10px;border:1.5px solid #dfe1e6;font-family:\'Segoe UI\',sans-serif;font-size:13px;color:#1a1d23;margin-bottom:14px;box-sizing:border-box;';
+  EQUIPOS.forEach(eq=>{
+    const opt = document.createElement('option');
+    opt.value = eq; opt.textContent = EQ_LABEL[eq] || eq;
+    if(eq === plantEqActivo) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  body.appendChild(sel);
+
+  const textLbl = mk('div','');
+  textLbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;';
+  textLbl.textContent = 'Lista de jugadores';
+  body.appendChild(textLbl);
+  const textarea = document.createElement('textarea');
+  textarea.placeholder = 'ÁLVARO LEZCANO\nÁNGEL CARVAJAL, RMC\nMANEX REZOLA\tJUVENIL A\n...';
+  textarea.style.cssText = 'width:100%;min-height:180px;padding:10px 12px;border-radius:10px;border:1.5px solid #dfe1e6;font-family:\'Segoe UI\',monospace;font-size:13px;color:#1a1d23;margin-bottom:14px;box-sizing:border-box;resize:vertical;';
+  body.appendChild(textarea);
+
+  const btnRow = mk('div','');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:1px solid #dfe1e6;background:transparent;color:#5a6170;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  const okBtn = document.createElement('button');
+  okBtn.textContent = 'Importar';
+  okBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
+  body.appendChild(btnRow);
+
+  box.appendChild(hdr); box.appendChild(body);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  function cerrar(){ overlay.remove(); }
+  cancelBtn.onclick = cerrar;
+  overlay.onclick = (e)=>{ if(e.target===overlay) cerrar(); };
+  okBtn.onclick = ()=>{
+    const texto = textarea.value;
+    const eqDefecto = sel.value;
+    cerrar();
+    importarTablaJugadores(texto, eqDefecto);
+  };
+}
+// Nombres válidos de equipo aceptados en la columna "Equipo" (con alias frecuentes)
+const _ALIAS_EQUIPO = {
+  'CASTILLA':'CASTILLA', 'CAS':'CASTILLA',
+  'RMC':'RMC', 'REAL MADRID C':'RMC',
+  'JUVENIL A':'JUVENIL A', 'JA':'JUVENIL A',
+  'JUVENIL B':'JUVENIL B', 'JB':'JUVENIL B',
+  'JUVENIL C':'JUVENIL C', 'JC':'JUVENIL C',
+  'CADETE A':'CADETE A', 'CA':'CADETE A',
+  '1ER EQUIPO':'1ER EQUIPO', 'PRIMER EQUIPO':'1ER EQUIPO', '1ER':'1ER EQUIPO',
+};
+function importarTablaJugadores(texto, eqDefecto){
+  const lineas = texto.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lineas.length){ toast('⚠️ No hay nada que importar'); return; }
+  let añadidos = 0, yaExistian = 0, equipoNoReconocido = [];
+  lineas.forEach(linea=>{
+    const partes = linea.split(/\t|,/).map(p=>p.trim()).filter(Boolean);
+    const nombre = (partes[0]||'').toUpperCase();
+    if(!nombre) return;
+    let eq = eqDefecto;
+    if(partes[1]){
+      const alias = _ALIAS_EQUIPO[partes[1].toUpperCase()];
+      if(alias) eq = alias;
+      else equipoNoReconocido.push(partes[1]+' ('+nombre+')');
+    }
+    if(!plantillas[eq]) plantillas[eq] = [];
+    if(plantillas[eq].includes(nombre)){ yaExistian++; return; }
+    plantillas[eq].push(nombre);
+    origen[nombre] = eq;
+    if(eq !== '1ER EQUIPO'){
+      DIAS.forEach(d=>{
+        if(!data[d][eq].disponibles.includes(nombre) && !ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre))){
+          if(!data[d][eq].disponibles) data[d][eq].disponibles = [];
+          data[d][eq].disponibles.push(nombre);
+        }
+      });
+    }
+    añadidos++;
+  });
+  plantillas[eqDefecto] && plantillas[eqDefecto].sort((a,b)=>a.localeCompare(b,'es'));
+  EQUIPOS.forEach(eq=>{ if(plantillas[eq]) plantillas[eq].sort((a,b)=>a.localeCompare(b,'es')); });
+  renderPlantTabs(); renderPlantBody();
+  autoGuardar(); render();
+  let msg = '✅ '+añadidos+' jugadores importados';
+  if(yaExistian) msg += ', '+yaExistian+' ya existían (omitidos)';
+  if(equipoNoReconocido.length){
+    msg += '. ⚠️ Equipo no reconocido en: '+equipoNoReconocido.slice(0,3).join('; ')+(equipoNoReconocido.length>3?'...':'');
+  }
+  toast(msg);
+}
 function plantAñadirDesdeFecha(){
   const input = document.getElementById('plant-add-input');
   const nombre = input.value.trim().toUpperCase();
