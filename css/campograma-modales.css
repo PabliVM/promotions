@@ -450,20 +450,13 @@
 .c-triple{outline:3px solid #111827;outline-offset:1px;box-shadow:0 0 0 3px rgba(17,24,39,.35);}
 .ac-prueba-hint{padding:4px 9px 5px;font-size:10px;color:#5a6170;border-top:1px dashed #e2e8f0;font-style:italic;}
 /* ── SESIONES FIREBASE ── */
-#fb-overlay{position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;padding-top:60px;}
-#fb-overlay.open{display:flex;}
-#fb-box{background:#0f1729;border:1px solid rgba(200,168,0,.3);border-radius:14px;padding:18px;width:360px;max-width:94vw;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.7);}
-#fb-box h3{font-family:'Barlow Condensed',sans-serif;color:#C8A800;font-size:18px;margin:0 0 14px;letter-spacing:1px;}
-.fb-sesion-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:6px;gap:8px;}
-.fb-sesion-nombre{font-family:'Barlow Condensed',sans-serif;color:#fff;font-size:14px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.fb-sesion-ts{font-size:10px;color:rgba(255,255,255,.35);white-space:nowrap;}
-.fb-btn{padding:5px 12px;border-radius:7px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;}
-.fb-btn.cargar{background:#C8A800;color:#000;}
-.fb-btn.borrar{background:#ef4444;color:#fff;}
-#fb-nueva-row{display:flex;gap:8px;margin-top:14px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px;}
-#fb-nueva-inp{flex:1;padding:8px 12px;border-radius:8px;border:1px solid rgba(200,168,0,.3);background:rgba(255,255,255,.05);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;}
-#fb-nueva-inp::placeholder{color:rgba(255,255,255,.3);}
-.fb-empty{color:rgba(255,255,255,.3);font-size:13px;text-align:center;padding:20px 0;font-family:'Barlow Condensed',sans-serif;}
+/* Estilos de #fb-overlay/#fb-box/.fb-* movidos y unificados en campograma-semana.css
+   (estilo claro MAESTRO, consistente con el resto de modales) — aquí ya no se definen
+   para evitar el conflicto que había entre este archivo (oscuro/dorado, antiguo) y el
+   parche posterior en semana.css. */
+/* .fb-sesion-nombre y .fb-sesion-ts también centralizados en campograma-semana.css */
+/* .fb-btn, #fb-nueva-row, #fb-nueva-inp, .fb-empty también centralizados en
+   campograma-semana.css junto con el resto de estilos de este panel. */
 /* ── CALENDARIO SEMANA ── */
 #cal-overlay{
   position:fixed;inset:0;z-index:10250;
