@@ -465,6 +465,11 @@ body.dark .card-notas-input { background: #0d1117; border-color: #30363d; color:
 #fb-nueva-row { display:flex; gap: 8px; margin: 4px 20px 14px; padding-top: 14px; border-top: 1px solid #eef1f6; }
 #fb-nueva-inp { flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid #dfe1e6; background: #f8fafd; color: #1a1d23; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 13px; }
 #fb-nueva-inp::placeholder { color: #9ca3af; }
+.fb-seccion { margin: 0 20px 14px; padding-top: 12px; border-top: 1px solid #eef1f6; }
+.fb-seccion-titulo { font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.fb-seccion-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.fb-btn-secundario { background: #eef2ff; color: #2563eb; font-size: 11px; }
+.fb-btn-peligro { background: rgba(220,38,38,.1); color: #dc2626; font-size: 11px; }
 #fb-box > div:last-child { padding: 0 20px 16px; }
 
 /* Vista semana: banner partido y tipos flotan sobre el campo */
