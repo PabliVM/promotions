@@ -1021,8 +1021,18 @@ async function fbCargar(nombre){
 // Pide confirmación explícita antes de borrar nada.
 async function limpiarCamposResidualesConfirmar(){
   if(!window._fbReady){ toast('⏳ Firebase no conectado'); return; }
+  toast('🔍 Comprobando...');
+  const chk = await window.fbContarCamposResiduales(_fbSesionActiva || 'principal');
+  if(!chk || !chk.ok){
+    toast('❌ No se pudo comprobar: '+(chk && chk.message || ''));
+    return;
+  }
+  if(!chk.campos.length){
+    toast('✅ No hay campos residuales que limpiar — ya está todo limpio');
+    return;
+  }
   showAlert(
-    '🧹 Esto borrará SOLO los campos antiguos "data_por_eq.*" y "prominfo_por_eq.*" (restos de una función ya revertida). No toca nada más: ni plantillas, ni jugadores, ni histórico, ni nada que uses ahora. ¿Confirmas?',
+    '🧹 Se han encontrado '+chk.campos.length+' campos antiguos sin uso ("data_por_eq.*"/"prominfo_por_eq.*", restos de una función ya revertida). Se borrarán SOLO esos — no toca plantillas, jugadores, histórico ni nada que uses ahora. ¿Confirmas?',
     async ()=>{
       toast('🧹 Limpiando...');
       const res = await window.fbLimpiarCamposResiduales(_fbSesionActiva || 'principal');
