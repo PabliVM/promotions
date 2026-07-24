@@ -412,16 +412,53 @@ function plantAñadir(){
     toast('⚠️ Revisa: nombre parecido a '+lista);
   }
 }
-function _plantAñadirConfirmado(nombre){
+// Igual que plantAñadir(), pero preguntando desde qué día de la semana debe aparecer
+// disponible el jugador (en vez de en toda la semana por defecto).
+function plantAñadirDesdeFecha(){
+  const input = document.getElementById('plant-add-input');
+  const nombre = input.value.trim().toUpperCase();
+  if(!nombre){ input.focus(); return; }
+  if(plantEqActivo === 'JA_YOUTH' || plantEqActivo === '1ER EQUIPO'){
+    toast('⚠️ Esta opción no aplica aquí, usa "+ Añadir"');
+    return;
+  }
+  if(!plantillas[plantEqActivo]) plantillas[plantEqActivo]=[];
+  if(plantillas[plantEqActivo].includes(nombre)){
+    toast('⚠️ '+nombre+' ya está en '+plantEqActivo);
+    return;
+  }
+  const parecidos = buscarPosiblesDuplicados(nombre);
+  const nombreNorm = _normalizarNombre(nombre);
+  const exactoEnOtroEquipo = parecidos.find(n=>_normalizarNombre(n)===nombreNorm);
+  function continuar(){
+    abrirDiaAplicaModal(nombre, plantEqActivo, plantEqActivo, (diaIdx)=>{
+      _plantAñadirConfirmado(nombre, diaIdx);
+      if(parecidos.length){
+        const lista = parecidos.map(n=>n+' ('+(origen[n]||'?')+')').join(', ');
+        toast('⚠️ Revisa: nombre parecido a '+lista);
+      }
+    }, ()=>{ /* cancelado, no hacer nada */ });
+  }
+  if(exactoEnOtroEquipo){
+    showAlert(
+      '⚠️ "'+nombre+'" ya existe en '+(origen[exactoEnOtroEquipo]||'otro equipo')+'. Si continúas, quedará en LAS DOS plantillas a la vez. ¿Seguro que quieres añadirlo también aquí?',
+      continuar,
+      'Añadir de todas formas'
+    );
+    return;
+  }
+  continuar();
+}
+function _plantAñadirConfirmado(nombre, idxDesde){
   const input = document.getElementById('plant-add-input');
   plantillas[plantEqActivo].push(nombre);
   plantillas[plantEqActivo].sort((a,b)=>a.localeCompare(b,'es'));
   origen[nombre] = plantEqActivo;
   if(plantEqActivo !== '1ER EQUIPO'){
-    // Solo HOY en adelante: un fichaje nuevo no debe aparecer en días anteriores a su alta
-    const idxHoy = diaHoyIdx();
+    // En TODOS los días de la semana activa por defecto — o solo desde el día elegido
+    // (idxDesde) si se ha usado "Añadir desde fecha".
     DIAS.forEach((d,i)=>{
-      if(i < idxHoy) return;
+      if(typeof idxDesde === 'number' && i < idxDesde) return;
       if(!(data[d][plantEqActivo].disponibles||[]).includes(nombre) &&
          !ZONAS.some(z=>(data[d][plantEqActivo][z]||[]).includes(nombre))){
         if(!data[d][plantEqActivo].disponibles) data[d][plantEqActivo].disponibles = [];
