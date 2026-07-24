@@ -1658,10 +1658,9 @@ function renderMultiEqBar(){
 function exportarDatos(){
   try{
     const payload = {
-      data, pos, plantillas, origen,
-      colNames, extraZonas, promInfo, multiEq, fechas: FECHAS,
-      ts: new Date().toISOString(),
-      version: 'rm_cantera_v2'
+      ...buildPayload(false),
+      exportadoEl: new Date().toISOString(),
+      version: 'rm_cantera_v3_completo'
     };
     const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], {type:'application/json'});
@@ -1669,10 +1668,10 @@ function exportarDatos(){
     const a    = document.createElement('a');
     const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g,'-');
     a.href = url;
-    a.download = 'campograma_datos_'+fecha+'.json';
+    a.download = 'campograma_backup_'+fecha+'.json';
     a.click();
     URL.revokeObjectURL(url);
-    toast('✅ Datos exportados correctamente');
+    toast('✅ Copia de seguridad completa descargada');
   }catch(e){ toast('❌ Error al exportar: '+e.message); }
 }
 // ── Abrir selector de fichero
@@ -1690,24 +1689,34 @@ function cargarFicheroImport(ev){
       const payload = JSON.parse(e.target.result);
       if(!payload.data){ toast('❌ Fichero no válido'); return; }
       if(!confirm('¿Cargar estos datos? Se sobreescribirá todo lo actual.')){return;}
-      if(payload.data)       data       = payload.data;
-      if(payload.pos)        pos        = payload.pos;
-      if(payload.plantillas) plantillas = payload.plantillas;
-      if(payload.origen)     Object.assign(origen, payload.origen);
-      if(payload.colNames)   colNames   = payload.colNames;
-      if(payload.porteros)    porteros   = payload.porteros;
-      if(payload.movimientos) movimientos = payload.movimientos;
-      if(payload.extraZonas) extraZonas = payload.extraZonas;
-      if(payload.promInfo)   promInfo   = payload.promInfo;
-    if(payload.multiEq)    multiEq    = payload.multiEq;
-    if(payload.modoPartido) modoPartido = payload.modoPartido;
-    if(payload.rivales)          rivales              = payload.rivales;
-    if(payload.primerEquipoJugadores) primerEquipoJugadores = payload.primerEquipoJugadores;
-      if(payload.fechas)     Object.assign(FECHAS, payload.fechas);
+      if(payload.data)                  data = payload.data;
+      if(payload.pos)                   pos = payload.pos;
+      if(payload.plantillas)            plantillas = payload.plantillas;
+      if(payload.origen)                Object.assign(origen, payload.origen);
+      if(payload.colNames)              colNames = payload.colNames;
+      if(payload.porteros)              porteros = payload.porteros;
+      if(payload.movimientos)           movimientos = payload.movimientos;
+      if(payload.extraZonas)            extraZonas = payload.extraZonas;
+      if(payload.promInfo)              promInfo = payload.promInfo;
+      if(payload.multiEq)               multiEq = payload.multiEq;
+      if(payload.modoPartido)           modoPartido = payload.modoPartido;
+      if(payload.modoDescanso)          modoDescanso = payload.modoDescanso;
+      if(payload.modoUYL)               modoUYL = payload.modoUYL;
+      if(payload.listaUYL)              listaUYL = payload.listaUYL;
+      if(payload.listaUYLExcl)          window.listaUYLExcl = payload.listaUYLExcl;
+      if(payload.tipoPartido)           tipoPartido = payload.tipoPartido;
+      if(payload.tiposConfig)           tiposConfig = payload.tiposConfig;
+      if(payload.rivales)               window.rivales = payload.rivales;
+      if(payload.primerEquipoJugadores) primerEquipoJugadores = payload.primerEquipoJugadores;
+      if(payload.historicoJugador)      historicoJugador = payload.historicoJugador;
+      if(payload.semanasGuardadas)      _semanasGuardadas = payload.semanasGuardadas;
+      if(payload.notas)                 window._notasData = payload.notas;
+      if(payload.fechas)                Object.assign(FECHAS, payload.fechas);
+      window._saltarFrenoGuardado = true; // restauración explícita ya confirmada por el usuario
       autoGuardar();
       render();
       renderDias();
-      toast('✅ Datos cargados correctamente');
+      toast('✅ Copia de seguridad restaurada correctamente (con histórico y semanas incluidos)');
     }catch(err){ toast('❌ Error al leer fichero: '+err.message); }
   };
   reader.readAsText(file);
