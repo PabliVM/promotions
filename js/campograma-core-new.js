@@ -291,6 +291,58 @@ function diaHoyIdx(){
 // permite elegir otro día para tapar huecos si se te olvidó hacerlo a tiempo).
 // Modal para copiar un equipo de un día concreto a otro día: elegir origen, destino
 // (por defecto distinto al origen) y si solo el campo o todo el equipo.
+// Modal con calendario NATIVO de verdad (input type=date) para elegir desde qué fecha
+// aparece disponible un jugador nuevo. Limitado a los días de la semana ACTIVA, que es
+// lo único que la app puede usar ahora mismo (los datos se guardan por semana visible).
+function abrirCalendarioFechaModal(nombre, onConfirmar){
+  const fechasSemana = DIAS.map(d=>(window.FECHAS_COMPLETAS||{})[d]).filter(Boolean);
+  if(!fechasSemana.length){ onConfirmar(0); return; } // fallback de seguridad
+  const minFecha = fechasSemana[0];
+  const maxFecha = fechasSemana[fechasSemana.length-1];
+  const hoyFecha = (window.FECHAS_COMPLETAS||{})[dia] || minFecha;
+
+  const overlay = mk('div','');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10400;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);';
+  const box = mk('div','');
+  box.style.cssText = 'width:100%;max-width:360px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.15);';
+  const hdr = mk('div','');
+  hdr.style.cssText = 'background:#2563eb;padding:14px 18px;';
+  hdr.innerHTML = `<div style="font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:800;color:#fff;">${nombre}: ¿desde qué fecha?</div>`;
+  const body = mk('div','');
+  body.style.cssText = 'padding:18px;';
+  const sub = mk('div','');
+  sub.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:12px;color:#5a6170;margin-bottom:12px;';
+  sub.textContent = 'Solo se puede elegir dentro de la semana que estás viendo ahora mismo.';
+  body.appendChild(sub);
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.min = minFecha; inp.max = maxFecha; inp.value = hoyFecha;
+  inp.style.cssText = 'width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #dfe1e6;font-family:\'Segoe UI\',sans-serif;font-size:14px;color:#1a1d23;margin-bottom:16px;box-sizing:border-box;';
+  body.appendChild(inp);
+  const btnRow = mk('div','');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:1px solid #dfe1e6;background:transparent;color:#5a6170;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  const okBtn = document.createElement('button');
+  okBtn.textContent = 'Añadir';
+  okBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
+  body.appendChild(btnRow);
+  box.appendChild(hdr); box.appendChild(body);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  function cerrar(){ overlay.remove(); }
+  cancelBtn.onclick = cerrar;
+  overlay.onclick = (e)=>{ if(e.target===overlay) cerrar(); };
+  okBtn.onclick = ()=>{
+    const fechaElegida = inp.value;
+    if(!fechaElegida){ toast('⚠️ Elige una fecha'); return; }
+    const idx = fechasSemana.indexOf(fechaElegida);
+    cerrar();
+    onConfirmar(idx >= 0 ? idx : 0);
+  };
+}
 function abrirCopiarDiaModal(eq, diaOrigenDefecto){
   const overlay = mk('div','');
   overlay.id = 'copiar-dia-overlay';
