@@ -208,6 +208,9 @@ try {
       if(!snap.exists){
         return { ok:false, reason:'not_found', message:'La sesión no existe en Firebase.' };
       }
+      // Diagnóstico de solo lectura: lista todos los campos guardados, para poder ver
+      // a simple vista si hay algo residual/sin usar. No borra ni cambia nada.
+      console.log('[diag-campos] Campos guardados en el documento:', Object.keys(snap.data()));
       return { ok:true, data: _reconstruirDesdePorEq(snap.data()) };
     }catch(e){
       console.error('fbCargarSesion error:', e);
