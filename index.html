@@ -38,6 +38,7 @@
 </script>
 <!-- html2canvas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <!-- Firebase compat 9.23.0 -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -353,7 +354,8 @@
     </div>
     <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
       <button class="fb-btn" style="background:rgba(220,38,38,.15);color:#fca5a5;font-size:11px;" onclick="limpiarCamposResidualesConfirmar()" title="Borra campos antiguos sin uso (data_por_eq/prominfo_por_eq)">🧹 Limpiar residuales</button>
-      <button class="fb-btn" style="background:#eef2ff;color:#2563eb;font-size:11px;" onclick="exportarDatos()" title="Descarga un archivo con todo, para guardar en tu ordenador">📥 Descargar copia</button>
+      <button class="fb-btn" style="background:#eef2ff;color:#2563eb;font-size:11px;" onclick="exportarDatos()" title="Descarga un archivo con todo, para guardar en tu ordenador">📥 Descargar copia (.json)</button>
+      <button class="fb-btn" style="background:#eef2ff;color:#2563eb;font-size:11px;" onclick="exportarPDF()" title="PDF legible con todas las plantillas">📄 Descargar PDF</button>
       <button class="fb-btn" style="background:#eef2ff;color:#2563eb;font-size:11px;" onclick="importarDatos()" title="Restaura desde un archivo descargado antes">📤 Restaurar de archivo</button>
     </div>
     <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
@@ -478,7 +480,6 @@
 <script src="js/campograma-buildcard-new.js"></script>
 <script src="js/campograma-render-new.js"></script>
 <script src="js/campograma-modos-new.js"></script>
-<script src="js/campograma-captura-new.js"></script>
 <script src="js/campograma-drag-new.js"></script>
 <script src="js/campograma-copiar-new.js"></script>
 <script src="js/campograma-stats-new.js"></script>
