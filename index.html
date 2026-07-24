@@ -351,8 +351,12 @@
       <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)">
       <button class="fb-btn cargar" onclick="fbGuardarActual()">💾 Guardar</button>
     </div>
-    <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-      <button class="fb-btn" style="background:rgba(220,38,38,.15);color:#fca5a5;font-size:11px;" onclick="limpiarCamposResidualesConfirmar()" title="Borra campos antiguos sin uso (data_por_eq/prominfo_por_eq)">🧹 Limpiar campos residuales</button>
+    <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+      <button class="fb-btn" style="background:rgba(220,38,38,.15);color:#fca5a5;font-size:11px;" onclick="limpiarCamposResidualesConfirmar()" title="Borra campos antiguos sin uso (data_por_eq/prominfo_por_eq)">🧹 Limpiar residuales</button>
+      <button class="fb-btn" style="background:#eef2ff;color:#2563eb;font-size:11px;" onclick="exportarDatos()" title="Descarga un archivo con todo, para guardar en tu ordenador">📥 Descargar copia</button>
+      <button class="fb-btn" style="background:#eef2ff;color:#2563eb;font-size:11px;" onclick="importarDatos()" title="Restaura desde un archivo descargado antes">📤 Restaurar de archivo</button>
+    </div>
+    <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
       <div id="fb-sesion-activa-lbl" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#60b4ff;padding:4px 0;"></div>
       <button class="fb-btn" style="background:rgba(255,255,255,.1);color:#fff;" onclick="cerrarFbPanel()">Cerrar</button>
     </div>
@@ -527,7 +531,6 @@ if(cargado) render();
     <span>Control</span>
   </button>
 </nav>
-<input type="file" id="import-file" accept=".json" style="display:none" onchange="cargarFicheroImport(event)">
 <footer class="app-footer-maestro">
   Cantera del Real Madrid CF · Promociones
 </footer>
