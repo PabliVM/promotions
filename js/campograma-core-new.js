@@ -862,9 +862,9 @@ function abrirFbPanel(){
   if(actLbl) actLbl.textContent = _fbSesionActiva ? '🔄 Sync: '+_fbSesionActiva : 'Sin sesión activa';
   // Rellenar el nombre con la fecha de hoy por defecto (se puede cambiar si se quiere)
   const inp = document.getElementById('fb-nueva-inp');
-  if(inp && !inp.value){
+  if(inp){
     const hoy = new Date();
-    inp.value = 'Backup ' + String(hoy.getDate()).padStart(2,'0') + '/' + String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear();
+    inp.value = 'Backup ' + String(hoy.getDate()).padStart(2,'0') + '/' + String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear() + ' ' + String(hoy.getHours()).padStart(2,'0') + ':' + String(hoy.getMinutes()).padStart(2,'0');
   }
   renderFbLista();
 }
