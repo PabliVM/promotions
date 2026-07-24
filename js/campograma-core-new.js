@@ -808,6 +808,12 @@ function abrirFbPanel(){
   // Mostrar sesión activa
   const actLbl = document.getElementById('fb-sesion-activa-lbl');
   if(actLbl) actLbl.textContent = _fbSesionActiva ? '🔄 Sync: '+_fbSesionActiva : 'Sin sesión activa';
+  // Rellenar el nombre con la fecha de hoy por defecto (se puede cambiar si se quiere)
+  const inp = document.getElementById('fb-nueva-inp');
+  if(inp && !inp.value){
+    const hoy = new Date();
+    inp.value = 'Backup ' + String(hoy.getDate()).padStart(2,'0') + '/' + String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear();
+  }
   renderFbLista();
 }
 function cerrarFbPanel(){
