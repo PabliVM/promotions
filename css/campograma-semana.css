@@ -447,18 +447,25 @@ body.dark .card-notas-input { background: #0d1117; border-color: #30363d; color:
 #season-box { max-width: 560px; border-radius: 12px; }
 #season-box-hdr { border-radius: 0; }
 
-/* Firebase panel */
-#fb-overlay { align-items: flex-start; padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); }
-#fb-box { max-width: 560px; width: 100%; background: #fff; border-radius: 12px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,.15); padding: 0; overflow: hidden; }
-#fb-box h3 { background: #2563eb; color: #fff; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 15px; font-weight: 700; margin: 0; padding: 14px 20px; letter-spacing: 0; }
-.fb-sesion-row { background: #f8fafd; border-radius: 8px; border: 1px solid #e8eef8; }
-.fb-sesion-nombre { color: #1a1d23; font-family: 'Segoe UI',-apple-system,sans-serif; }
-.fb-sesion-ts { color: #9ca3af; }
-.fb-btn.cargar { background: #2563eb; color: #fff; border-radius: 8px; }
-.fb-btn.borrar { background: #ef4444; color: #fff; border-radius: 8px; }
-#fb-nueva-inp { border: 1px solid #dfe1e6; background: #f8fafd; color: #1a1d23; border-radius: 8px; font-family: 'Segoe UI',-apple-system,sans-serif; }
+/* Firebase panel — bloque completo y autosuficiente (antes estaba repartido entre
+   2 archivos con reglas viejas en conflicto; ahora todo vive aquí, coherente con el
+   resto de modales de hoy: fondo blanco, cabecera azul, Segoe UI) */
+#fb-overlay { position:fixed; inset:0; z-index:10020; display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding: calc(20px + env(safe-area-inset-top,0px)) 16px 24px; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); }
+#fb-overlay.open { display:flex; }
+#fb-box { max-width: 480px; width: 100%; background: #fff; border-radius: 14px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,.18); padding: 0; overflow: hidden; max-height: 80vh; display:flex; flex-direction:column; }
+#fb-box h3 { background: #2563eb; color: #fff; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 15px; font-weight: 800; margin: 0; padding: 14px 20px; letter-spacing: 0; }
+#fb-lista { padding: 14px 20px 4px; overflow-y:auto; flex:1; }
+.fb-sesion-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding: 9px 12px; border-radius: 10px; background: #f8fafd; border: 1px solid #e8eef8; margin-bottom: 8px; }
+.fb-sesion-nombre { color: #1a1d23; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 13px; font-weight: 600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fb-sesion-ts { color: #9ca3af; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 11px; white-space:nowrap; }
+.fb-btn { padding: 6px 12px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; cursor: pointer; font-family: 'Segoe UI',-apple-system,sans-serif; }
+.fb-btn.cargar { background: #2563eb; color: #fff; }
+.fb-btn.borrar { background: #ef4444; color: #fff; }
+.fb-empty { color: #9ca3af; font-size: 13px; text-align:center; padding: 20px 0; font-family: 'Segoe UI',-apple-system,sans-serif; }
+#fb-nueva-row { display:flex; gap: 8px; margin: 4px 20px 14px; padding-top: 14px; border-top: 1px solid #eef1f6; }
+#fb-nueva-inp { flex:1; padding: 8px 12px; border-radius: 8px; border: 1px solid #dfe1e6; background: #f8fafd; color: #1a1d23; font-family: 'Segoe UI',-apple-system,sans-serif; font-size: 13px; }
 #fb-nueva-inp::placeholder { color: #9ca3af; }
-#fb-box .fb-sesion-row, #fb-box h3, #fb-nueva-row { padding-left: 20px; padding-right: 20px; }
+#fb-box > div:last-child { padding: 0 20px 16px; }
 
 /* Vista semana: banner partido y tipos flotan sobre el campo */
 .semana-td-card .partido-banner {
