@@ -477,6 +477,16 @@ function move(fromEq,fromZona,toEq,toZona,nombre){
   arr.splice(i,1);
   data[dia][toEq][toZona].push(nombre);
   borrarMultiEq(dia, nombre, fromEq);
+  // ── Si se saca al jugador de "Promocionados" (promovidos_1er) hacia CUALQUIER otra
+  // zona, la promoción queda cancelada: hay que limpiar el/los destino(s) donde estaba
+  // promocionado (su disponibles/campo en el equipo destino, o su ficha en 1er equipo)
+  // y borrar el registro en promInfo — si no, se queda "medio promocionado": desaparece
+  // de Promocionados pero sigue apareciendo doblado en el equipo destino y en Control.
+  if(fromZona === 'promovidos_1er'){
+    const destinos = getDestinos(dia, fromEq, nombre);
+    destinos.forEach(destino=>limpiarUnDestino(dia, destino, nombre));
+    if(promInfo[dia]?.[fromEq]) delete promInfo[dia][fromEq][nombre];
+  }
   // ── Si vuelve al campo de SU equipo propio real DESDE OTRO EQUIPO, limpiar promoción
   // (fromEq!==toEq: un movimiento interno en su propio equipo NUNCA debe tocar la promoción)
   if(origen[nombre] && toEq === origen[nombre] && toZona === 'campo' && fromEq !== toEq){
