@@ -490,7 +490,7 @@ function abrirDiaAplicaModal(nombre, eqViejo, nuevoEq, onConfirmar, onCancelar){
   box.style.cssText = 'width:100%;max-width:380px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.15);';
   const hdr = mk('div','');
   hdr.style.cssText = 'background:#2563eb;padding:14px 18px;';
-  hdr.innerHTML = `<div style="font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:800;color:#fff;">${nombre}: ${eqViejo} → ${nuevoEq}</div>`;
+  hdr.innerHTML = `<div style="font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:800;color:#fff;">${eqViejo===nuevoEq ? nombre+': ¿desde qué día?' : nombre+': '+eqViejo+' → '+nuevoEq}</div>`;
   const body = mk('div','');
   body.style.cssText = 'padding:16px 18px;';
   const sub = mk('div','');
@@ -2127,13 +2127,12 @@ async function arrancarDesdeFirebase(){
         for(const z of ZONAS) if(!data[d][e][z]) data[d][e][z]=[];
       }
       DIAS.forEach(d=>{if(!promInfo[d])promInfo[d]={};EQUIPOS.forEach(eq=>{if(!promInfo[d][eq])promInfo[d][eq]={};});});
-      // Sincronizar plantillas → disponibles (solo HOY en adelante, nunca días pasados —
-      // si no, un fichaje nuevo aparecería retroactivamente en días anteriores a su alta)
-      const _idxHoyBoot = diaHoyIdx();
+      // Sincronizar plantillas → disponibles en TODOS los días de la semana activa —
+      // si un jugador de la plantilla no está en ninguna zona ese día, debe verse
+      // disponible, sin restringirlo a partir de hoy.
       EQUIPOS.forEach(eq=>{
         (plantillas[eq]||[]).forEach(nombre=>{
-          DIAS.forEach((d,i)=>{
-            if(i < _idxHoyBoot) return;
+          DIAS.forEach((d)=>{
             const enAlgunaZona=ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre));
             if(!enAlgunaZona && !data[d][eq].disponibles.includes(nombre))
               data[d][eq].disponibles.push(nombre);
