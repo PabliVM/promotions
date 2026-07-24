@@ -908,22 +908,17 @@ async function fbGuardarActual(){
   const nombre = inp.value.trim();
   if(!nombre){ toast('⚠️ Escribe un nombre'); return; }
   toast('☁️ Guardando...');
-  const payload = {
-    data, pos, plantillas, origen,
-    colNames, extraZonas, promInfo, multiEq,
-    modoPartido, modoDescanso,
-    modoUYL, listaUYL, listaUYLExcl: window.listaUYLExcl||[],
-    tipoPartido, tiposConfig,
-    rivales: window.rivales||{},
-    primerEquipoJugadores,
-    fechas: FECHAS
-  };
+  const payload = buildPayload(false); // payload completo (histórico, semanas, todo)
   const res = await window.fbGuardarSesion(nombre, payload);
   if(res.ok){
     _fbSesionActiva = nombre;
     toast('✅ Guardado en la nube: '+nombre);
     inp.value = '';
     renderFbLista();
+    // Descargar automáticamente las 2 copias en el ordenador, para no tener que
+    // pulsar nada más aparte
+    exportarDatos();
+    exportarPDF();
   } else {
     toast('❌ Firebase: ' + (res.message || 'error al guardar'));
   }
