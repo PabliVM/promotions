@@ -118,6 +118,7 @@
       <div id="plant-add-row">
         <input id="plant-add-input" type="text" placeholder="Nombre del jugador…" onkeydown="if(event.key==='Enter')plantAñadir()" oninput="filtrarUYLDrop()" onfocus="filtrarUYLDrop()" onblur="setTimeout(()=>cerrarUYLDrop(),200)"/>
         <button id="plant-add-btn" onclick="plantAñadir()">+ Añadir</button>
+        <button id="plant-add-desde-btn" onclick="plantAñadirDesdeFecha()" title="Elegir desde qué día aparece disponible" style="margin-left:6px;">📅 Añadir desde fecha</button>
         <div id="plant-uyl-dropdown"></div>
       </div>
       <div id="plant-uyl-add-row" style="display:none;gap:6px;margin-bottom:10px;">
