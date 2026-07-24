@@ -1655,6 +1655,66 @@ function renderMultiEqBar(){
   bar.appendChild(btnFoto);
 }
 // ── Exportar datos a fichero JSON
+// PDF legible con todas las plantillas (equipo por equipo) — para leer/imprimir,
+// aparte del .json funcional (ese sí sirve para restaurar; este es solo para consulta).
+function exportarPDF(){
+  try{
+    if(typeof window.jspdf === 'undefined'){ toast('❌ No se pudo cargar el generador de PDF'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4' });
+    const margenIzq = 16;
+    let y = 20;
+    const anchoUtil = 210 - margenIzq*2;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(16);
+    doc.setTextColor(37,99,235); // #2563eb
+    doc.text('Real Madrid Cantera — Plantillas', margenIzq, y);
+    y += 6;
+    doc.setFontSize(9);
+    doc.setTextColor(120,120,120);
+    doc.setFont('helvetica','normal');
+    doc.text('Generado: '+new Date().toLocaleString('es-ES'), margenIzq, y);
+    y += 10;
+    const equiposOrden = ['1ER EQUIPO', ...EQUIPOS];
+    equiposOrden.forEach(eq=>{
+      const jugs = (plantillas[eq]||[]).slice().sort((a,b)=>a.localeCompare(b,'es'));
+      // Salto de página si no cabe ni la cabecera + 2 líneas
+      if(y > 270){ doc.addPage(); y = 20; }
+      doc.setFillColor(37,99,235);
+      doc.rect(margenIzq, y-4.5, anchoUtil, 7, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(11);
+      doc.text(eq+'  ('+jugs.length+' jugadores)', margenIzq+3, y);
+      y += 8;
+      doc.setTextColor(30,30,30);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(10);
+      if(!jugs.length){
+        doc.setTextColor(150,150,150);
+        doc.text('— sin jugadores —', margenIzq+3, y);
+        y += 6;
+      } else {
+        const colAncho = anchoUtil/2;
+        jugs.forEach((nombre,i)=>{
+          if(y > 285){ doc.addPage(); y = 20; }
+          const esPor = porteros.includes(nombre);
+          const col = i % 2;
+          const fila = Math.floor(i/2);
+          const x = margenIzq + 3 + col*colAncho;
+          const yy = y + fila*5.5;
+          doc.text((i+1)+'. '+nombre+(esPor?' (POR)':''), x, yy);
+        });
+        const filas = Math.ceil(jugs.length/2);
+        y += filas*5.5 + 4;
+      }
+      y += 3;
+    });
+    const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g,'-');
+    doc.save('campograma_plantillas_'+fecha+'.pdf');
+    toast('✅ PDF descargado');
+  }catch(e){ toast('❌ Error al generar PDF: '+e.message); console.error(e); }
+}
 function exportarDatos(){
   try{
     const payload = {
