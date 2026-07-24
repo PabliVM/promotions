@@ -174,6 +174,20 @@ try {
   // Limpieza de campos residuales: borra SOLO los campos que empiecen por
   // "data_por_eq." o "prominfo_por_eq." (restos muertos de una función revertida hace
   // tiempo, confirmados sin uso). No toca ningún otro campo del documento.
+  // Solo cuenta/lista los campos residuales, SIN borrar nada — para poder mostrar al
+  // usuario un mensaje real de qué se va a borrar antes de pedir confirmación.
+  window.fbContarCamposResiduales = async function(nombre){
+    try{
+      const snap = await db.collection('sesiones').doc(nombre).get();
+      if(!snap.exists) return { ok:true, campos:[] };
+      const campos = Object.keys(snap.data());
+      const encontrados = campos.filter(k=>k.startsWith('data_por_eq.') || k.startsWith('prominfo_por_eq.'));
+      return { ok:true, campos: encontrados };
+    }catch(e){
+      console.error('fbContarCamposResiduales error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e), campos:[] };
+    }
+  };
   window.fbLimpiarCamposResiduales = async function(nombre){
     try{
       const snap = await db.collection('sesiones').doc(nombre).get();
@@ -412,6 +426,7 @@ try {
   window.fbLogin = async function(){ return { ok:false, message: MSG }; };
   window.fbLogout = _fbStub(MSG);
   window.fbGuardarSesion = _fbStub(MSG);
+  window.fbContarCamposResiduales = async function(){ return { ok:false, campos:[], message:MSG }; };
   window.fbLimpiarCamposResiduales = _fbStub(MSG);
   window.fbCargarSesion = _fbStub(MSG);
   window.fbListarSesiones = _fbStub(MSG);
