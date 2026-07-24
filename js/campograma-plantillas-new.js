@@ -431,13 +431,13 @@ function plantAñadirDesdeFecha(){
   const nombreNorm = _normalizarNombre(nombre);
   const exactoEnOtroEquipo = parecidos.find(n=>_normalizarNombre(n)===nombreNorm);
   function continuar(){
-    abrirDiaAplicaModal(nombre, plantEqActivo, plantEqActivo, (diaIdx)=>{
+    abrirCalendarioFechaModal(nombre, (diaIdx)=>{
       _plantAñadirConfirmado(nombre, diaIdx);
       if(parecidos.length){
         const lista = parecidos.map(n=>n+' ('+(origen[n]||'?')+')').join(', ');
         toast('⚠️ Revisa: nombre parecido a '+lista);
       }
-    }, ()=>{ /* cancelado, no hacer nada */ });
+    });
   }
   if(exactoEnOtroEquipo){
     showAlert(
