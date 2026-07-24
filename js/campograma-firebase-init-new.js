@@ -171,6 +171,31 @@ try {
     return out;
   }
   // Guardar sesión en Firebase
+  // Limpieza de campos residuales: borra SOLO los campos que empiecen por
+  // "data_por_eq." o "prominfo_por_eq." (restos muertos de una función revertida hace
+  // tiempo, confirmados sin uso). No toca ningún otro campo del documento.
+  window.fbLimpiarCamposResiduales = async function(nombre){
+    try{
+      const snap = await db.collection('sesiones').doc(nombre).get();
+      if(!snap.exists) return { ok:false, reason:'not_found' };
+      const campos = Object.keys(snap.data());
+      const aBorrar = campos.filter(k=>k.startsWith('data_por_eq.') || k.startsWith('prominfo_por_eq.'));
+      if(!aBorrar.length) return { ok:true, borrados:0 };
+      // IMPORTANTE: estos nombres de campo tienen puntos LITERALES (no son rutas
+      // anidadas) — hay que usar FieldPath con el nombre completo como UN solo
+      // segmento, si no Firestore los interpretaría como campo->subcampo->subcampo.
+      const args = [];
+      aBorrar.forEach(k=>{
+        args.push(new firebase.firestore.FieldPath(k));
+        args.push(firebase.firestore.FieldValue.delete());
+      });
+      await db.collection('sesiones').doc(nombre).update(...args);
+      return { ok:true, borrados: aBorrar.length, campos: aBorrar };
+    }catch(e){
+      console.error('fbLimpiarCamposResiduales error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
   window.fbGuardarSesion = async function(nombre, payload){
     try{
       const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payload)));
@@ -208,9 +233,6 @@ try {
       if(!snap.exists){
         return { ok:false, reason:'not_found', message:'La sesión no existe en Firebase.' };
       }
-      // Diagnóstico de solo lectura: lista todos los campos guardados, para poder ver
-      // a simple vista si hay algo residual/sin usar. No borra ni cambia nada.
-      console.log('[diag-campos] Campos guardados en el documento:', Object.keys(snap.data()));
       return { ok:true, data: _reconstruirDesdePorEq(snap.data()) };
     }catch(e){
       console.error('fbCargarSesion error:', e);
@@ -390,6 +412,7 @@ try {
   window.fbLogin = async function(){ return { ok:false, message: MSG }; };
   window.fbLogout = _fbStub(MSG);
   window.fbGuardarSesion = _fbStub(MSG);
+  window.fbLimpiarCamposResiduales = _fbStub(MSG);
   window.fbCargarSesion = _fbStub(MSG);
   window.fbListarSesiones = _fbStub(MSG);
   window.fbEliminarSesion = _fbStub(MSG);
