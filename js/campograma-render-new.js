@@ -200,6 +200,21 @@ function aplicarSemana(){
   guardarFotoSemanaActual();
   FECHAS = calcFechasSemana(_calLunesSel);
   if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
+  // Sincronizar plantillas → disponibles en la semana recién cargada/creada — por si se
+  // han añadido jugadores nuevos a la plantilla DESPUÉS de que esta semana se archivara
+  // (si no, esos jugadores nuevos no aparecerían en los días de una semana ya visitada).
+  // Solo AÑADE lo que falte, nunca quita ni sobrescribe nada que ya hubiera.
+  EQUIPOS.forEach(eq=>{
+    (plantillas[eq]||[]).forEach(nombre=>{
+      DIAS.forEach(d=>{
+        if(!data[d] || !data[d][eq]) return;
+        const enAlgunaZona = ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre));
+        if(!enAlgunaZona && !data[d][eq].disponibles.includes(nombre)){
+          data[d][eq].disponibles.push(nombre);
+        }
+      });
+    });
+  });
   // Si hoy cae dentro de esta semana, seleccionar ese día automáticamente
   DIAS.forEach(d=>{
     const [dd,mm] = (FECHAS[d]||'').split('/');
