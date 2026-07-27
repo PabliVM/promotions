@@ -594,7 +594,7 @@ function abrirDiaAplicaModal(nombre, eqViejo, nuevoEq, onConfirmar, onCancelar){
 }
 function countLabel(eq,campo){
   let p=0,j=0;
-  campo.forEach((n,i)=>{ if(esPortero(eq,n,i)) p++; else j++; });
+  campo.forEach((n)=>{ if(porteros.includes(n)) p++; else j++; });
   return p===0 ? campo.length+'' : j+'+'+p+'P';
 }
 function updateCount(eq){
@@ -716,7 +716,8 @@ function autoAlinear(eq, diaP){
 // ══════════════════════════════════════════════════
 // AUTOCOMPLETE — desplegable para añadir jugadores
 // ══════════════════════════════════════════════════
-function candidatos(eq, zona){
+function candidatos(eq, zona, diaParam){
+  const d0 = diaParam || dia;
   const todos = new Set();
   // Solo jugadores de OTROS equipos (nunca del propio)
   EQUIPOS.forEach(e=>{
@@ -728,10 +729,10 @@ function candidatos(eq, zona){
     if(e===eq) return;
     ZONAS.forEach(z=> (data[d][e][z]||[]).forEach(n=>todos.add(n)));
   }));
-  const enZona = new Set(data[dia][eq][zona]||[]);
+  const enZona = new Set(data[d0][eq][zona]||[]);
   // También excluir los que ya están en cualquier zona de este equipo hoy
   const enEquipo = new Set();
-  ZONAS.forEach(z=>(data[dia][eq][z]||[]).forEach(n=>enEquipo.add(n)));
+  ZONAS.forEach(z=>(data[d0][eq][z]||[]).forEach(n=>enEquipo.add(n)));
   return [...todos]
     .filter(n=>!enZona.has(n) && !enEquipo.has(n))
     .sort((a,b)=>{
@@ -741,6 +742,11 @@ function candidatos(eq, zona){
     });
 }
 function buildAddInput(eq, zona){
+  // Capturar el día ACTUAL en el momento en que se construye este desplegable (importante
+  // en la vista semana, donde el día global cambia varias veces seguidas al construir
+  // todas las tarjetas — sin esto, el desplegable de una fila usaría el día que quedó
+  // puesto al final, no el de su propia fila).
+  const diaLocal = dia;
   const wrap  = mk('div','zona-add');
   const input = mk('input','zona-add-input');
   input.type='text';
@@ -753,7 +759,7 @@ function buildAddInput(eq, zona){
   function filtrar(){
     const q = input.value.trim().toLowerCase();
     list.innerHTML=''; selIdx=-1;
-    const todos = candidatos(eq,zona).filter(n=>!q||n.toLowerCase().includes(q));
+    const todos = candidatos(eq,zona,diaLocal).filter(n=>!q||n.toLowerCase().includes(q));
     const hayResultados = todos.length > 0;
     if(hayResultados){
       // Agrupar por equipo de origen
@@ -783,7 +789,7 @@ function buildAddInput(eq, zona){
   function elegirPrueba(nombre){
     // Jugador a prueba: se marca en origen como null/'PRUEBA'
     origen[nombre] = 'PRUEBA';
-    data[dia][eq].disponibles.push(nombre);
+    data[diaLocal][eq].disponibles.push(nombre);
     toast('⚡ '+nombre+' añadido a prueba en '+eq);
     input.value=''; list.classList.remove('open');
     render();
@@ -796,15 +802,15 @@ function buildAddInput(eq, zona){
       // Quitarlo de donde esté AHORA en su equipo origen (campo, disponibles, banquillo...)
       // — es una transferencia real, no debe quedarse duplicado ahí.
       ZONAS_ACTIVAS.forEach(z=>{
-        const arr = data[dia][eqPropio]?.[z];
+        const arr = data[diaLocal][eqPropio]?.[z];
         if(!arr) return;
         const i = arr.indexOf(nombre);
-        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(dia,eqPropio,nombre)]; }
+        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(diaLocal,eqPropio,nombre)]; }
       });
       // Misma función que usa el flujo "promocionar desde origen" — comportamiento idéntico
       // sea cual sea el punto desde el que se inicie la acción. Siempre a Disponibles,
       // nunca directo al campo (el usuario lo coloca él mismo después si quiere).
-      ejecutarPromocion(nombre, eqPropio, eq, dia);
+      ejecutarPromocion(nombre, eqPropio, eq, diaLocal);
       toast(nombre+' promocionado a '+eq);
       input.value=''; list.classList.remove('open');
       render();
@@ -815,10 +821,10 @@ function buildAddInput(eq, zona){
     // Evitar duplicado dentro del MISMO equipo: quitarlo de cualquier otra zona suya en este equipo
     ZONAS_ACTIVAS.forEach(z=>{
       if(z===zona) return;
-      const arr = data[dia][eq]?.[z];
+      const arr = data[diaLocal][eq]?.[z];
       if(arr){
         const i = arr.indexOf(nombre);
-        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(dia,eq,nombre)]; }
+        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(diaLocal,eq,nombre)]; }
       }
     });
     if(zona==='campo'){
@@ -831,9 +837,9 @@ function buildAddInput(eq, zona){
         bestIdx = i; // fallback: último índice si todo lleno
       }
       const [t,l] = SNAP_SLOTS[bestIdx] || [50,50];
-      savePos(dia,eq,nombre,t,l);
+      savePos(diaLocal,eq,nombre,t,l);
     }
-    data[dia][eq][zona].push(nombre);
+    data[diaLocal][eq][zona].push(nombre);
     toast(nombre+' → '+ZONA_NAMES[zona]);
     input.value='';list.classList.remove('open');
     render();
