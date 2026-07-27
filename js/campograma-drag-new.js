@@ -150,12 +150,22 @@ function dispararDobleTap(nombre, eq, zona, diaP){
       doblarJugador(nombre, eqPropio, destino, diaP);
     });
   };
+  const esMovil = window.matchMedia('(max-width: 640px)').matches;
   if(esPrimario){
-    // Desde disponibles de su propio equipo: Duplicar o Meter en campo (armado, sin arrastrar aún)
-    showAlert(msg, onDuplicar, 'Duplicar', ()=>armarModoMover(nombre, eq, zona), 'Meter en campo');
+    // Desde disponibles de su propio equipo: Duplicar, y "Meter en campo" (armado)
+    // solo tiene sentido en móvil (en escritorio ya se arrastra directamente)
+    if(esMovil){
+      showAlert(msg, onDuplicar, 'Duplicar', ()=>armarModoMover(nombre, eq, zona), 'Meter en campo');
+    } else {
+      showAlert(msg, onDuplicar, 'Duplicar');
+    }
   } else {
-    const onMover = ()=>armarModoMover(nombre, eq, zona);
-    showAlert(msg, onEliminar, 'Eliminar', onDuplicar, 'Duplicar', onMover, 'Mover');
+    if(esMovil){
+      const onMover = ()=>armarModoMover(nombre, eq, zona);
+      showAlert(msg, onEliminar, 'Eliminar', onDuplicar, 'Duplicar', onMover, 'Mover');
+    } else {
+      showAlert(msg, onEliminar, 'Eliminar', onDuplicar, 'Duplicar');
+    }
   }
 }
 // Alias por compatibilidad (ya no se usa pero por si acaso)
