@@ -460,7 +460,7 @@ function buildCard(eq){
     // quita también del equipo destino), no solo de esta columna visual.
     if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros'){
       const vaciarBtn = mk('button','col-vaciar-btn');
-      vaciarBtn.innerHTML = '🗑';
+      vaciarBtn.textContent = '✕';
       vaciarBtn.title = 'Vaciar esta columna (hoy) — vuelven a Disponibles de '+eq;
       vaciarBtn.onclick = (e)=>{
         e.stopPropagation();
