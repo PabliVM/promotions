@@ -635,6 +635,10 @@ function _ejecutarBorradoJugador(nombre, alcance){
         const i=(data[d][plantEqActivo][z]||[]).indexOf(nombre);
         if(i>=0) data[d][plantEqActivo][z].splice(i,1);
       });
+      // El registro de "a dónde estaba promocionado" (promInfo) es aparte del array
+      // visual de promovidos_1er — si no se borra aquí también, queda un rastro
+      // fantasma que hace pensar que sigue promocionado de verdad aunque ya no exista.
+      if(promInfo[d]?.[plantEqActivo]) delete promInfo[d][plantEqActivo][nombre];
     });
   } else {
     diasATocar.forEach(d=>{
