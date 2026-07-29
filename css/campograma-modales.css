@@ -757,7 +757,7 @@ body.dark .col-extra{background:#1a1625;}
   cursor:pointer;font-size:10px;line-height:1;color:rgba(0,0,0,.2);padding:0;}
 .col-del-btn:hover{color:#ef4444;}
 .col-vaciar-btn{flex-shrink:0;border:none;background:none;cursor:pointer;
-  font-size:12px;line-height:1;padding:0 2px;opacity:.55;filter:grayscale(0);}
+  font-size:13px;font-weight:900;line-height:1;padding:0 2px;color:#ef4444;opacity:.7;}
 .col-vaciar-btn:hover{opacity:1;}
 .zona-lbl{font-family:'Segoe UI',-apple-system,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;color:#9ca3af;}
 .zona-disponibles .zona-lbl{color:#64748b;}
