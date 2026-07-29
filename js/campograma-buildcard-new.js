@@ -455,6 +455,41 @@ function buildCard(eq){
         if(!colNames[eq][3]) colNames[eq][3]='EXTRA'; render(); };
       lblWrap.appendChild(addBtn);
     }
+    // Botón "vaciar esta columna" (solo el día actual) — devuelve a todos a Disponibles
+    // de su equipo. Si es Promocionados, además deshace la promoción de verdad (los
+    // quita también del equipo destino), no solo de esta columna visual.
+    if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros'){
+      const vaciarBtn = mk('button','col-del-btn');
+      vaciarBtn.innerHTML = '🗑';
+      vaciarBtn.title = 'Vaciar esta columna (hoy) — vuelven a Disponibles de '+eq;
+      vaciarBtn.onclick = (e)=>{
+        e.stopPropagation();
+        const nombres = [...(data[dia][eq][zona]||[])];
+        if(!nombres.length) return;
+        showAlert(
+          '¿Vaciar "'+(colNames[eq][idx]||zona)+'" de '+eq+' hoy? '+nombres.length+' jugador(es) volverán a Disponibles.',
+          ()=>{
+            nombres.forEach(nombre=>{
+              if(zona==='promovidos_1er'){
+                // Deshacer la promoción de verdad: quitar también del equipo destino
+                const destinos = getDestinos(dia, eq, nombre);
+                destinos.forEach(destino=>limpiarUnDestino(dia, destino, nombre));
+                if(promInfo[dia]?.[eq]) delete promInfo[dia][eq][nombre];
+              }
+              const arr = data[dia][eq][zona];
+              const i = arr.indexOf(nombre);
+              if(i>=0) arr.splice(i,1);
+              if(!data[dia][eq].disponibles.includes(nombre)) data[dia][eq].disponibles.push(nombre);
+            });
+            autoGuardar();
+            render();
+            toast('🗑 '+nombres.length+' jugador(es) de vuelta a Disponibles de '+eq);
+          },
+          'Vaciar'
+        );
+      };
+      lblWrap.appendChild(vaciarBtn);
+    }
     col.appendChild(lblWrap);
     const cw=mk('div','chips-wrap');
     d[zona].forEach(n=>{
