@@ -459,7 +459,7 @@ function buildCard(eq){
     // de su equipo. Si es Promocionados, además deshace la promoción de verdad (los
     // quita también del equipo destino), no solo de esta columna visual.
     if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros'){
-      const vaciarBtn = mk('button','col-del-btn');
+      const vaciarBtn = mk('button','col-vaciar-btn');
       vaciarBtn.innerHTML = '🗑';
       vaciarBtn.title = 'Vaciar esta columna (hoy) — vuelven a Disponibles de '+eq;
       vaciarBtn.onclick = (e)=>{
