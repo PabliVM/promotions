@@ -282,10 +282,41 @@ function renderPlantBody(){
       }, ()=>{ eqSel.value = eqViejo; }); // si cancela, el desplegable vuelve al equipo actual
     };
 
+    // Botón "Quitar promoción" — solo visible si tiene alguna promoción activa en
+    // algún día, para poder deshacerla de golpe sin ir a buscarla al campograma
+    const tienePromo = DIAS.some(d => getDestinos(d, plantEqActivo, nombre).length > 0);
+    let quitarPromoBtn = null;
+    if(tienePromo){
+      quitarPromoBtn = mk('button','plant-del');
+      quitarPromoBtn.textContent = '🚫';
+      quitarPromoBtn.title = 'Quitar la promoción (sigue en '+plantEqActivo+', solo se le quita el destino)';
+      quitarPromoBtn.onclick = ()=> quitarPromocionCompleta(nombre, plantEqActivo);
+    }
+
     row.appendChild(dragHandle); row.appendChild(num); row.appendChild(nm);
-    row.appendChild(editBtn); row.appendChild(porLabel); row.appendChild(eqSel); row.appendChild(del);
+    row.appendChild(editBtn); row.appendChild(porLabel); row.appendChild(eqSel);
+    if(quitarPromoBtn) row.appendChild(quitarPromoBtn);
+    row.appendChild(del);
     list.appendChild(row);
   });
+}
+// Quita la promoción de un jugador en TODOS los días de golpe (sin borrar al jugador,
+// sigue en su plantilla) — evita tener que ir día por día en el campograma.
+function quitarPromocionCompleta(nombre, eqPropio){
+  let quitados = 0;
+  DIAS.forEach(d=>{
+    const destinos = getDestinos(d, eqPropio, nombre);
+    if(!destinos.length) return;
+    destinos.forEach(destino=>limpiarUnDestino(d, destino, nombre));
+    if(promInfo[d]?.[eqPropio]) delete promInfo[d][eqPropio][nombre];
+    const prom = data[d]?.[eqPropio]?.promovidos_1er;
+    if(prom){ const i=prom.indexOf(nombre); if(i>=0) prom.splice(i,1); }
+    quitados++;
+  });
+  renderPlantBody();
+  autoGuardar();
+  render();
+  toast('🚫 Promoción de '+nombre+' quitada ('+quitados+' día'+(quitados===1?'':'s')+')');
 }
 function plantCambiarEquipo(nombre, nuevoEq, diaAplicaIdx){
   if(!nuevoEq || nuevoEq === plantEqActivo) return;
