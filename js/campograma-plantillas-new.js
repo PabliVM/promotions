@@ -169,6 +169,13 @@ function renderPlantBody(){
   const _numPor = jugadores.filter(n => porteros.includes(n)).length;
   const _numNorm = jugadores.length - _numPor;
   document.getElementById('plant-count').textContent = (_numPor > 0 ? _numNorm + '+' + _numPor : jugadores.length) + ' jugadores';
+  // Botón único y siempre visible: quita TODAS las promociones activas de este equipo
+  // de golpe, en todos los días — más simple y fiable que un botón por jugador.
+  const quitarTodasBtn = mk('button','');
+  quitarTodasBtn.textContent = '🚫 Quitar todas las promociones activas de '+plantEqActivo;
+  quitarTodasBtn.style.cssText = 'margin:0 0 10px;padding:7px 12px;border-radius:8px;border:1px solid rgba(220,38,38,.3);background:rgba(220,38,38,.08);color:#dc2626;font-size:12px;cursor:pointer;font-family:"Segoe UI",sans-serif;font-weight:600;';
+  quitarTodasBtn.onclick = ()=> quitarTodasLasPromociones(plantEqActivo);
+  list.appendChild(quitarTodasBtn);
   jugadores.forEach((nombre, i)=>{
     const row = mk('div','plant-row');
     row.draggable = true;
@@ -302,6 +309,30 @@ function renderPlantBody(){
 }
 // Quita la promoción de un jugador en TODOS los días de golpe (sin borrar al jugador,
 // sigue en su plantilla) — evita tener que ir día por día en el campograma.
+// Quita TODAS las promociones activas de un equipo, en todos los días, de golpe.
+function quitarTodasLasPromociones(eqPropio){
+  let totalJugadores = 0, totalDias = 0;
+  (plantillas[eqPropio]||[]).forEach(nombre=>{
+    let tuvo = false;
+    DIAS.forEach(d=>{
+      const destinos = getDestinos(d, eqPropio, nombre);
+      if(!destinos.length) return;
+      tuvo = true;
+      destinos.forEach(destino=>limpiarUnDestino(d, destino, nombre));
+      if(promInfo[d]?.[eqPropio]) delete promInfo[d][eqPropio][nombre];
+      const prom = data[d]?.[eqPropio]?.promovidos_1er;
+      if(prom){ const i=prom.indexOf(nombre); if(i>=0) prom.splice(i,1); }
+      totalDias++;
+    });
+    if(tuvo) totalJugadores++;
+  });
+  renderPlantBody();
+  autoGuardar();
+  render();
+  toast(totalJugadores>0
+    ? '🚫 Quitadas '+totalDias+' promociones de '+totalJugadores+' jugador(es) en '+eqPropio
+    : 'ℹ️ No había promociones activas en '+eqPropio);
+}
 function quitarPromocionCompleta(nombre, eqPropio){
   let quitados = 0;
   DIAS.forEach(d=>{
