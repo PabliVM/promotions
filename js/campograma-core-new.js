@@ -2301,6 +2301,20 @@ async function arrancarDesdeFirebase(){
       // un equipo sin ser de ese equipo NI estar prestados ahí de verdad (con un registro
       // real en promInfo) — sobras de reconstrucciones o borrados de antes de este arreglo.
       DIAS.forEach(d=>{
+        // Limpiar registros de promInfo "fantasma" PRIMERO: si dice que un jugador está
+        // promocionado DESDE un equipo donde ya ni siquiera está en la plantilla (se
+        // borró de ahí en algún momento sin limpiar este registro), el registro ya no
+        // significa nada real — quitarlo. Esto arregla rastros que quedaron mal ANTES
+        // de este arreglo, no solo previene nuevos. Va PRIMERO porque las comprobaciones
+        // de abajo dependen de que promInfo ya esté limpio para surtir efecto ya mismo.
+        EQUIPOS.forEach(eqOrigen=>{
+          const infoEq = promInfo[d]?.[eqOrigen];
+          if(!infoEq) return;
+          Object.keys(infoEq).forEach(nombre=>{
+            const sigueEnPlantilla = (plantillas[eqOrigen]||[]).includes(nombre);
+            if(!sigueEnPlantilla) delete infoEq[nombre];
+          });
+        });
         EQUIPOS.forEach(eq=>{
           ['disponibles','campo','banquillo'].forEach(z=>{
             const arr = data[d]?.[eq]?.[z];
