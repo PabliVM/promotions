@@ -665,6 +665,26 @@ function moveGroupDrag(e){
   if(!_groupDrag) return;
   e.preventDefault && e.preventDefault();
   const ev = e.touches ? e.touches[0] : e;
+  _groupDrag.lastClientX = ev.clientX; _groupDrag.lastClientY = ev.clientY;
+  // Comprobar si estamos sobre el campo de OTRO equipo (para dar feedback visual)
+  const bajoPuntero = document.elementFromPoint(ev.clientX, ev.clientY);
+  const campoDestino = bajoPuntero && bajoPuntero.closest('.campo-wrap');
+  const esOtroEquipo = campoDestino && campoDestino !== _groupDrag.campoWrap;
+  document.querySelectorAll('.campo-wrap.grupo-drag-destino').forEach(el=>el.classList.remove('grupo-drag-destino'));
+  if(esOtroEquipo) campoDestino.classList.add('grupo-drag-destino');
+  if(esOtroEquipo){
+    // Sobre otro equipo: mover visualmente el grupo dentro de ESE campo (posición relativa a él)
+    const r2 = campoDestino.getBoundingClientRect();
+    _groupDrag.items.forEach((it,i)=>{
+      const relTop = ((ev.clientY - r2.top)/r2.height)*100;
+      const relLeft = ((ev.clientX - r2.left)/r2.width)*100;
+      // Distribuir en pequeño abanico alrededor del puntero para que no se solapen visualmente
+      const offT = (i%3-1)*4, offL = (Math.floor(i/3)-1)*6;
+      it.pof.style.top = clamp(relTop+offT,0,100)+'%';
+      it.pof.style.left = clamp(relLeft+offL,0,100)+'%';
+    });
+    return;
+  }
   const r = _groupDrag.campoWrap.getBoundingClientRect();
   const dxPct = ((ev.clientX - _groupDrag.startX)/r.width)*100;
   const dyPct = ((ev.clientY - _groupDrag.startY)/r.height)*100;
@@ -677,10 +697,22 @@ function endGroupDrag(e){
   off('mousemove', moveGroupDrag); off('mouseup', endGroupDrag);
   off('touchmove', moveGroupDrag); off('touchend', endGroupDrag);
   if(!_groupDrag) return;
+  document.querySelectorAll('.campo-wrap.grupo-drag-destino').forEach(el=>el.classList.remove('grupo-drag-destino'));
   const items = _groupDrag.items;
   const diaG = items[0]?.dia || dia;
   const eqG = items[0]?.eq;
+  const lastX = _groupDrag.lastClientX, lastY = _groupDrag.lastClientY;
+  const bajoPuntero = (lastX!=null) ? document.elementFromPoint(lastX, lastY) : null;
+  const campoDestinoEl = bajoPuntero && bajoPuntero.closest('.campo-wrap');
+  const eqDestino = campoDestinoEl ? campoDestinoEl.dataset.eq : null;
   _groupDrag = null;
+
+  if(eqDestino && eqDestino !== eqG){
+    // ── Mover el grupo entero a OTRO equipo (antes no se podía) ──
+    moverGrupoAOtroEquipo(items, eqG, eqDestino, diaG, campoDestinoEl);
+    return;
+  }
+
   // Comprobar que ninguno del grupo invade a un jugador que NO está en el grupo
   const nombresGrupo = new Set(items.map(it=>it.nombre));
   const ocupadasExternas = (data[diaG]?.[eqG]?.campo || [])
@@ -711,4 +743,58 @@ function endGroupDrag(e){
   autoGuardar();
   render();
   toast('↕ Grupo movido');
+}
+// Mueve un grupo entero de jugadores del campo de un equipo al campo de OTRO equipo,
+// respetando la misma lógica que un movimiento individual: si el destino es su propio
+// equipo real, se limpia cualquier promoción; si no, se registra como promoción (queda
+// en Promocionados de su equipo de origen real).
+function moverGrupoAOtroEquipo(items, eqOrigenCard, eqDestino, diaG, campoDestinoEl){
+  const rDestino = campoDestinoEl.getBoundingClientRect();
+  let movidos = 0;
+  items.forEach((it,i)=>{
+    const nombre = it.nombre;
+    // Quitar del campo de origen
+    const campoOrigenArr = data[diaG][eqOrigenCard]?.campo;
+    if(campoOrigenArr){ const ci = campoOrigenArr.indexOf(nombre); if(ci>=0) campoOrigenArr.splice(ci,1); }
+    delete pos[key(diaG,eqOrigenCard,nombre)];
+    const eqReal = origen[nombre] || eqOrigenCard;
+    if(eqDestino === eqReal){
+      // Vuelve a su equipo real: limpiar cualquier promoción activa (igual que move())
+      const destinos = getDestinos(diaG, eqReal, nombre);
+      destinos.forEach(d=>limpiarUnDestino(diaG, d, nombre));
+      if(promInfo[diaG]?.[eqReal]) delete promInfo[diaG][eqReal][nombre];
+      const promArr = data[diaG][eqReal]?.promovidos_1er;
+      if(promArr){ const pi=promArr.indexOf(nombre); if(pi>=0) promArr.splice(pi,1); }
+    } else {
+      // Promoción real hacia otro equipo: registrar en Promocionados de su equipo de origen
+      if(!data[diaG][eqReal].promovidos_1er) data[diaG][eqReal].promovidos_1er=[];
+      if(!data[diaG][eqReal].promovidos_1er.includes(nombre)) data[diaG][eqReal].promovidos_1er.push(nombre);
+      if(!promInfo[diaG]) promInfo[diaG]={};
+      if(!promInfo[diaG][eqReal]) promInfo[diaG][eqReal]={};
+      promInfo[diaG][eqReal][nombre]=eqDestino;
+      if(!historicoJugador[diaG]) historicoJugador[diaG]={};
+      if(!historicoJugador[diaG][nombre]){
+        historicoJugador[diaG][nombre] = { equipoOrigen: eqReal, entrenoCon: eqDestino, promocionado: true, promocionadoDesde: eqReal };
+      }
+    }
+    // Quitar cualquier rastro suyo en el equipo destino antes de añadirlo, para no duplicar
+    ZONAS_ACTIVAS.forEach(z=>{
+      const arr = data[diaG][eqDestino]?.[z];
+      if(!arr) return;
+      const zi = arr.indexOf(nombre);
+      if(zi>=0){ arr.splice(zi,1); if(z==='campo') delete pos[key(diaG,eqDestino,nombre)]; }
+    });
+    // Añadir al campo del equipo destino, en la posición donde se soltó (con un pequeño
+    // reparto para que no queden todos exactamente encima)
+    if(!data[diaG][eqDestino].campo) data[diaG][eqDestino].campo = [];
+    data[diaG][eqDestino].campo.push(nombre);
+    const top = clamp(parseFloat(it.pof.style.top)||50, 0, 100);
+    const left = clamp(parseFloat(it.pof.style.left)||50, 0, 100);
+    savePos(diaG, eqDestino, nombre, top, left);
+    movidos++;
+  });
+  limpiarSeleccionCampo();
+  autoGuardar();
+  render();
+  toast('↕ '+movidos+' jugadores movidos a '+eqDestino);
 }
