@@ -2318,6 +2318,25 @@ async function arrancarDesdeFirebase(){
             }
           });
         });
+        // Lo mismo, pero para "Primer Equipo" — es una estructura APARTE de 'data', y
+        // hasta ahora nadie la validaba nunca: si alguien quedaba "colgado" ahí por
+        // cualquier motivo, se quedaba para siempre. Un jugador solo pertenece de verdad
+        // a Primer Equipo si es de su plantilla propia, O si algún equipo de cantera
+        // tiene registrada una promoción real hacia 1ER EQUIPO ese día.
+        const arr1er = primerEquipoJugadores[d];
+        if(Array.isArray(arr1er)){
+          for(let i=arr1er.length-1; i>=0; i--){
+            const nombre = arr1er[i];
+            const esPropio = (plantillas['1ER EQUIPO']||[]).includes(nombre);
+            const estaPromocionadoDeVerdad = EQUIPOS.some(eqOrigen=>
+              getDestinos(d, eqOrigen, nombre).includes('1ER EQUIPO')
+            );
+            if(!esPropio && !estaPromocionadoDeVerdad){
+              arr1er.splice(i,1);
+              delete pos[key(d,'1ER EQUIPO',nombre)];
+            }
+          }
+        }
       });
       // Rellenar la foto histórica de días ya existentes que aún no la tengan
       // (backfill: solo la primera vez que se detecta cada jugador en cada día;
