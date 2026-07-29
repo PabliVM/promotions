@@ -171,11 +171,9 @@ function renderPlantBody(){
   document.getElementById('plant-count').textContent = (_numPor > 0 ? _numNorm + '+' + _numPor : jugadores.length) + ' jugadores';
   // Botón único y siempre visible: quita TODAS las promociones activas de este equipo
   // de golpe, en todos los días — más simple y fiable que un botón por jugador.
-  const quitarTodasBtn = mk('button','');
-  quitarTodasBtn.textContent = '🚫 Quitar todas las promociones activas de '+plantEqActivo;
-  quitarTodasBtn.style.cssText = 'margin:0 0 10px;padding:7px 12px;border-radius:8px;border:1px solid rgba(220,38,38,.3);background:rgba(220,38,38,.08);color:#dc2626;font-size:12px;cursor:pointer;font-family:"Segoe UI",sans-serif;font-weight:600;';
-  quitarTodasBtn.onclick = ()=> quitarTodasLasPromociones(plantEqActivo);
-  list.appendChild(quitarTodasBtn);
+  // Botón oculto por defecto (la función queda disponible por si hace falta en el
+  // futuro para arreglar algún fallo, pero no se muestra en el uso normal)
+  // const hayPromoActiva = ...; if(hayPromoActiva){ ...crear y mostrar el botón... }
   jugadores.forEach((nombre, i)=>{
     const row = mk('div','plant-row');
     row.draggable = true;
