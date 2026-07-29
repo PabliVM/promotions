@@ -2338,7 +2338,11 @@ async function arrancarDesdeFirebase(){
       _fbSesionActiva = 'principal';
       // Guardar en local como caché
       // localStorage desactivado
+      console.log('[diag-carga] dia actual:', dia, '| vistaActual:', vistaActual);
+      console.log('[diag-carga] CASTILLA disponibles hoy:', data[dia]?.['CASTILLA']?.disponibles);
+      console.log('[diag-carga] plantillas CASTILLA:', (plantillas['CASTILLA']||[]).length, 'jugadores');
       render(); renderMultiEqBar();
+      console.log('[diag-carga] tras render() — CASTILLA disponibles hoy:', data[dia]?.['CASTILLA']?.disponibles);
       console.log('✅ Sesión principal cargada desde Firebase');
       // Fijar la referencia de "jugadores conocidos" para el freno de emergencia
       fijarTotalJugadoresConocido();
