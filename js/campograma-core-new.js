@@ -2372,6 +2372,21 @@ async function arrancarDesdeFirebase(){
       // Guardar en local como caché
       // localStorage desactivado
       render(); renderMultiEqBar();
+      // Diagnóstico dirigido (solo lectura) para los 2 casos reportados
+      ['VÍCTOR VALDEPEÑAS','RACHAD FETTAL'].forEach(nombreDiag=>{
+        const diasDiag = nombreDiag==='VÍCTOR VALDEPEÑAS' ? ['LUNES'] : ['MIÉRCOLES'];
+        diasDiag.forEach(d=>{
+          console.log('[diag-1er] ---', nombreDiag, d, '---');
+          console.log('[diag-1er] en plantillas 1ER EQUIPO:', (plantillas['1ER EQUIPO']||[]).includes(nombreDiag));
+          console.log('[diag-1er] en primerEquipoJugadores['+d+']:', (primerEquipoJugadores[d]||[]).includes(nombreDiag));
+          console.log('[diag-1er] origen:', origen[nombreDiag]);
+          EQUIPOS.forEach(eq=>{
+            const enPlantilla = (plantillas[eq]||[]).includes(nombreDiag);
+            const promInfoVal = promInfo[d]?.[eq]?.[nombreDiag];
+            if(enPlantilla || promInfoVal) console.log('[diag-1er]  '+eq+' → en plantilla:', enPlantilla, '| promInfo:', promInfoVal);
+          });
+        });
+      });
       console.log('✅ Sesión principal cargada desde Firebase');
       // Fijar la referencia de "jugadores conocidos" para el freno de emergencia
       fijarTotalJugadoresConocido();
