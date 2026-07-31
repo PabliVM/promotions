@@ -147,26 +147,22 @@ try {
     _CAMPOS_POR_DIA.forEach(campo=>{
       if(!out[campo] || typeof out[campo] !== 'object') return;
       const nuevo = {};
-      // Firestore NO garantiza el orden en que devuelve las claves de un mapa. Como
-      // llevamos varias semanas guardando con clave "AAAA-MM-DD_DIA", puede haber
-      // varias entradas para el mismo día (ej. varios "VIERNES" de semanas distintas)
-      // acumuladas en el documento. Antes, la última que tocara en la iteración (orden
-      // no garantizado) ganaba — a veces era una semana VIEJA y vacía, borrando visualmente
-      // los cambios de hoy nada más cargar. Ahora se ordena explícitamente y SIEMPRE
-      // gana la fecha más reciente de cada día, sin depender del orden de Firestore.
       const mejorFechaPorDia = {};
+      if(campo==='data') console.log('[DIAG-DESELLAR] claves crudas de data:', Object.keys(out[campo]).sort());
       Object.keys(out[campo]).sort().forEach(k=>{
         const idx = k.indexOf('_');
         const esFechaValida = idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx));
-        if(!esFechaValida){ nuevo[k] = out[campo][k]; return; }
+        if(!esFechaValida){ nuevo[k] = out[campo][k]; if(campo==='data') console.log('[DIAG-DESELLAR] clave SIN fecha reconocida:', k); return; }
         const fecha = k.slice(0,idx);
         const diaLimpio = k.slice(idx+1);
         if(!mejorFechaPorDia[diaLimpio] || fecha > mejorFechaPorDia[diaLimpio]){
           mejorFechaPorDia[diaLimpio] = fecha;
           nuevo[diaLimpio] = out[campo][k];
+          if(campo==='data' && diaLimpio==='VIERNES') console.log('[DIAG-DESELLAR] VIERNES ahora mismo ganado por fecha', fecha, '→ CASTILLA.campo=', JSON.stringify(out[campo][k]?.CASTILLA?.campo));
         }
       });
       out[campo] = nuevo;
+      if(campo==='data') console.log('[DIAG-DESELLAR] VIERNES final tras desellar → CASTILLA.campo=', JSON.stringify(nuevo['VIERNES']?.CASTILLA?.campo));
     });
     if(out.pos && typeof out.pos === 'object'){
       const nuevoPos = {};
