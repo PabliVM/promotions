@@ -2220,6 +2220,21 @@ function toggleDarkMaestro(){
 // Firebase es la fuente de verdad. localStorage solo como fallback mientras carga.
 initTiposConfig();
 async function arrancarDesdeFirebase(){
+  // Carrera de arranque: este código puede ejecutarse ANTES de que el script que
+  // define window.render() termine de cargar (ej. si va con defer/module, o
+  // simplemente carga después en el HTML). Esperar a que exista, máx 3s.
+  async function _esperarRenderListo(){
+    if(typeof window.render === 'function') return;
+    await new Promise(res=>{
+      let intentos = 0;
+      const iv = setInterval(()=>{
+        intentos++;
+        if(typeof window.render === 'function' || intentos > 150){
+          clearInterval(iv); res();
+        }
+      }, 20);
+    });
+  }
   try{
     // Esperar Firebase listo (máx 6s)
     if(!window._fbReady){
@@ -2383,7 +2398,8 @@ async function arrancarDesdeFirebase(){
       _fbSesionActiva = 'principal';
       // Guardar en local como caché
       // localStorage desactivado
-      render(); renderMultiEqBar();
+      await _esperarRenderListo();
+      window.render(); renderMultiEqBar();
       console.log('✅ Sesión principal cargada desde Firebase');
       // Fijar la referencia de "jugadores conocidos" para el freno de emergencia
       fijarTotalJugadoresConocido();
@@ -2409,7 +2425,8 @@ async function arrancarDesdeFirebase(){
                 data[d][eq].disponibles.push(nombre);
             });
           });
-          render();
+          await _esperarRenderListo();
+          window.render();
           toast('☁️ Plantillas importadas desde Firebase');
         }
       }catch(e){ console.warn('Sin plantillas Firebase:', e); }
@@ -2419,7 +2436,7 @@ async function arrancarDesdeFirebase(){
     // iniciarEscuchaEnVivo(); // DESACTIVADO — causaba que jugadores volvieran solos a su sitio anterior
   }catch(e){
     console.warn('[arranque] Firebase no disponible, usando datos locales:', e);
-    if(!cargado){ initTiposConfig(); render(); }
+    if(!cargado){ initTiposConfig(); await _esperarRenderListo(); window.render(); }
   }
 }
 arrancarDesdeFirebase();
