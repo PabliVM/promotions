@@ -147,21 +147,43 @@ try {
     _CAMPOS_POR_DIA.forEach(campo=>{
       if(!out[campo] || typeof out[campo] !== 'object') return;
       const nuevo = {};
-      Object.keys(out[campo]).forEach(k=>{
+      // Firestore NO garantiza el orden en que devuelve las claves de un mapa. Como
+      // llevamos varias semanas guardando con clave "AAAA-MM-DD_DIA", puede haber
+      // varias entradas para el mismo día (ej. varios "VIERNES" de semanas distintas)
+      // acumuladas en el documento. Antes, la última que tocara en la iteración (orden
+      // no garantizado) ganaba — a veces era una semana VIEJA y vacía, borrando visualmente
+      // los cambios de hoy nada más cargar. Ahora se ordena explícitamente y SIEMPRE
+      // gana la fecha más reciente de cada día, sin depender del orden de Firestore.
+      const mejorFechaPorDia = {};
+      Object.keys(out[campo]).sort().forEach(k=>{
         const idx = k.indexOf('_');
-        const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx))) ? k.slice(idx+1) : k;
-        nuevo[diaLimpio] = out[campo][k];
+        const esFechaValida = idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx));
+        if(!esFechaValida){ nuevo[k] = out[campo][k]; return; }
+        const fecha = k.slice(0,idx);
+        const diaLimpio = k.slice(idx+1);
+        if(!mejorFechaPorDia[diaLimpio] || fecha > mejorFechaPorDia[diaLimpio]){
+          mejorFechaPorDia[diaLimpio] = fecha;
+          nuevo[diaLimpio] = out[campo][k];
+        }
       });
       out[campo] = nuevo;
     });
     if(out.pos && typeof out.pos === 'object'){
       const nuevoPos = {};
-      Object.keys(out.pos).forEach(k=>{
+      const mejorFechaPorClave = {};
+      Object.keys(out.pos).sort().forEach(k=>{
         const partes = k.split('|');
         if(partes.length===3){
           const idx = partes[0].indexOf('_');
-          const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(partes[0].slice(0,idx))) ? partes[0].slice(idx+1) : partes[0];
-          nuevoPos[diaLimpio+'|'+partes[1]+'|'+partes[2]] = out.pos[k];
+          const esFechaValida = idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(partes[0].slice(0,idx));
+          if(!esFechaValida){ nuevoPos[k] = out.pos[k]; return; }
+          const fecha = partes[0].slice(0,idx);
+          const diaLimpio = partes[0].slice(idx+1);
+          const claveLimpia = diaLimpio+'|'+partes[1]+'|'+partes[2];
+          if(!mejorFechaPorClave[claveLimpia] || fecha > mejorFechaPorClave[claveLimpia]){
+            mejorFechaPorClave[claveLimpia] = fecha;
+            nuevoPos[claveLimpia] = out.pos[k];
+          }
         } else {
           nuevoPos[k] = out.pos[k];
         }
