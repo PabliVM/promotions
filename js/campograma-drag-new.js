@@ -443,7 +443,7 @@ function endChip(e){
         drag=null; autoGuardar(); render(); return;
       }
       move(drag.eq,drag.zona,toEq,'campo',drag.nombre);
-      drag=null; render(); return;
+      drag=null; autoGuardar(); render(); return;
     }
     // ── Destino: misma zona origen → recolocar en campo si viene del campo
     if(drag.eq===toEq && drag.zona===toZona){ drag=null; return; }
