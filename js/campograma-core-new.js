@@ -2152,7 +2152,7 @@ function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel='',on
   document.getElementById('alert-ok-btn').textContent=okLabel;
   // Estilo rojo si es destructivo
   const okBtn=document.getElementById('alert-ok-btn');
-  if(okLabel==='Eliminar'){ okBtn.style.background='#ef4444'; okBtn.style.borderColor='#ef4444'; }
+  if(okLabel==='Eliminar' || okLabel==='Volver a su equipo'){ okBtn.style.background='#ef4444'; okBtn.style.borderColor='#ef4444'; }
   else { okBtn.style.background=''; okBtn.style.borderColor=''; }
   // Quitar el foco de cualquier botón ANTES de cerrar el modal: en algunos navegadores
   // (Windows), ocultar un elemento que tiene el foco hace que la página salte de scroll
