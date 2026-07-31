@@ -121,7 +121,7 @@ function dispararDobleTap(nombre, eq, zona, diaP){
     const onEliminarTodo = ()=>{
       eliminarTodosLosDuplicados(nombre, eqPropio, diaP);
     };
-    showAlert(msg, onEliminarTodo, 'Eliminar', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
+    showAlert(msg, onEliminarTodo, 'Volver a su equipo', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
     return;
   }
 
@@ -162,9 +162,9 @@ function dispararDobleTap(nombre, eq, zona, diaP){
   } else {
     if(esMovil){
       const onMover = ()=>armarModoMover(nombre, eq, zona);
-      showAlert(msg, onEliminar, 'Eliminar', onDuplicar, 'Duplicar', onMover, 'Mover');
+      showAlert(msg, onEliminar, 'Volver a su equipo', onDuplicar, 'Duplicar', onMover, 'Mover');
     } else {
-      showAlert(msg, onEliminar, 'Eliminar', onDuplicar, 'Duplicar');
+      showAlert(msg, onEliminar, 'Volver a su equipo', onDuplicar, 'Duplicar');
     }
   }
 }
@@ -646,7 +646,7 @@ function eliminarSeleccionados(){
     autoGuardar();
     render();
     toast('🗑 '+n+' jugadores quitados del campo');
-  }, 'Eliminar');
+  }, 'Volver a su equipo');
 }
 // ── Arrastrar el grupo seleccionado entero (solo dentro del mismo campo) ──
 var _groupDrag = null;
