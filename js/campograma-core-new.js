@@ -2249,6 +2249,7 @@ async function arrancarDesdeFirebase(){
       const payload = res.data;
       // Aplicar payload de Firebase (misma lógica que fbCargar pero silenciosa)
       if(payload.data        && typeof payload.data==='object')        data        = payload.data;
+      console.log('[DIAG-1 recién cargado]', dia, 'CASTILLA.campo =', JSON.stringify(data[dia]?.['CASTILLA']?.campo));
       if(payload.pos         && typeof payload.pos==='object')         pos         = payload.pos;
       if(payload.plantillas  && typeof payload.plantillas==='object')  plantillas  = payload.plantillas;
       if(payload.origen      && typeof payload.origen==='object')      Object.assign(origen, payload.origen);
@@ -2269,6 +2270,7 @@ async function arrancarDesdeFirebase(){
       // 'FECHAS'/'_semanaKeyActual' ya están forzados a la semana de HOY (más arriba).
       // Si no coinciden, hay que guardar esa foto y cargar (o crear) la de esta semana.
       if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
+        console.warn('[DIAG-0 MISMATCH DE SEMANA]', 'payload.ultimaSemanaKey=', payload.ultimaSemanaKey, ' _semanaKeyActual=', _semanaKeyActual, '→ se va a ARCHIVAR y crear semana vacía');
         _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
           data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
           primerEquipoJugadores, notas: window._notasData || {}, origen, historicoJugador
@@ -2312,6 +2314,7 @@ async function arrancarDesdeFirebase(){
           });
         });
       });
+      console.log('[DIAG-2 tras sync plantillas→disponibles]', dia, 'CASTILLA.campo =', JSON.stringify(data[dia]?.['CASTILLA']?.campo));
       // Limpieza de "huérfanos": jugadores que aparecen en Disponibles/Campo/Banquillo de
       // un equipo sin ser de ese equipo NI estar prestados ahí de verdad (con un registro
       // real en promInfo) — sobras de reconstrucciones o borrados de antes de este arreglo.
@@ -2372,6 +2375,7 @@ async function arrancarDesdeFirebase(){
           }
         }
       });
+      console.log('[DIAG-3 tras limpieza huérfanos]', dia, 'CASTILLA.campo =', JSON.stringify(data[dia]?.['CASTILLA']?.campo), '| origen[nombre] ejemplo=', JSON.stringify(Object.keys(origen).slice(0,5)));
       // Rellenar la foto histórica de días ya existentes que aún no la tengan
       // (backfill: solo la primera vez que se detecta cada jugador en cada día;
       // los días que YA tengan foto no se tocan, quedan tal y como estaban)
