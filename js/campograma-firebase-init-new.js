@@ -142,27 +142,39 @@ try {
     }
     return out;
   }
-  function _desellarSnapshot(obj){
+  function _desellarSnapshot(obj, esArchivada){
     const out = { ...obj };
+    // Fechas reales de la semana ACTIVA ahora mismo (calculadas al arrancar la página,
+    // ej. {VIERNES:'2026-07-31', ...}). Si existen, son la ÚNICA fuente de verdad para
+    // decidir qué entrada usar — así ignoramos tanto semanas viejas como, ojo, semanas
+    // FUTURAS ya creadas (vacías) que por error "ganaban" antes por ser cronológicamente
+    // posteriores a hoy sin ser la semana real que se está viendo.
+    const fechasHoy = esArchivada ? {} : (window.FECHAS_COMPLETAS || {});
     _CAMPOS_POR_DIA.forEach(campo=>{
       if(!out[campo] || typeof out[campo] !== 'object') return;
       const nuevo = {};
       const mejorFechaPorDia = {};
-      if(campo==='data') console.log('[DIAG-DESELLAR] claves crudas de data:', Object.keys(out[campo]).sort());
       Object.keys(out[campo]).sort().forEach(k=>{
         const idx = k.indexOf('_');
         const esFechaValida = idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx));
-        if(!esFechaValida){ nuevo[k] = out[campo][k]; if(campo==='data') console.log('[DIAG-DESELLAR] clave SIN fecha reconocida:', k); return; }
+        if(!esFechaValida){ nuevo[k] = out[campo][k]; return; }
         const fecha = k.slice(0,idx);
         const diaLimpio = k.slice(idx+1);
+        const fechaEsperadaHoy = fechasHoy[diaLimpio];
+        if(fechaEsperadaHoy){
+          // Sabemos la fecha real de HOY para este día — solo esa entrada es válida,
+          // ignorar cualquier otra (pasada o futura), sea cual sea.
+          if(fecha === fechaEsperadaHoy) nuevo[diaLimpio] = out[campo][k];
+          return;
+        }
+        // Sin referencia de "hoy" disponible (ej. al desellar un snapshot archivado de
+        // otra semana): usar la más reciente de las que haya, como aproximación razonable.
         if(!mejorFechaPorDia[diaLimpio] || fecha > mejorFechaPorDia[diaLimpio]){
           mejorFechaPorDia[diaLimpio] = fecha;
           nuevo[diaLimpio] = out[campo][k];
-          if(campo==='data' && diaLimpio==='VIERNES') console.log('[DIAG-DESELLAR] VIERNES ahora mismo ganado por fecha', fecha, '→ CASTILLA.campo=', JSON.stringify(out[campo][k]?.CASTILLA?.campo));
         }
       });
       out[campo] = nuevo;
-      if(campo==='data') console.log('[DIAG-DESELLAR] VIERNES final tras desellar → CASTILLA.campo=', JSON.stringify(nuevo['VIERNES']?.CASTILLA?.campo));
     });
     if(out.pos && typeof out.pos === 'object'){
       const nuevoPos = {};
@@ -176,6 +188,11 @@ try {
           const fecha = partes[0].slice(0,idx);
           const diaLimpio = partes[0].slice(idx+1);
           const claveLimpia = diaLimpio+'|'+partes[1]+'|'+partes[2];
+          const fechaEsperadaHoy = fechasHoy[diaLimpio];
+          if(fechaEsperadaHoy){
+            if(fecha === fechaEsperadaHoy) nuevoPos[claveLimpia] = out.pos[k];
+            return;
+          }
           if(!mejorFechaPorClave[claveLimpia] || fecha > mejorFechaPorClave[claveLimpia]){
             mejorFechaPorClave[claveLimpia] = fecha;
             nuevoPos[claveLimpia] = out.pos[k];
@@ -193,7 +210,7 @@ try {
     if(out.semanasGuardadas && typeof out.semanasGuardadas === 'object'){
       const nuevasSemanas = {};
       Object.keys(out.semanasGuardadas).forEach(weekKey=>{
-        nuevasSemanas[weekKey] = _desellarSnapshot(out.semanasGuardadas[weekKey]);
+        nuevasSemanas[weekKey] = _desellarSnapshot(out.semanasGuardadas[weekKey], true);
       });
       out.semanasGuardadas = nuevasSemanas;
     }
