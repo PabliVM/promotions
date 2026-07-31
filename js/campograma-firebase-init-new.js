@@ -21,12 +21,23 @@ try {
     messagingSenderId: "365543412948",
     appId: "1:365543412948:web:19afe2a748305fd2f71741"
   };
-  firebase.initializeApp(firebaseConfig);
+  // Evita "Firebase App named '[DEFAULT]' already exists" si el script se re-ejecuta.
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
   const db = firebase.firestore();
+  window.db = db; // red de seguridad: por si algún otro archivo usa "db" global en vez de "window._db"
   // Safari (y algunas redes/navegadores restrictivos) fallan con el canal de conexión
   // en tiempo real por defecto de Firestore ("access control checks" en el WebChannel).
   // Esto detecta el problema y usa long-polling en su lugar, mucho más compatible.
-  db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
+  // BLINDADO: si settings() ya se llamó antes (doble carga del script, HMR, etc.),
+  // Firestore lanza "already been started" — sin este try/catch, ESE error tumbaba
+  // TODO el bloque de abajo y dejaba sin funcionar login, plantillas, auto-guardado, todo.
+  try {
+    db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
+  } catch (eSettings) {
+    console.warn('[Firebase] settings() ya estaba aplicado (doble carga del script) — se ignora y se continúa con normalidad:', eSettings.message);
+  }
   const auth = firebase.auth();
   window._db = db;
   window._auth = auth;
