@@ -1,263 +1,588 @@
-// ── campograma-captura.js — Captura de fotos y panel Firebase ──
-function capturarCampo(eq, card, diaParam){
-  if(typeof html2canvas === 'undefined'){ toast('❌ html2canvas no cargado'); return; }
-  toast('Generando imagen…');
-  const _diaOriginal = dia;
-  if(diaParam) dia = diaParam; // usar el día de la card que disparó la captura
-  const fecha  = FECHAS[dia] || '';
-  const isIOS  = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  // Primer Equipo: recoger jugadores de todos los equipos promocionados
-  let proms=[], lesion=[], otros=[], extra=[], banquillo=[];
-  let esCas = false;
-  let colN = ['PROMOCIONADOS','LESIONADOS','OTROS'];
-  let promoInfoEq = {};
-  const esPartidoHoy = esPartido(eq);
-  if(eq === '1ER EQUIPO'){
-    // Listar todos los jugadores promocionados a 1er equipo hoy
-    EQUIPOS.forEach(e=>{
-      const prom = promInfo[dia]?.[e]||{};
-      Object.entries(prom).forEach(([nombre,dest])=>{
-        if(dest==='1ER EQUIPO' && !proms.includes(nombre)) proms.push(nombre);
-      });
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Promociones">
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="rm.png">
+<title>Promociones RM</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+<!-- CSS -->
+<link rel="stylesheet" href="css/campograma-base.css">
+<link rel="stylesheet" href="css/campograma-modales.css">
+<link rel="stylesheet" href="css/campograma-semana.css">
+<link rel="stylesheet" href="css/campograma-extras.css">
+
+<script>
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  if(sessionStorage.getItem('_swCleaned')) return; // evitar bucles de recarga
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    var n = regs.length;
+    regs.forEach(function(r){ r.unregister(); });
+    caches.keys().then(function(keys){
+      keys.forEach(function(k){ caches.delete(k); });
     });
-    colN = ['PROMOCIONADOS'];
-  } else {
-    const d = data[dia][eq];
-    esCas  = eq === 'CASTILLA';
-    colN   = colNames[eq] || ['PROMOCIONADOS','LESIONADOS','OTROS'];
-    proms  = d.promovidos_1er || [];
-    lesion = d.lesionados     || [];
-    otros  = d.otros          || [];
-    extra  = d.extra          || [];
-    banquillo = d.banquillo   || [];
-    promoInfoEq = promInfo[dia]?.[eq] || {};
-  }
-  const _campoArr = (eq === '1ER EQUIPO') ? [] : (data[dia][eq]?.campo || []);
-  const _numPorterosCampo = _campoArr.filter(n => porteros.includes(n)).length;
-  const _numCampoNormal = _campoArr.length - _numPorterosCampo;
-  const _contadorTxt = _numCampoNormal + (_numPorterosCampo>0 ? '+'+_numPorterosCampo : '');
-  const cWrap = card.querySelector('.campo-wrap');
-  if(!cWrap){ toast('❌ No se encontró el campo'); return; }
-  // Ocultar escudo: html2canvas no soporta mix-blend-mode
-  const shieldEl = cWrap.querySelector('.campo-shield');
-  if(shieldEl) shieldEl.style.visibility = 'hidden';
-  // Resaltar porteros en el campo con borde amarillo grueso temporal
-  const _chipsPortero = [];
-  const _chipsPorteroOriginal = [];
-  cWrap.querySelectorAll('.chip[data-nombre]').forEach(chipEl => {
-    const nombreChip = chipEl.dataset.nombre;
-    if(porteros.includes(nombreChip)){
-      _chipsPorteroOriginal.push({
-        el: chipEl,
-        border: chipEl.style.border,
-        shadow: chipEl.style.boxShadow,
-        padding: chipEl.style.padding
-      });
-      chipEl.style.border = '2.5px solid #facc15';
-      chipEl.style.boxSizing = 'border-box';
-      _chipsPortero.push(chipEl);
+    if(n > 0){
+      sessionStorage.setItem('_swCleaned', '1');
+      window.location.reload();
     }
   });
-  html2canvas(cWrap, {
-    scale: 3, useCORS: true, allowTaint: true,
-    backgroundColor: '#1a6b2a', logging: false, imageTimeout: 0
-  }).then(fieldCanvas=>{
-    // Restaurar escudo y bordes de porteros en la UI
-    if(shieldEl) shieldEl.style.visibility = '';
-    _chipsPorteroOriginal.forEach(({el, border, shadow, padding}) => { el.style.border = border; el.style.boxShadow = shadow; el.style.padding = padding; });
-    // Dimensiones del canvas — respeta la proporción real del campo capturado
-    const W       = 800;
-    const HEADER_H = 80;
-    // Usar la proporción real del campo (fieldCanvas tiene scale:2)
-    const FIELD_H  = Math.round(W * (fieldCanvas.height / fieldCanvas.width));
-    const ROW_H    = 28;
-    const maxRows  = Math.max(proms.length, lesion.length, otros.length, extra.length, banquillo.length, 1);
-    const COL_H    = 30 + maxRows * ROW_H + 16;
-    const bannerHpre = esPartidoHoy ? 42 : 0;
-    const H        = HEADER_H + bannerHpre + FIELD_H + COL_H + 10;
-    // Escalar canvas por devicePixelRatio para salida nítida en retina/iPhone
-    const DPR = Math.min(window.devicePixelRatio || 2, 3);
-    const cv  = document.createElement('canvas');
-    cv.width  = W * DPR; cv.height = H * DPR;
-    cv.style.width  = W + 'px';
-    cv.style.height = H + 'px';
-    const ctx = cv.getContext('2d');
-    ctx.scale(DPR, DPR);
-    // Fondo blanco
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W, H);
-    // Cabecera azul corporativa
-    ctx.fillStyle = '#2563eb';
-    ctx.fillRect(0, 0, W, HEADER_H);
-    // Equipo arriba izquierda pequeño
-    ctx.fillStyle = 'rgba(255,255,255,.75)';
-    ctx.font = '600 13px Segoe UI, -apple-system, sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.textAlign = 'left';
-    ctx.fillText(eq, 16, 10);
-    // Fecha grande izquierda — LUNES DD/MM/AA
-    const partesFecha = fecha.split('/');
-    const aaStr = new Date().getFullYear().toString().slice(2);
-    const fechaFmt = partesFecha.length===2
-      ? (dia + '  ' + partesFecha[0] + '/' + partesFecha[1] + '/' + aaStr)
-      : dia;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '700 32px Segoe UI, -apple-system, sans-serif';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'left';
-    ctx.fillText(fechaFmt, 16, HEADER_H/2 + 8);
-    // Contador de jugadores en campo (con porteros) — arriba derecha
-    if(eq !== '1ER EQUIPO'){
-      ctx.fillStyle = 'rgba(255,255,255,.95)';
-      ctx.font = '700 20px Segoe UI, -apple-system, sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText(_contadorTxt, W - 16, HEADER_H/2 + 8);
-      ctx.textAlign = 'left';
-    }
-    // Sin escudo en header (evitar fondo negro por transparencia)
+})();
+</script>
+<!-- html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    // Banner PARTIDO vs Rival + tipo, si aplica
-    let bannerH = 0;
-    if(esPartidoHoy){
-      bannerH = 42;
-      const rivalVal = rivales[dia]?.[eq] || 'Rival por confirmar';
-      const tiposBase = (tiposConfig[eq] && tiposConfig[eq].length) ? tiposConfig[eq] : TIPOS_BASE;
-      const tipoKey = tipoPartido[dia]?.[eq] || tiposBase[0]?.k || 'liga';
-      const tipoObj = tiposBase.find(t=>t.k===tipoKey) || tiposBase[0] || {l:'Liga'};
-      ctx.fillStyle = '#eff4fe';
-      ctx.fillRect(0, HEADER_H, W, bannerH);
-      ctx.fillStyle = '#2563eb';
-      ctx.fillRect(0, HEADER_H, W, 3);
-      ctx.font = '700 16px Segoe UI, -apple-system, sans-serif';
-      ctx.fillStyle = '#2563eb';
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'left';
-      ctx.fillText('⚽ PARTIDO', 16, HEADER_H + bannerH/2);
-      ctx.font = '600 15px Segoe UI, -apple-system, sans-serif';
-      ctx.fillStyle = '#1e3a8a';
-      ctx.fillText((tipoObj.l||'').toUpperCase() + '  vs ' + rivalVal, 160, HEADER_H + bannerH/2);
-    }
+<!-- Firebase compat 9.23.0 -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/campograma-firebase-init-new.js"></script>
 
-    // Campo capturado
-    ctx.drawImage(fieldCanvas, 0, HEADER_H + bannerH, W, FIELD_H);
-    function dibujarColumnas(){
-      const colY = HEADER_H + bannerH + FIELD_H + 8;
-      const eqsShort = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
-      const colDefs = [];
-      if(esPartidoHoy && banquillo.length) colDefs.push({ label: '🔄 BANQUILLO', items: banquillo, color:'#f59e0b' });
-      colDefs.push({ label: colN[0], items: proms, color:'#7c3aed', destinos: promoInfoEq });
-      colDefs.push({ label: colN[1], items: lesion, color:'#dc2626' });
-      colDefs.push({ label: colN[2], items: otros, color:'#6b7280' });
-      if(extra && extra.length) colDefs.push({ label: colN[3]||colNames[eq]?.[3]||'EXTRA', items: extra, color:'#7c3aed' });
-      const cW = Math.floor(W / colDefs.length);
-      colDefs.forEach((col, ci)=>{
-        const cx = ci * cW;
-        // Línea de separación vertical entre columnas (excepto la primera)
-        if(ci > 0){
-          ctx.strokeStyle = '#dfe1e6';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(cx, colY);
-          ctx.lineTo(cx, H - 10);
-          ctx.stroke();
-        }
-        // Cabecera columna con color de zona
-        ctx.fillStyle = '#f8fafd';
-        ctx.fillRect(cx+2, colY, cW-4, 30);
-        ctx.fillStyle = col.color;
-        ctx.fillRect(cx+2, colY, 4, 30);
-        ctx.fillStyle = col.color;
-        ctx.font = '700 12px Segoe UI, -apple-system, sans-serif';
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = 'left';
-        ctx.fillText(col.label, cx+12, colY+15);
-        col.items.forEach((nombre, ri)=>{
-          const ry = colY + 30 + ri*ROW_H;
-          ctx.fillStyle = ri%2===0 ? '#f8fafd' : '#ffffff';
-          ctx.fillRect(cx+2, ry, cW-4, ROW_H);
-          ctx.fillStyle = '#1a1d23';
-          ctx.font = '600 14px Segoe UI, -apple-system, sans-serif';
-          ctx.fillText(nombre, cx+10, ry+ROW_H/2);
-          // Destino promoción
-          if(col.destinos && col.destinos[nombre]){
-            const dest = col.destinos[nombre];
-            const destLbl = dest==='1ER EQUIPO' ? '1ER' : (eqsShort[dest]||dest);
-            ctx.fillStyle = '#a78bfa';
-            ctx.font = 'bold 11px sans-serif';
-            ctx.textAlign = 'right';
-            ctx.fillText('→ '+destLbl, cx+cW-8, ry+ROW_H/2);
-            ctx.textAlign = 'left';
-          }
-        });
-        if(!col.items.length){
-          ctx.fillStyle = '#9ca3af';
-          ctx.font = '14px Segoe UI, sans-serif';
-          ctx.fillText('—', cx+10, colY+30+ROW_H/2);
-        }
-      });
+</head>
+<body>
+
+<!-- ── PANTALLA DE LOGIN ── -->
+<div id="login-overlay">
+  <div id="login-box">
+    <div id="login-logo">
+      <img src="rm.png" alt="Real Madrid"/>
+    </div>
+    <h1 id="login-title">Promociones</h1>
+    <p id="login-sub">Real Madrid · Cantera</p>
+    <form id="login-form" onsubmit="return false;">
+      <input id="login-email" type="email" placeholder="Email" autocomplete="username" required/>
+      <input id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password" required/>
+      <button id="login-btn" type="submit" onclick="handleLogin()">Entrar</button>
+      <div id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="app-wrap" style="display:none">
+<div id="ghost"></div>
+<div id="btn-alinear-wrap" style="display:none;position:fixed;z-index:9998;bottom:80px;left:50%;transform:translateX(-50%);gap:8px;">
+  <button id="btn-alinear-h" style="background:#2563eb;color:#fff;border:none;border-radius:20px;padding:10px 16px;font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.25);cursor:pointer;" onclick="alinearSeleccionados('h')">↔ Horizontal</button>
+  <button id="btn-alinear-v" style="background:#2563eb;color:#fff;border:none;border-radius:20px;padding:10px 16px;font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.25);cursor:pointer;" onclick="alinearSeleccionados('v')">↕ Vertical</button>
+  <button id="btn-alinear-del" style="background:#ef4444;color:#fff;border:none;border-radius:20px;padding:10px 16px;font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.25);cursor:pointer;" onclick="eliminarSeleccionados()">🔄 Volver a su equipo</button>
+</div>
+<div id="alert-overlay" onclick="if(event.target===this) closeAlert()">
+  <div id="alert-box">
+    <div id="alert-msg"></div>
+    <div id="alert-btns">
+      <button class="alert-btn alert-cancel" onclick="closeAlert()">Cancelar</button>
+      <button class="alert-btn alert-ok" id="alert-extra2-btn" style="display:none"></button>
+      <button class="alert-btn alert-ok" id="alert-extra-btn" style="display:none"></button>
+      <button class="alert-btn alert-ok" id="alert-ok-btn"></button>
+    </div>
+  </div>
+</div>
+<!-- MODAL REGISTRO -->
+<div id="reg-overlay" onclick="if(event.target===this) closeReg()">
+  <div id="reg-box">
+    <div id="reg-header">
+      <h2>📊 Stats Semanales</h2>
+      <button id="reg-close" onclick="closeReg()">✕</button>
+    </div>
+    <div id="reg-body">
+      <div id="reg-tabs">
+        <button class="reg-tab active" onclick="switchRegTab('jugadores')">👤 Por Jugador</button>
+        <button class="reg-tab" onclick="switchRegTab('equipos')">🏟️ Por Equipo</button>
+      </div>
+      <div id="reg-filters">
+        <input id="reg-search" type="text" placeholder="Buscar jugador…" oninput="renderReg()"/>
+      </div>
+      <div id="reg-jug-eq-btns" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;"></div>
+      <div id="reg-eq-btns" style="display:none"></div>
+      <div id="reg-content"></div>
+    </div>
+  </div>
+</div>
+<!-- MODAL PLANTILLAS -->
+<div id="plant-overlay" onclick="if(event.target===this) closePlant()">
+  <div id="plant-box">
+    <div id="plant-hdr">
+      <h2>👥 Gestión de Plantillas</h2>
+      <button onclick="abrirImportarTablaModal()" title="Pegar una lista de jugadores desde Excel/Sheets" style="background:rgba(37,99,235,.3);border:none;color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:11px;margin-right:6px;">📋 Importar tabla</button>
+      <button onclick="borrarTodosLosJugadores()" title="Borrar TODOS los jugadores (empezar de nuevo)" style="background:rgba(239,68,68,.3);border:none;color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:11px;margin-right:6px;">🗑️ Borrar todo</button>
+      <button id="plant-close" onclick="closePlant()">✕</button>
+    </div>
+    <div id="plant-eq-tabs" id="plant-tabs"></div>
+    <div id="plant-body">
+      <div id="plant-eq-title"></div>
+      <div id="plant-add-row">
+        <input id="plant-add-input" type="text" placeholder="Nombre del jugador…" onkeydown="if(event.key==='Enter')plantAñadir()" oninput="filtrarUYLDrop()" onfocus="filtrarUYLDrop()" onblur="setTimeout(()=>cerrarUYLDrop(),200)"/>
+        <button id="plant-add-btn" onclick="plantAñadir()">+ Añadir</button>
+        <button id="plant-add-desde-btn" onclick="plantAñadirDesdeFecha()" title="Elegir desde qué fecha aparece disponible">+ Añadir <small>(desde fecha)</small></button>
+        <div id="plant-uyl-dropdown"></div>
+      </div>
+      <div id="plant-uyl-add-row" style="display:none;gap:6px;margin-bottom:10px;">
+        <select id="plant-uyl-eq-sel" onchange="renderUYLJugSel()"></select>
+        <select id="plant-uyl-jug-sel"></select>
+        <button id="plant-uyl-add-btn" onclick="uylAñadirDesdeSelects()">+ Añadir</button>
+      </div>
+      <div id="plant-count"></div>
+      <div id="plant-list"></div>
+    </div>
+  </div>
+</div>
+<!-- ── MODAL CONFIG TIPOS DE PARTIDO ── -->
+<div id="cfg-tipos-modal" onclick="cerrarConfigTipos(event)">
+  <div id="cfg-tipos-box">
+    <div id="cfg-tipos-hdr">
+      <span id="cfg-tipos-title">Tipos de partido</span>
+      <button id="cfg-tipos-close" onclick="cerrarConfigTipos()">×</button>
+    </div>
+    <div id="cfg-tipos-eq-strip"></div>
+    <div id="cfg-tipos-list"></div>
+    <div id="cfg-tipo-add-row">
+      <input id="cfg-tipo-new-label" type="text" placeholder="Nuevo tipo…" maxlength="24"/>
+      <input id="cfg-tipo-new-color" type="color" value="#3b82f6"/>
+      <button id="cfg-tipo-add-btn" onclick="addTipoConfig()">+ Añadir</button>
+    </div>
+    <div id="cfg-tipos-footer">
+      <button id="cfg-tipos-reset" onclick="resetTiposConfig()">↺ Restablecer</button>
+      <button id="cfg-tipos-save" onclick="cerrarConfigTipos()">Guardar</button>
+    </div>
+  </div>
+</div>
+<!-- ── MODAL LISTA UYL ── -->
+<div id="uyl-modal" onclick="cerrarUYL(event)">
+  <div id="uyl-box">
+    <div id="uyl-box-hdr">
+      <div id="uyl-box-title">
+        Plantilla JA Youth League <span>UYL</span>
+      </div>
+      <button id="uyl-box-close" onclick="cerrarUYL()">×</button>
+    </div>
+    <div id="uyl-search-wrap">
+      <input id="uyl-search" type="text" placeholder="Buscar jugador extra (otros equipos)…" oninput="renderUYLList()"/>
+    </div>
+    <!-- Sección JA base (siempre visible) -->
+    <div id="uyl-ja-section">
+      <div class="uyl-section-hdr">JUVENIL A — base <span id="uyl-ja-note">todos incluidos por defecto</span></div>
+      <div id="uyl-ja-list"></div>
+    </div>
+    <!-- Separador -->
+    <div class="uyl-section-hdr" style="margin-top:6px;">EXTRAS (otros equipos)</div>
+    <div id="uyl-player-list"></div>
+    <div id="uyl-footer">
+      <span id="uyl-count"></span>
+      <button id="uyl-ok" onclick="cerrarUYL()">Guardar lista</button>
+    </div>
+  </div>
+</div>
+<!-- ── MODAL RESET EQUIPO ── -->
+<!-- Modal Reset Global -->
+<div id="reset-global-overlay" onclick="cerrarResetGlobal(event)" style="position:fixed;inset:0;z-index:10200;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="width:100%;max-width:520px;background:#111827;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.1);padding:0 0 calc(20px + env(safe-area-inset-bottom,0px));">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;border-bottom:1px solid rgba(255,255,255,.08);">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#fff;">↺ Resetear equipos</span>
+      <button onclick="cerrarResetGlobal()" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);font-size:20px;line-height:1;padding:4px;">×</button>
+    </div>
+    <p style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,255,255,.4);padding:8px 20px 4px;text-transform:uppercase;letter-spacing:.5px;margin:0;">Selecciona los equipos a resetear hoy</p>
+    <div id="reset-global-checks" style="display:flex;flex-direction:column;gap:6px;padding:10px 16px;"></div>
+    <div style="display:flex;gap:8px;padding:10px 16px 0;">
+      <button onclick="resetGlobalSelAll()" style="flex:1;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Todos</button>
+      <button onclick="resetGlobalNone()" style="flex:1;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Ninguno</button>
+      <button onclick="ejecutarResetGlobal()" style="flex:2;padding:9px;border-radius:10px;border:none;background:#ef4444;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.5px;">↺ RESETEAR</button>
+    </div>
+    <button onclick="cerrarResetGlobal()" style="margin:8px 16px 0;width:calc(100% - 32px);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Cancelar</button>
+  </div>
+</div>
+<div id="reset-modal-overlay" onclick="cerrarResetModal(event)">
+  <div id="reset-modal-box">
+    <div id="reset-modal-hdr">
+      <span id="reset-modal-title">Resetear equipo</span>
+      <button onclick="cerrarResetModal()" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.8);font-size:20px;line-height:1;padding:4px;">×</button>
+    </div>
+    <p id="reset-modal-sub"></p>
+    <div id="reset-modal-opts">
+      <button class="reset-opt-btn reset-opt-campo" id="reset-opt-campo">
+        <span class="reset-opt-icon">⬜</span>
+        <div>
+          <div class="reset-opt-title">Solo el campo</div>
+          <div class="reset-opt-desc">Los jugadores del campo vuelven a disponibles. Lesiones, promociones y otros se mantienen.</div>
+        </div>
+      </button>
+      <button class="reset-opt-btn reset-opt-todo" id="reset-opt-todo">
+        <span class="reset-opt-icon">↺</span>
+        <div>
+          <div class="reset-opt-title">Todo el equipo</div>
+          <div class="reset-opt-desc">Todos los jugadores (campo, lesiones, promociones…) vuelven a disponibles.</div>
+        </div>
+      </button>
+    </div>
+    <button id="reset-modal-cancel" onclick="cerrarResetModal()">Cancelar</button>
+  </div>
+</div>
+<div id="toast"></div>
+<!-- ── MODAL TEMPORADA ── -->
+<div id="season-modal" onclick="cerrarSeasonModal(event)">
+  <div id="season-box">
+    <div id="season-box-hdr">
+      <span id="season-box-title">Temporada</span>
+      <button id="season-box-close" onclick="cerrarSeasonModal()">×</button>
+    </div>
+    <div id="season-list"></div>
+    <button id="season-new-btn" onclick="nuevaTemporada()">+ Nueva temporada</button>
+  </div>
+</div>
+<!-- ── MODAL CONFIRMACIÓN ASCENSO ── -->
+<div id="ascenso-modal">
+  <div id="ascenso-box">
+    <div id="ascenso-title">⬆️ Nueva temporada</div>
+    <div id="ascenso-body"></div>
+    <div id="ascenso-equipos"></div>
+    <div class="ascenso-btns">
+      <button class="ascenso-btn cancel" onclick="cancelarAscenso()">Cancelar</button>
+      <button class="ascenso-btn confirm" onclick="confirmarAscenso()">Crear temporada</button>
+    </div>
+  </div>
+</div>
+<!-- ═══════════════════════════════
+     ENCABEZADO PREMIUM
+════════════════════════════════ -->
+<header id="app-header">
+  <!-- Izquierda: logo + nombre -->
+  <div id="hdr-identity">
+    <div id="hdr-escudo">
+      <img src="https://raw.githubusercontent.com/PabliVM/Promociones/main/rm__.png" alt="Real Madrid" crossorigin="anonymous" style="width:100%;height:100%;object-fit:contain;"/>
+    </div>
+    <div id="hdr-titles">
+      <span id="hdr-club">Promociones</span>
+      <span id="hdr-sub">Real Madrid · Cantera</span>
+    </div>
+  </div>
+
+  <!-- Centro: vacío — botones se mueven a sub-header -->
+  <div id="hdr-actions"></div>
+
+  <!-- Derecha: dark mode + temporada + guardar -->
+  <div id="hdr-right">
+    <button class="btn-dark-maestro" onclick="toggleDarkMaestro()" id="darkBtnMaestro" title="Modo oscuro">☾</button>
+    <button class="btn-dark-maestro" onclick="abrirFbPanel()" title="Sesiones guardadas en Firebase">☁️</button>
+    <button id="season-badge" onclick="abrirSeasonModal()">
+      <span id="season-label">2026-27</span>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div id="save-area">
+<span id="save-ts"></span>
+    </div>
+    <button onclick="fbLogout()" title="Cerrar sesión" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:16px;padding:4px 6px;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.7)'">⏻</button>
+  </div>
+</header>
+<!-- Barra blanca secundaria con botones de acción -->
+<div id="sub-header">
+  <button class="hdr-action-btn btn-plantillas" onclick="openPlant()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    Plantillas
+  </button>
+  <button class="hdr-action-btn btn-stats" onclick="openReg()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+    Stats
+  </button>
+  <button class="hdr-action-btn btn-control" onclick="abrirControl()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    Control
+  </button>
+  <button class="hdr-action-btn btn-copiar" onclick="abrirCopiarModal()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    Copiar
+  </button>
+
+  <!-- Selector semana -->
+  <button class="hdr-action-btn" onclick="abrirCal()" style="margin-left:4px;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    <span id="sub-semana-lbl">Semana</span>
+  </button>
+
+  <!-- Leyenda equipos -->
+  <div id="sub-leyenda">
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#1e3a8a"></span>CAS</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#7c3aed"></span>RMC</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#eab308"></span>JA</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#16a34a"></span>JB</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#db2777"></span>JC</span>
+    <span class="sub-ley"><span class="sub-ley-dot" style="background:#ea580c"></span>CA</span>
+  </div>
+</div>
+<!-- Filtros vista semana: días y equipos -->
+<div id="filtros-semana-bar">
+  <div id="filtro-dias-row"></div>
+  <div class="filtros-sep"></div>
+  <div id="filtro-eqs-row"></div>
+</div>
+<!-- Leyenda colores equipos — fina, integrada -->
+<div id="leyenda-strip">
+  <div class="ley2"><span class="ley2-dot" style="background:#1e3a8a"></span><span>CAS</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#7c3aed"></span><span>RMC</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#eab308"></span><span>JA</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#16a34a"></span><span>JB</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#db2777"></span><span>JC</span></div>
+  <div class="ley2"><span class="ley2-dot" style="background:#ea580c"></span><span>CA</span></div>
+</div>
+<!-- Días de la semana -->
+<div id="semana-nav">
+  <button id="btn-semana-cal" onclick="abrirCal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    <div id="semana-fechas">
+      <span id="semana-fecha-ini">—</span>
+      <span id="semana-fecha-fin">—</span>
+    </div>
+    <span id="top-semana-lbl" style="display:none"></span>
+  </button>
+  <div id="dias-strip" role="tablist"></div>
+</div>
+<!-- Filtro de equipos -->
+<div id="eq-strip"></div>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="cargarFicheroImport(event)">
+<!-- Panel sesiones Firebase -->
+<div id="fb-overlay">
+  <div id="fb-box">
+    <h3>☁️ SESIONES GUARDADAS</h3>
+    <div id="fb-lista"><div class="fb-empty">Cargando...</div></div>
+    <div id="fb-nueva-row">
+      <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)">
+      <button class="fb-btn cargar" onclick="fbGuardarActual()">💾 Guardar</button>
+    </div>
+
+    <div class="fb-seccion">
+      <div class="fb-seccion-titulo">Copia en tu ordenador</div>
+      <div class="fb-seccion-btns">
+        <button class="fb-btn fb-btn-secundario" onclick="exportarDatos()" title="Descarga un archivo con todo, para guardar en tu ordenador">📥 Descargar (.json)</button>
+        <button class="fb-btn fb-btn-secundario" onclick="exportarPDF()" title="PDF legible con todas las plantillas">📄 Descargar PDF</button>
+        <button class="fb-btn fb-btn-secundario" onclick="importarDatos()" title="Restaura desde un archivo descargado antes">📤 Restaurar de archivo</button>
+      </div>
+    </div>
+
+    <div class="fb-seccion">
+      <div class="fb-seccion-titulo">Mantenimiento</div>
+      <div class="fb-seccion-btns">
+        <button class="fb-btn fb-btn-peligro" onclick="limpiarCamposResidualesConfirmar()" title="Borra campos antiguos sin uso (data_por_eq/prominfo_por_eq)">🧹 Limpiar campos residuales</button>
+      </div>
+    </div>
+
+    <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+      <div id="fb-sesion-activa-lbl" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#60b4ff;padding:4px 0;"></div>
+      <button class="fb-btn" style="background:rgba(255,255,255,.1);color:#fff;" onclick="cerrarFbPanel()">Cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Destino Promoción -->
+<div id="promo-dest-overlay">
+  <div id="promo-dest-modal">
+    <h3 id="promo-dest-title">¿A qué equipo va?</h3>
+    <p id="promo-dest-sub"></p>
+    <div id="promo-dest-opts"></div>
+    <button id="promo-dest-cancel" onclick="cerrarPromoDestModal()">Cancelar</button>
+  </div>
+</div>
+<!-- Modal Foto Múltiple -->
+<div id="foto-multi-overlay">
+  <div id="foto-multi-modal">
+    <h3>Foto de equipos</h3>
+    <p>Selecciona los equipos que quieres incluir</p>
+    <div id="foto-eq-checks"></div>
+    <div id="foto-multi-footer">
+      <button id="foto-multi-cancel" onclick="cerrarFotoMultiModal()">Cancelar</button>
+      <button id="foto-multi-ok" onclick="generarFotoMulti()">Generar foto</button>
+    </div>
+  </div>
+</div>
+<!-- Modal Copiar -->
+<div id="copy-modal-overlay">
+  <div id="copy-modal">
+    <div id="copy-modal-hdr">
+      <span>Copiar campograma</span>
+      <button onclick="cerrarCopiarModal()">✕</button>
+    </div>
+
+    <!-- Equipos -->
+    <div class="copy-section-lbl">Equipos</div>
+    <div id="copy-eq-checks"></div>
+
+    <!-- Día ORIGEN -->
+    <div class="copy-section-lbl" style="margin-top:14px;">Día origen</div>
+    <div id="copy-origen-btns" class="copy-dias-row"></div>
+
+    <!-- Día(s) DESTINO -->
+    <div class="copy-section-lbl" style="margin-top:14px;">Día(s) destino</div>
+    <div id="copy-dias-btns" class="copy-dias-row"></div>
+    <div id="copy-dia-semana-lbl" style="display:none;font-size:11px;color:#2563eb;margin:4px 0 6px;font-family:'Segoe UI',sans-serif;"></div>
+    <div style="margin-top:8px;">
+      <button id="copy-dia-semana-btn" onclick="abrirCalCopiaDir()" style="font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;cursor:pointer;">
+        📅 Otra semana
+      </button>
+    </div>
+
+    <!-- Mantener compatibilidad con setCopyTipo -->
+    <div id="copy-tipo-btns" style="display:none;">
+      <button class="copy-tipo-btn active" id="ctype-dia" onclick="setCopyTipo('dia')">Día concreto</button>
+      <button class="copy-tipo-btn" id="ctype-semana" onclick="setCopyTipo('semana')">Semana completa</button>
+    </div>
+    <div id="copy-semana-sel" style="display:none;margin-top:12px;">
+      <button id="copy-semana-btn" onclick="abrirCalCopia()" style="width:100%;padding:10px 14px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;font-family:'Segoe UI',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span id="copy-semana-lbl">Seleccionar semana…</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      </button>
+    </div>
+
+    <div id="copy-modal-footer">
+      <button id="copy-ok-btn" onclick="ejecutarCopia()">Copiar ✓</button>
+    </div>
+  </div>
+</div>
+<!-- Calendario semana -->
+<div id="cal-overlay">
+  <div id="cal-box">
+    <div id="cal-header">
+      <span id="cal-mes"></span>
+      <div style="display:flex;gap:4px;">
+        <button class="cal-nav" id="cal-prev">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="cal-nav" id="cal-next">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="cal-grid"></div>
+    <div id="cal-footer">
+      <button id="cal-cancel" onclick="cerrarCal()" style="background:none;border:none;color:#9ca3af;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;">✕</button>
+      <span id="cal-sel-txt"></span>
+      <button id="cal-ok" onclick="aplicarSemana()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+<div id="eq-strip-wrap">
+  <div id="eq-strip"></div>
+</div>
+<!-- Barra de vista -->
+<div id="view-bar" style="display:none">
+  <button class="view-btn active" id="vbtn-semana-alias" style="display:none"></button>
+  <button class="view-btn" id="vbtn-semana" onclick="setView('semana')" title="Vista semana completa">
+    <svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke-width="1.8">
+      <rect x="1" y="1" width="2" height="16" rx="1"/>
+      <rect x="4" y="1" width="2" height="16" rx="1"/>
+      <rect x="7" y="1" width="2" height="16" rx="1"/>
+      <rect x="10" y="1" width="2" height="16" rx="1"/>
+      <rect x="13" y="1" width="2" height="16" rx="1"/>
+      <rect x="16" y="1" width="2" height="16" rx="1"/>
+    </svg>
+  </button>
+
+</div>
+<div id="multi-eq-bar"></div>
+<div class="cards-grid view-1" id="grid"></div>
+<div id="scroll-sync-bar"><div id="scroll-sync-inner"></div></div>
+<script src="js/campograma-constants-new.js"></script>
+<script src="js/campograma-core-new.js"></script>
+<script src="js/campograma-plantillas-new.js"></script>
+<script src="js/campograma-temporadas-new.js"></script>
+<script src="js/campograma-buildcard-new.js"></script>
+<script src="js/campograma-render-new.js"></script>
+<script src="js/campograma-modos-new.js"></script>
+<script src="js/campograma-drag-new.js"></script>
+<script src="js/campograma-copiar-new.js"></script>
+<script src="js/campograma-stats-new.js"></script>
+<script>
+// Arranque — después de todos los módulos cargados
+const cargado = cargarGuardado();
+initTiposConfig();
+if(cargado) render();
+</script>
+<!-- ═══════════════════════════════
+     NAVEGACIÓN INFERIOR APP MÓVIL
+════════════════════════════════ -->
+<!-- ═══════════ TABLA CONTROL ═══════════ -->
+<div id="control-overlay" onclick="if(event.target===this) cerrarControl()">
+  <div id="control-box">
+    <div id="control-hdr">
+      <div>
+        <h2>✓ Tabla de control</h2>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:5px;">
+          <button onclick="abrirCal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:11px;">📅</button>
+          <div id="control-dia-btns" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+      <button id="control-close" onclick="cerrarControl()">✕</button>
+    </div>
+    <div id="control-eqs-row" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 20px;border-bottom:1px solid #e8eef8;"></div>
+    <div id="control-body">
+      <table id="control-table">
+        <thead id="control-thead"></thead>
+        <tbody id="control-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<nav id="bottom-nav" style="display:none">
+  <button class="bnav-btn" onclick="abrirCopiarModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    <span>Copiar</span>
+  </button>
+  <button class="bnav-btn" onclick="openPlant()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    <span>Plantillas</span>
+  </button>
+  <button class="bnav-btn" onclick="openReg()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+    <span>Stats</span>
+  </button>
+  <button class="bnav-btn" onclick="abrirControl()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    <span>Control</span>
+  </button>
+</nav>
+<footer class="app-footer-maestro">
+  Cantera del Real Madrid CF · Promociones
+</footer>
+</div>
+
+
+
+<script>
+// ── LOGIN HANDLING ──
+function handleLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  if(!email || !pass){ errEl.textContent = 'Rellena email y contraseña.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  window.fbLogin(email, pass).then(res => {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+    if(!res.ok){
+      errEl.textContent = res.message;
     }
-    function finalizarYExportar(){
-      // Escudo sobre el campo (screen blend — sin cuadro negro)
-      const shieldEl2 = cWrap.querySelector('.campo-shield');
-      if(shieldEl2 && shieldEl2.src){
-        const si=new Image();
-        si.onload=()=>{
-          const sw=W*0.38;
-          const sx=(W-sw)/2;
-          // Centrar escudo en el campo visual (vertical: 45% del FIELD_H desde arriba)
-          const sy=HEADER_H+(FIELD_H*0.5)-(sw/2);
-          ctx.save();
-          ctx.globalAlpha=0.22;
-          ctx.globalCompositeOperation='screen';
-          ctx.drawImage(si,sx,sy,sw,sw);
-          ctx.restore();
-          dibujarColumnas();
-          _exportarImagen(cv,eq,dia,fecha,isIOS);
-        };
-        si.onerror=()=>{dibujarColumnas();_exportarImagen(cv,eq,dia,fecha,isIOS);};
-        si.src=shieldEl2.src;
-        return; // salir — continuará en onload
-      }
-      // Columnas
-      dibujarColumnas();
-      // Exportar
-      _exportarImagen(cv,eq,dia,fecha,isIOS);
-    }
-    function _exportarImagen(cv,eq,dia,fecha,isIOS){
-      try{
-        cv.toBlob(blob=>{
-          if(!blob){toast('❌ Error generando imagen');return;}
-          const blobUrl=URL.createObjectURL(blob);
-          let ov=document.getElementById('photo-ov');
-          if(ov) ov.remove();
-          ov=document.createElement('div');
-          ov.id='photo-ov';
-          ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:env(safe-area-inset-top,16px) 16px env(safe-area-inset-bottom,16px);box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;';
-          const instruccion=isIOS?'📥 Mantén pulsada la imagen → <b>Añadir a Fotos</b>':'📥 Mantén pulsada la imagen para guardarla';
-          const imgEl=document.createElement('img');
-          imgEl.src=blobUrl;
-          imgEl.style.cssText='max-width:100%;max-height:70vh;border-radius:8px;border:2px solid #2563eb;display:block;';
-          const p=document.createElement('p');
-          p.innerHTML=instruccion;
-          p.style.cssText='color:#fff;font-family:Segoe UI,sans-serif;font-size:15px;text-align:center;margin:0;font-weight:600;';
-          const btnC=document.createElement('button');
-          btnC.textContent='Cerrar';
-          btnC.style.cssText='padding:12px 32px;background:#2563eb;color:#fff;border:none;border-radius:20px;font-weight:600;font-size:14px;cursor:pointer;min-height:44px;font-family:Segoe UI,sans-serif;';
-          btnC.onclick=()=>{ov.remove();URL.revokeObjectURL(blobUrl);};
-          ov.appendChild(p);ov.appendChild(imgEl);ov.appendChild(btnC);
-          document.body.appendChild(ov);
-        },'image/png');
-      }catch(e){toast('❌ Error: '+e.message);}
-    }
-    // Sin escudo en la foto (más fiable en iOS)
-    finalizarYExportar();
-    dia = _diaOriginal; // restaurar
-  }).catch(err=>{
-    if(shieldEl) shieldEl.style.visibility = '';
-    toast('❌ Error: '+err.message);
-    dia = _diaOriginal; // restaurar
+    // Si ok, onAuthStateChanged se encarga de mostrar la app
   });
 }
-// ══════════════════════════════════════════════════
-// PANEL SESIONES FIREBASE
-// ══════════════════════════════════════════════════
+
+document.addEventListener('auth-ready', () => {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app-wrap').style.display = '';
+});
+
+document.addEventListener('auth-logout', () => {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('app-wrap').style.display = 'none';
+});
+</script>
+
+
+</body>
+</html>
