@@ -1,550 +1,803 @@
-// ================================================
-// CAMPOGRAMA-FIREBASE-INIT.JS — Init Firebase compat 9.23.0
-// Expone: window._db, window._fbReady, window.fbGuardarSesion,
-//         window.fbCargarSesion, window.fbListarSesiones, window.fbEliminarSesion
-// ================================================
-
-function _fbStub(mensaje){
-  return async function(){ return { ok:false, reason:'firebase_no_disponible', message: mensaje }; };
-}
-
-try {
-  if (typeof firebase === 'undefined') {
-    throw new Error('Las librerías de Firebase (gstatic.com) no llegaron a cargar en el navegador.');
-  }
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCvoSR0sAyXkQ96HdaO4G5sF8kBn0go-Ig",
-    authDomain: "promotions-532a7.firebaseapp.com",
-    projectId: "promotions-532a7",
-    storageBucket: "promotions-532a7.firebasestorage.app",
-    messagingSenderId: "365543412948",
-    appId: "1:365543412948:web:19afe2a748305fd2f71741"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  // Safari (y algunas redes/navegadores restrictivos) fallan con el canal de conexión
-  // en tiempo real por defecto de Firestore ("access control checks" en el WebChannel).
-  // Esto detecta el problema y usa long-polling en su lugar, mucho más compatible.
-  db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
-  const auth = firebase.auth();
-  window._db = db;
-  window._auth = auth;
-  window._fbReady = false; // se activa tras login correcto
-
-  // ── LOGIN ──
-  window.fbLogin = async function(email, password){
-    try{
-      await auth.signInWithEmailAndPassword(email, password);
-      return { ok:true };
-    }catch(e){
-      console.error('fbLogin error:', e);
-      let msg = 'Email o contraseña incorrectos.';
-      if(e.code === 'auth/too-many-requests') msg = 'Demasiados intentos. Espera unos minutos.';
-      return { ok:false, message: msg };
-    }
-  };
-  window.fbLogout = function(){
-    return auth.signOut();
-  };
-
-  // Escuchar cambios de sesión
-  auth.onAuthStateChanged(user => {
-    if(user){
-      window._fbReady = true;
-      window._fbUser = user;
-      window.dispatchEvent(new Event('firebase-ready'));
-      document.dispatchEvent(new Event('auth-ready'));
-    } else {
-      window._fbReady = false;
-      window._fbUser = null;
-      document.dispatchEvent(new Event('auth-logout'));
-    }
-  });
-  function fbErrorMsg(e){
-    if(!e) return 'Error desconocido';
-    return e.message || String(e);
-  }
-  // ── Días CON fecha real para guardar en Firebase ──
-  // Por dentro, la app usa siempre "LUNES"/"MARTES"... (sin tocar nada de eso). Pero al
-  // guardar en Firebase, las claves de día pasan a incluir la fecha real (ej.
-  // "2026-07-21_MARTES"), para que se pueda identificar la semana con solo mirar
-  // Firestore. Al cargar, se revierte automáticamente — invisible para el resto del código.
-  const _CAMPOS_POR_DIA = ['data','promInfo','historicoJugador','modoPartido','modoDescanso','tipoPartido','primerEquipoJugadores'];
-  function _mapaDiaConFecha(fechas){
-    const anio = new Date().getFullYear();
-    const mapa = {};
-    Object.keys(fechas||{}).forEach(dia=>{
-      const partes = String(fechas[dia]||'').split('/');
-      if(partes.length===2){
-        const dd = partes[0].padStart(2,'0');
-        const mm = partes[1].padStart(2,'0');
-        mapa[dia] = anio+'-'+mm+'-'+dd+'_'+dia;
-      } else {
-        mapa[dia] = dia; // sin fecha disponible: usar el nombre tal cual
-      }
-    });
-    return mapa;
-  }
-  // Aplica el sellado de fecha (día->clave con fecha) a un objeto "tipo snapshot de
-  // semana" (data/promInfo/historicoJugador/... + pos), usando el mapa de fechas dado.
-  // Reutilizable tanto para la semana activa como para cada semana archivada.
-  function _sellarSnapshot(obj, mapa){
-    const out = { ...obj };
-    _CAMPOS_POR_DIA.forEach(campo=>{
-      if(!out[campo] || typeof out[campo] !== 'object') return;
-      const nuevo = {};
-      Object.keys(out[campo]).forEach(dia=>{
-        nuevo[mapa[dia] || dia] = out[campo][dia];
-      });
-      out[campo] = nuevo;
-    });
-    if(out.pos && typeof out.pos === 'object'){
-      const nuevoPos = {};
-      Object.keys(out.pos).forEach(k=>{
-        const partes = k.split('|');
-        if(partes.length===3 && mapa[partes[0]]){
-          nuevoPos[mapa[partes[0]]+'|'+partes[1]+'|'+partes[2]] = out.pos[k];
-        } else {
-          nuevoPos[k] = out.pos[k];
-        }
-      });
-      out.pos = nuevoPos;
-    }
-    return out;
-  }
-  function _aplicarFechaAClaves(payload){
-    if(!payload.fechas) return payload;
-    const mapa = _mapaDiaConFecha(payload.fechas);
-    let out = _sellarSnapshot(payload, mapa);
-    // Semanas archivadas: cada una tiene sus propias fechas reales (distintas de la
-    // semana activa) — se calculan a partir de su propia clave (el lunes de esa semana)
-    // usando fechaCompletaDeDia(), y se sella cada una con SU mapa correspondiente.
-    if(out.semanasGuardadas && typeof out.semanasGuardadas === 'object' && typeof fechaCompletaDeDia === 'function'){
-      const nuevasSemanas = {};
-      Object.keys(out.semanasGuardadas).forEach(weekKey=>{
-        const mapaSemana = {};
-        DIAS.forEach(dia=>{ mapaSemana[dia] = fechaCompletaDeDia(dia, weekKey)+'_'+dia; });
-        nuevasSemanas[weekKey] = _sellarSnapshot(out.semanasGuardadas[weekKey], mapaSemana);
-      });
-      out.semanasGuardadas = nuevasSemanas;
-    }
-    return out;
-  }
-  function _desellarSnapshot(obj){
-    const out = { ...obj };
-    _CAMPOS_POR_DIA.forEach(campo=>{
-      if(!out[campo] || typeof out[campo] !== 'object') return;
-      const nuevo = {};
-      Object.keys(out[campo]).forEach(k=>{
-        const idx = k.indexOf('_');
-        const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx))) ? k.slice(idx+1) : k;
-        nuevo[diaLimpio] = out[campo][k];
-      });
-      out[campo] = nuevo;
-    });
-    if(out.pos && typeof out.pos === 'object'){
-      const nuevoPos = {};
-      Object.keys(out.pos).forEach(k=>{
-        const partes = k.split('|');
-        if(partes.length===3){
-          const idx = partes[0].indexOf('_');
-          const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(partes[0].slice(0,idx))) ? partes[0].slice(idx+1) : partes[0];
-          nuevoPos[diaLimpio+'|'+partes[1]+'|'+partes[2]] = out.pos[k];
-        } else {
-          nuevoPos[k] = out.pos[k];
-        }
-      });
-      out.pos = nuevoPos;
-    }
-    return out;
-  }
-  function _quitarFechaDeClaves(raw){
-    let out = _desellarSnapshot(raw);
-    if(out.semanasGuardadas && typeof out.semanasGuardadas === 'object'){
-      const nuevasSemanas = {};
-      Object.keys(out.semanasGuardadas).forEach(weekKey=>{
-        nuevasSemanas[weekKey] = _desellarSnapshot(out.semanasGuardadas[weekKey]);
-      });
-      out.semanasGuardadas = nuevasSemanas;
-    }
-    return out;
-  }
-  // Guardar sesión en Firebase
-  // Limpieza de campos residuales: borra SOLO los campos que empiecen por
-  // "data_por_eq." o "prominfo_por_eq." (restos muertos de una función revertida hace
-  // tiempo, confirmados sin uso). No toca ningún otro campo del documento.
-  // Solo cuenta/lista los campos residuales, SIN borrar nada — para poder mostrar al
-  // usuario un mensaje real de qué se va a borrar antes de pedir confirmación.
-  window.fbContarCamposResiduales = async function(nombre){
-    try{
-      const snap = await db.collection('sesiones').doc(nombre).get();
-      if(!snap.exists) return { ok:true, campos:[] };
-      const campos = Object.keys(snap.data());
-      const encontrados = campos.filter(k=>k.startsWith('data_por_eq.') || k.startsWith('prominfo_por_eq.'));
-      return { ok:true, campos: encontrados };
-    }catch(e){
-      console.error('fbContarCamposResiduales error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e), campos:[] };
-    }
-  };
-  window.fbLimpiarCamposResiduales = async function(nombre){
-    try{
-      const snap = await db.collection('sesiones').doc(nombre).get();
-      if(!snap.exists) return { ok:false, reason:'not_found' };
-      const campos = Object.keys(snap.data());
-      const aBorrar = campos.filter(k=>k.startsWith('data_por_eq.') || k.startsWith('prominfo_por_eq.'));
-      if(!aBorrar.length) return { ok:true, borrados:0 };
-      // IMPORTANTE: estos nombres de campo tienen puntos LITERALES (no son rutas
-      // anidadas) — hay que usar FieldPath con el nombre completo como UN solo
-      // segmento, si no Firestore los interpretaría como campo->subcampo->subcampo.
-      const args = [];
-      aBorrar.forEach(k=>{
-        args.push(new firebase.firestore.FieldPath(k));
-        args.push(firebase.firestore.FieldValue.delete());
-      });
-      await db.collection('sesiones').doc(nombre).update(...args);
-      return { ok:true, borrados: aBorrar.length, campos: aBorrar };
-    }catch(e){
-      console.error('fbLimpiarCamposResiduales error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  window.fbGuardarSesion = async function(nombre, payload){
-    try{
-      const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payload)));
-      await db.collection('sesiones').doc(nombre).set({
-        ...clean,
-        _nombre: nombre,
-        _ts: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      return { ok:true };
-    }catch(e){
-      console.error('fbGuardarSesion error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // Cargar sesión desde Firebase
-  // Puede haber quedado un residuo del guardado dividido por equipo (data_por_eq /
-  // prominfo_por_eq) de una versión anterior que luego se revirtió. Si existe y tiene
-  // contenido, hay que RECONSTRUIR 'data'/'promInfo' a partir de ahí — es la copia real
-  // y más reciente de los datos; el campo plano 'data' puede haber quedado vacío/desfasado.
-  function _reconstruirDesdePorEq(raw){
-    const out = { ...raw };
-    if(raw.data_por_eq && typeof raw.data_por_eq === 'object' && Object.keys(raw.data_por_eq).length){
-      out.data = raw.data_por_eq;
-      delete out.data_por_eq;
-    }
-    if(raw.prominfo_por_eq && typeof raw.prominfo_por_eq === 'object' && Object.keys(raw.prominfo_por_eq).length){
-      out.promInfo = raw.prominfo_por_eq;
-      delete out.prominfo_por_eq;
-    }
-    return _quitarFechaDeClaves(out);
-  }
-  window.fbCargarSesion = async function(nombre){
-    try{
-      const snap = await db.collection('sesiones').doc(nombre).get();
-      if(!snap.exists){
-        return { ok:false, reason:'not_found', message:'La sesión no existe en Firebase.' };
-      }
-      return { ok:true, data: _reconstruirDesdePorEq(snap.data()) };
-    }catch(e){
-      console.error('fbCargarSesion error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // Listar sesiones guardadas
-  window.fbListarSesiones = async function(){
-    try{
-      const snap = await db.collection('sesiones').get();
-      return { ok:true, data:snap.docs.map(d=>({id:d.id, ...d.data()})) };
-    }catch(e){
-      console.error('fbListarSesiones error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e), data:[] };
-    }
-  };
-  // Eliminar sesión
-  window.fbEliminarSesion = async function(nombre){
-    try{
-      await db.collection('sesiones').doc(nombre).delete();
-      return { ok:true };
-    }catch(e){
-      console.error('fbEliminarSesion error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // Lectura rápida SOLO para comparar cuántos jugadores hay ahora mismo en el servidor,
-  // justo antes de guardar — así se detecta si OTRA pestaña/dispositivo tiene datos más
-  // completos que los que esta pestaña está a punto de guardar (y evitar pisarlos).
-  window.fbContarJugadoresServidor = async function(){
-    try{
-      const snap = await db.collection('sesiones').doc('principal').get();
-      if(!snap.exists) return { ok:true, total: 0 };
-      const plantillasSrv = snap.data().plantillas || {};
-      const total = Object.values(plantillasSrv).reduce((acc,arr)=>acc+(Array.isArray(arr)?arr.length:0), 0);
-      return { ok:true, total };
-    }catch(e){
-      console.error('fbContarJugadoresServidor error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // Copia de seguridad DIARIA automática — independiente del guardado normal, en una
-  // colección aparte ('backups'). Si algo rompe la sesión principal, aquí queda un
-  // punto de recuperación de cada día. Se sobreescribe si se llama varias veces el
-  // mismo día (no crece sin límite), pero los días anteriores NUNCA se tocan.
-  window.fbGuardarBackupDiario = async function(payload){
-    try{
-      const hoy = new Date().toISOString().slice(0,10); // 'YYYY-MM-DD'
-      const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payload)));
-      await db.collection('backups').doc(hoy).set({
-        ...clean,
-        _fecha: hoy,
-        _ts: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      return { ok:true };
-    }catch(e){
-      console.error('fbGuardarBackupDiario error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // Copia de seguridad justo ANTES de una acción destructiva (Borrar todo, Borrar
-  // definitivo de un jugador). Se guardan las últimas 5 en rotación (pre_accion_0..4),
-  // así siempre hay un paso atrás disponible sin esperar al backup diario.
-  window.fbGuardarBackupPreAccion = async function(payload, etiqueta){
-    try{
-      const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payload)));
-      let contador = 0;
-      try{ contador = parseInt(localStorage.getItem('rm_backup_pre_accion_contador')||'0', 10) || 0; }catch(e){}
-      const slot = 'pre_accion_' + (contador % 5);
-      try{ localStorage.setItem('rm_backup_pre_accion_contador', String(contador+1)); }catch(e){}
-      await db.collection('backups').doc(slot).set({
-        ...clean,
-        _etiqueta: etiqueta || '',
-        _fechaHora: new Date().toISOString(),
-        _ts: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      return { ok:true };
-    }catch(e){
-      console.error('fbGuardarBackupPreAccion error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // Listar backups disponibles (para poder restaurar uno concreto si hace falta)
-  window.fbListarBackups = async function(){
-    try{
-      const snap = await db.collection('backups').orderBy('_fecha','desc').limit(30).get();
-      return { ok:true, data: snap.docs.map(d=>d.id) };
-    }catch(e){
-      console.error('fbListarBackups error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e), data:[] };
-    }
-  };
-  // ── Temporadas: guardar/cargar la lista completa (nombre, activa, payload de cada una) ──
-  window.fbGuardarTemporadas = async function(temporadasArr, temporadaActualId){
-    try{
-      const clean = JSON.parse(JSON.stringify(temporadasArr));
-      await db.collection('config').doc('temporadas').set({
-        temporadas: clean,
-        temporadaActual: temporadaActualId,
-        _ts: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      return { ok:true };
-    }catch(e){
-      console.error('fbGuardarTemporadas error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  window.fbCargarTemporadas = async function(){
-    try{
-      const snap = await db.collection('config').doc('temporadas').get();
-      if(!snap.exists) return { ok:true, temporadas: [], temporadaActual: null };
-      const d = snap.data();
-      return { ok:true, temporadas: d.temporadas||[], temporadaActual: d.temporadaActual||null };
-    }catch(e){
-      console.error('fbCargarTemporadas error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e), temporadas:[], temporadaActual:null };
-    }
-  };
-  // Cargar un backup concreto por fecha ('YYYY-MM-DD')
-  window.fbCargarBackup = async function(fecha){
-    try{
-      const snap = await db.collection('backups').doc(fecha).get();
-      if(!snap.exists) return { ok:false, reason:'not_found', message:'No hay backup de ese día.' };
-      return { ok:true, data: _quitarFechaDeClaves(snap.data()) };
-    }catch(e){
-      console.error('fbCargarBackup error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // Escuchar cambios EN VIVO de una sesión (de otros dispositivos/pestañas).
-  // callback(data) se llama cada vez que hay un cambio confirmado en el servidor
-  // que NO viene de una escritura pendiente nuestra (evita reaccionar a nuestro propio guardado).
-  window.fbEscucharSesion = function(nombre, callback){
-    return db.collection('sesiones').doc(nombre)
-      .onSnapshot({ includeMetadataChanges: true }, (snap) => {
-        if(!snap.exists) return;
-        if(snap.metadata.hasPendingWrites) return; // es nuestra propia escritura local, ignorar
-        callback(_reconstruirDesdePorEq(snap.data()));
-      }, (err) => {
-        console.error('fbEscucharSesion error:', err);
-      });
-  };
-  // Marcar/desmarcar portero de forma ATÓMICA — no depende del guardado general (buildPayload),
-  // así nunca se pisa aunque otra persona esté guardando algo distinto en ese mismo instante.
-  window.fbTogglePortero = async function(nombre, marcar){
-    try{
-      const ref = db.collection('sesiones').doc('principal');
-      const cambio = marcar
-        ? firebase.firestore.FieldValue.arrayUnion(nombre)
-        : firebase.firestore.FieldValue.arrayRemove(nombre);
-      await ref.set({ porteros: cambio }, { merge: true });
-      return { ok:true };
-    }catch(e){
-      console.error('fbTogglePortero error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // Sobrescribe la lista de porteros entera (para "Borrar todo" u otras operaciones masivas)
-  window.fbSetPorterosCompleto = async function(arr){
-    try{
-      await db.collection('sesiones').doc('principal').set({ porteros: arr }, { merge: true });
-      return { ok:true };
-    }catch(e){
-      console.error('fbSetPorterosCompleto error:', e);
-      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
-    }
-  };
-  // (firebase-ready ahora se dispara desde onAuthStateChanged tras login)
-
-} catch (errorInicial) {
-  // ── Firebase no se pudo inicializar (librerías bloqueadas, red, config, etc.) ──
-  // Nunca dejamos las funciones sin definir: así el resto de la app no revienta
-  // con "window.fbLogin is not a function", y el usuario ve un mensaje claro.
-  console.error('[Firebase] No se pudo inicializar:', errorInicial);
-  const MSG = 'No se pudo conectar con el servidor (Firebase). Revisa tu conexión o si algún bloqueador de anuncios/privacidad está impidiendo cargar gstatic.com, y recarga la página.';
-  window._fbReady = false;
-  window.fbLogin = async function(){ return { ok:false, message: MSG }; };
-  window.fbLogout = _fbStub(MSG);
-  window.fbGuardarSesion = _fbStub(MSG);
-  window.fbContarCamposResiduales = async function(){ return { ok:false, campos:[], message:MSG }; };
-  window.fbLimpiarCamposResiduales = _fbStub(MSG);
-  window.fbCargarSesion = _fbStub(MSG);
-  window.fbListarSesiones = _fbStub(MSG);
-  window.fbEliminarSesion = _fbStub(MSG);
-  window.fbContarJugadoresServidor = _fbStub(MSG);
-  window.fbGuardarBackupDiario = _fbStub(MSG);
-  window.fbGuardarBackupPreAccion = _fbStub(MSG);
-  window.fbListarBackups = _fbStub(MSG);
-  window.fbGuardarTemporadas = _fbStub(MSG);
-  window.fbCargarTemporadas = async function(){ return { ok:false, temporadas:[], temporadaActual:null, message:MSG }; };
-  window.fbCargarBackup = _fbStub(MSG);
-  window.fbEscucharSesion = function(){ return function(){}; }; // no-op: devuelve un "cancelar" vacío
-  window.fbTogglePortero = _fbStub(MSG);
-  window.fbSetPorterosCompleto = _fbStub(MSG);
-}
-
-// ================================================
-// TEMPORADAS — wiring del modal (crear/cambiar/listar)
-// No toca 'plantillas'. Ascenso de jugadores sigue siendo manual.
-// ================================================
+// ── campograma-render.js — Render principal, cards, lista, calendario, filtros ──
+// Blindaje: si este script se llegara a ejecutar más de una vez en la misma página
+// (doble <script>, caché vieja, service worker fantasma, etc.), no debe romper nada.
+if (window.__rmRenderLoaded) {
+  console.warn('campograma-render-new.js ya estaba cargado — segunda ejecución ignorada.');
+} else {
+window.__rmRenderLoaded = true;
 (function(){
-  var _temporadas = [];
-  var _temporadaActual = null;
-
-  function _pintarBadge(){
-    var lbl = document.getElementById('season-label');
-    if(lbl) lbl.textContent = _temporadaActual || '2026-27';
+let _diaElegidoManualmente = false; // en móvil, ningún día se marca hasta que el usuario toque uno
+let _yaSubidoInicial = false; // para no forzar scroll arriba en CADA acción, solo al arrancar
+function esMovilVista(){ return window.matchMedia('(max-width: 640px)').matches; }
+let _yaCentradoEscritorio = false; // el centrado en "hoy" de escritorio, solo una vez al arrancar
+function render(){
+  DIAS.forEach(d=>asegurarHistoricoJugador(d));
+  renderDias(); renderEqs(); renderCards();
+  autoGuardar();
+  if(esMovilVista()){
+    if(!_yaSubidoInicial){
+      _yaSubidoInicial = true;
+      window.scrollTo(0,0); // móvil: solo al ARRANCAR la app sube arriba
+    }
+  } else if(vistaActual==='semana' && !_yaCentradoEscritorio){
+    _yaCentradoEscritorio = true;
+    centrarDiaEnEscritorio(); // solo la primera vez: centra la card de hoy
   }
-
-  function _renderSeasonList(){
-    var cont = document.getElementById('season-list');
-    if(!cont) return;
-    cont.innerHTML = '';
-    if(!_temporadas.length){
-      var vacio = document.createElement('div');
-      vacio.className = 'season-row-meta';
-      vacio.style.padding = '14px 18px';
-      vacio.textContent = 'Aún no hay temporadas guardadas.';
-      cont.appendChild(vacio);
+}
+function centrarDiaEnEscritorio(){
+  if(vistaActual!=='semana') return;
+  requestAnimationFrame(()=>{
+    const hoyEl = document.querySelector('.card-hdr-hoy');
+    if(hoyEl){
+      const td = hoyEl.closest('.semana-td-card');
+      if(td) td.scrollIntoView({behavior:'auto', block:'nearest', inline:'center'});
       return;
     }
-    _temporadas.forEach(function(t){
-      var row = document.createElement('div');
-      row.className = 'season-row' + (t.id === _temporadaActual ? ' active' : '');
-      var nameEl = document.createElement('span');
-      nameEl.className = 'season-row-name';
-      nameEl.textContent = t.nombre || t.id;
-      row.appendChild(nameEl);
-      if(t.id === _temporadaActual){
-        var badge = document.createElement('span');
-        badge.className = 'season-row-badge';
-        badge.textContent = 'ACTIVA';
-        row.appendChild(badge);
-      } else {
-        row.onclick = function(){ _cambiarTemporada(t.id); };
+    // Si no hay card marcada como "hoy" (p.ej. semana sin hoy dentro), centrar en el día activo
+    const hdrs = document.querySelectorAll('.card-hdr-fecha');
+    hdrs.forEach(h=>{
+      if(h.textContent.trim().startsWith(dia)){
+        const td = h.closest('.semana-td-card');
+        if(td) td.scrollIntoView({behavior:'auto', block:'nearest', inline:'center'});
       }
-      cont.appendChild(row);
     });
+  });
+}
+function renderDias(){
+  // Actualizar etiqueta semana en botón
+  const lunes = FECHAS['LUNES']||'';
+  const domingo = FECHAS['DOMINGO']||'';
+  // Fechas apiladas: ini arriba, fin abajo
+  const iniEl = document.getElementById('semana-fecha-ini');
+  const finEl = document.getElementById('semana-fecha-fin');
+  if(iniEl && finEl){
+    iniEl.textContent = lunes  || '—';
+    finEl.textContent = domingo|| '—';
   }
-
-  async function _cambiarTemporada(id){
-    _temporadaActual = id;
-    _pintarBadge();
-    _renderSeasonList();
-    var res = await window.fbGuardarTemporadas(_temporadas, _temporadaActual);
-    if(!res.ok && typeof toast === 'function') toast('❌ No se pudo guardar el cambio de temporada: ' + (res.message||''));
+  const subLbl = document.getElementById('sub-semana-lbl');
+  if(subLbl) subLbl.textContent = (lunes && domingo) ? lunes + ' – ' + domingo : 'Semana';
+  document.getElementById('top-semana-lbl').textContent =
+    lunes ? lunes + ' – ' + domingo : 'Semana';
+  // Días strip
+  const strip = document.getElementById('dias-strip');
+  strip.innerHTML='';
+  DIAS.forEach(d=>{
+    const tieneDatos = EQUIPOS.some(e=>data[d][e].campo.length>0);
+    const esP = EQUIPOS.some(e=>modoPartido[d]?.[e]);
+    // Escritorio: se marca el día activo normalmente. Móvil: solo si el usuario ya eligió uno.
+    const marcado = esMovilVista() ? (_diaElegidoManualmente && d===dia) : (d===dia);
+    const tab = mk('div','dia-tab'+(marcado?' active':'')+(tieneDatos?' tiene-datos':'')+(esP?' es-partido':''));
+    tab.setAttribute('role','tab');
+    const f = FECHAS[d] || '';
+    const [numDia] = f.split('/');
+    tab.innerHTML=`
+      <span class="dia-tab-nombre">${d.slice(0,3)}</span>
+      <span class="dia-tab-fecha">${numDia||''}</span>
+      <span class="dia-tab-dot"></span>`;
+    tab.onclick=()=>{
+      dia=d;sessionStorage.setItem('rm_dia',d);
+      _diaElegidoManualmente = true;
+      renderDias();renderCards();
+      if(!esMovilVista()) centrarDiaEnEscritorio();
+    };
+    strip.appendChild(tab);
+  });
+}
+// ══════════════════════════════════════════════════
+// CALENDARIO MINI
+// ══════════════════════════════════════════════════
+let _calFecha = new Date(); // mes visible en el calendario
+let _calLunesSel = null;    // lunes seleccionado
+const DIAS_DOW = ['L','M','X','J','V','S','D'];
+function abrirCal(){
+  // Iniciar en el lunes actual de FECHAS
+  const partes = FECHAS['LUNES'] ? FECHAS['LUNES'].split('/') : null;
+  if(partes){
+    const hoy = new Date();
+    _calFecha = new Date(hoy.getFullYear(), parseInt(partes[1])-1, parseInt(partes[0]));
+    _calLunesSel = new Date(_calFecha);
+  } else {
+    _calFecha = new Date();
+    _calLunesSel = null;
   }
-
-  window.abrirSeasonModal = async function(){
-    var modal = document.getElementById('season-modal');
-    if(!modal) return;
-    modal.classList.add('open');
-    var res = await window.fbCargarTemporadas();
-    if(res.ok){
-      _temporadas = res.temporadas || [];
-      _temporadaActual = res.temporadaActual || null;
-    } else if(typeof toast === 'function'){
-      toast('❌ No se pudieron cargar las temporadas: ' + (res.message||''));
+  renderCal();
+  document.getElementById('cal-overlay').classList.add('open');
+}
+let _calModoCopia = false;
+function cerrarCal(){
+  document.getElementById('cal-overlay').classList.remove('open');
+  if(_calModoCopia){
+    _calModoCopia = false;
+    document.getElementById('copy-modal-overlay').classList.add('open');
+  }
+}
+function renderCal(){
+  const mes = _calFecha.getMonth();
+  const anyo = _calFecha.getFullYear();
+  // Nombre mes en inglés capitalizado (como en la foto)
+  const mesNombre = _calFecha.toLocaleString('en-GB',{month:'long'});
+  const mesLabel = mesNombre.charAt(0).toUpperCase()+mesNombre.slice(1)+' '+anyo;
+  document.getElementById('cal-mes').textContent = mesLabel;
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML='';
+  // Cabecera días semana — MON TUE WED...
+  ['MON','TUE','WED','THU','FRI','SAT','SUN'].forEach(d=>{
+    const el=mk('div','cal-dow'); el.textContent=d; grid.appendChild(el);
+  });
+  // Primer día del mes
+  const primerDia = new Date(anyo, mes, 1);
+  let dow = primerDia.getDay();
+  dow = dow===0 ? 6 : dow-1; // lunes=0
+  for(let i=0;i<dow;i++){
+    grid.appendChild(mk('div','cal-day vacio'));
+  }
+  const diasEnMes = new Date(anyo, mes+1, 0).getDate();
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  for(let d=1;d<=diasEnMes;d++){
+    const fecha = new Date(anyo, mes, d);
+    const dowDia = fecha.getDay(); // 0=dom,1=lun...
+    const esLunes = dowDia===1;
+    const el=mk('div','cal-day');
+    el.textContent=d;
+    if(fecha.getTime()===hoy.getTime()) el.classList.add('hoy');
+    // Resaltar semana seleccionada
+    if(_calLunesSel){
+      const domingo = new Date(_calLunesSel);
+      domingo.setDate(_calLunesSel.getDate()+6);
+      if(fecha>=_calLunesSel && fecha<=domingo){
+        el.classList.add('semana-sel');
+        if(esLunes) el.classList.add('lunes-sel');
+        if(dowDia===0) el.classList.add('domingo-sel');
+        // Día de hoy dentro de semana seleccionada → círculo azul
+        if(fecha.getTime()===hoy.getTime()) el.classList.add('dia-sel');
+      }
+      // Lunes seleccionado → círculo azul
+      if(fecha.getTime()===_calLunesSel.getTime()) el.classList.add('dia-sel');
     }
-    _pintarBadge();
-    _renderSeasonList();
-  };
-
-  window.cerrarSeasonModal = function(ev){
-    if(ev && ev.target && ev.target.id !== 'season-modal' && ev.target.id !== 'season-box-close') return;
-    var modal = document.getElementById('season-modal');
-    if(modal) modal.classList.remove('open');
-  };
-
-  window.nuevaTemporada = async function(){
-    var nombre = prompt('Nombre de la nueva temporada (ej: 2027-28):');
-    if(!nombre) return;
-    nombre = nombre.trim();
-    if(!nombre) return;
-    if(_temporadas.some(function(t){ return t.nombre === nombre; })){
-      if(typeof toast === 'function') toast('❌ Ya existe una temporada con ese nombre.');
-      return;
-    }
-    var id = 'temp_' + Date.now();
-    _temporadas.push({ id: id, nombre: nombre, creada: new Date().toISOString() });
-    _temporadaActual = id;
-    var res = await window.fbGuardarTemporadas(_temporadas, _temporadaActual);
-    if(!res.ok){
-      if(typeof toast === 'function') toast('❌ Firebase: ' + (res.message||'error al guardar'));
-      return;
-    }
-    _pintarBadge();
-    _renderSeasonList();
-    if(typeof toast === 'function') toast('✅ Temporada "'+nombre+'" creada.');
-  };
-
-  // Cargar temporadas al iniciar sesión (para que el badge muestre la activa real)
-  window.addEventListener('firebase-ready', async function(){
-    var res = await window.fbCargarTemporadas();
-    if(res.ok){
-      _temporadas = res.temporadas || [];
-      _temporadaActual = res.temporadaActual || null;
-      _pintarBadge();
+    // Todos los días son clicables — seleccionan la semana del lunes correspondiente
+    el.onclick=()=>{
+      // Calcular el lunes de esa semana
+      const d2 = new Date(anyo, mes, d);
+      const dw = d2.getDay();
+      const diff = dw===0 ? -6 : 1-dw;
+      const lun = new Date(d2); lun.setDate(d2.getDate()+diff);
+      _calLunesSel = lun;
+      renderCal();
+    };
+    grid.appendChild(el);
+  }
+}
+function resetCal(){
+  _calLunesSel = null;
+  if(!_calModoCopia) FECHAS = calcFechasSemana(new Date());
+  renderCal();
+}
+function aplicarSemana(){
+  if(!_calLunesSel){ toast('Selecciona un día'); return; }
+  if(_calModoCopia === 'semana'){
+    _copySemanaDestLunes = new Date(_calLunesSel);
+    // Resetear DESPUÉS para que cerrarCal no reabra el modal (lo hacemos nosotros)
+    const modoBak = _calModoCopia;
+    _calModoCopia = false;
+    document.getElementById('cal-overlay').classList.remove('open');
+    actualizarLblSemana();
+    document.getElementById('copy-modal-overlay').classList.add('open');
+    return;
+  }
+  if(_calModoCopia === 'dia'){
+    _copyDiaSemanaLunes = new Date(_calLunesSel);
+    _calModoCopia = false;
+    document.getElementById('cal-overlay').classList.remove('open');
+    // Mostrar label y re-renderizar días de esa semana
+    const fechas = calcFechasSemana(_copyDiaSemanaLunes);
+    const lbl = document.getElementById('copy-dia-semana-lbl');
+    lbl.textContent = 'Semana del ' + fechas['LUNES'] + ' al ' + fechas['DOMINGO'];
+    lbl.style.display = 'block';
+    renderCopyDias();
+    document.getElementById('copy-modal-overlay').classList.add('open');
+    return;
+  }
+  guardarFotoSemanaActual();
+  FECHAS = calcFechasSemana(_calLunesSel);
+  if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
+  // Sincronizar plantillas → disponibles en la semana recién cargada/creada — por si se
+  // han añadido jugadores nuevos a la plantilla DESPUÉS de que esta semana se archivara
+  // (si no, esos jugadores nuevos no aparecerían en los días de una semana ya visitada).
+  // Solo AÑADE lo que falte, nunca quita ni sobrescribe nada que ya hubiera.
+  EQUIPOS.forEach(eq=>{
+    (plantillas[eq]||[]).forEach(nombre=>{
+      DIAS.forEach(d=>{
+        if(!data[d] || !data[d][eq]) return;
+        const enAlgunaZona = ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre));
+        if(!enAlgunaZona && !data[d][eq].disponibles.includes(nombre)){
+          data[d][eq].disponibles.push(nombre);
+        }
+      });
+    });
+  });
+  // Si hoy cae dentro de esta semana, seleccionar ese día automáticamente
+  DIAS.forEach(d=>{
+    const [dd,mm] = (FECHAS[d]||'').split('/');
+    const hoy = new Date();
+    if(dd && mm && parseInt(dd)===hoy.getDate() && parseInt(mm)===(hoy.getMonth()+1)){
+      dia = d;
+      sessionStorage.setItem('rm_dia', d);
     }
   });
+  autoGuardar();
+  renderDias();
+  renderCards();
+  cerrarCal();
+  toast('📅 Semana actualizada');
+  if(document.getElementById('control-overlay').classList.contains('open')){
+    _controlDia = dia;
+    renderControlDiaBtns();
+    renderControl();
+  }
+}
+// Navegación meses
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('cal-prev').onclick=()=>{
+    _calFecha.setMonth(_calFecha.getMonth()-1); renderCal();
+  };
+  document.getElementById('cal-next').onclick=()=>{
+    _calFecha.setMonth(_calFecha.getMonth()+1); renderCal();
+  };
+  // Cerrar al clicar fuera
+  document.getElementById('cal-overlay').onclick=(e)=>{
+    if(e.target===document.getElementById('cal-overlay')) cerrarCal();
+  };
+});
+const EQ_LABEL = {
+  'TODOS':'Todos','CASTILLA':'CAST','RMC':'RMC',
+  'JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA',
+  '1ER EQUIPO':'1ER EQ'
+};
+function renderEqs(){
+  const w=document.getElementById('eq-strip');
+  if(!w) return;
+  w.innerHTML='';
+  const bTodos=mk('div','eq-tab'+('TODOS'===eqF?' active':''));
+  bTodos.textContent=EQ_LABEL['TODOS']||'TODOS';
+  bTodos.onclick=()=>{eqF='TODOS';renderEqs();renderCards();};
+  w.appendChild(bTodos);
+  const b1=mk('div','eq-tab eq-primer'+(eqF==='1ER EQUIPO'?' active':''));
+  b1.textContent='1ER EQ';
+  b1.title='Ver jugadores con Primer Equipo';
+  b1.onclick=()=>{eqF='1ER EQUIPO';renderEqs();renderCards();};
+  w.appendChild(b1);
+  EQUIPOS.forEach(e=>{
+    const b=mk('div','eq-tab'+(e===eqF?' active':''));
+    b.textContent=EQ_LABEL[e]||e;
+    b.onclick=()=>{eqF=e;renderEqs();renderCards();};
+    w.appendChild(b);
+  });
+}
+function renderCopyBar(){ /* eliminado — usar modal copiar */ }
+
+// ══════════════════════════════════════════════════
+// VISTA LISTA — alternativa al campo
+// ══════════════════════════════════════════════════
+let _vistaListaGlobal = false;
+const _vistaListaCards = new Set(); // cards individuales en modo lista
+
+function toggleVistaListaGlobal(){
+  _vistaListaGlobal = !_vistaListaGlobal;
+  const btn = document.getElementById('btn-vista-lista-global');
+  if(btn){
+    btn.style.background = _vistaListaGlobal ? 'rgba(37,99,235,.08)' : '';
+    btn.style.borderColor = _vistaListaGlobal ? '#2563eb' : '';
+    btn.style.color = _vistaListaGlobal ? '#2563eb' : '';
+  }
+  renderCards();
+  if(vistaActual==='semana') requestAnimationFrame(()=>{
+    igualarZonasSemana(document.getElementById('grid'));
+  });
+}
+
+function toggleVistaListaCard(eq, d){
+  const key = eq+'_'+d;
+  if(_vistaListaCards.has(key)) _vistaListaCards.delete(key);
+  else _vistaListaCards.add(key);
+  renderCards();
+  if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+}
+
+function esVistaLista(eq, d){
+  return _vistaListaGlobal || _vistaListaCards.has(eq+'_'+(d||dia));
+}
+
+function reordenarEnZona(eq, d, zona, nombreMovido, nombreDestino){
+  const arr = data[d]?.[eq]?.[zona];
+  if(!Array.isArray(arr)) return;
+  const fromIdx = arr.indexOf(nombreMovido);
+  const toIdx = arr.indexOf(nombreDestino);
+  if(fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+  arr.splice(fromIdx, 1);
+  const newToIdx = arr.indexOf(nombreDestino);
+  arr.splice(newToIdx, 0, nombreMovido);
+  autoGuardar();
+  renderCards();
+}
+
+function renombrarJugadorGlobal(nombreViejo, nombreNuevo){
+  nombreNuevo = nombreNuevo.trim().toUpperCase();
+  if(!nombreNuevo || nombreNuevo === nombreViejo) return false;
+
+  // Reemplazar en data: todas las zonas, todos los días, todos los equipos
+  DIAS.forEach(d => {
+    EQUIPOS.forEach(eq => {
+      const eqData = data[d]?.[eq];
+      if(!eqData) return;
+      ['campo','banquillo','disponibles','promovidos_1er','lesionados','otros','extra'].forEach(zona => {
+        const arr = eqData[zona];
+        if(!Array.isArray(arr)) return;
+        const idx = arr.indexOf(nombreViejo);
+        if(idx >= 0) arr[idx] = nombreNuevo;
+      });
+    });
+  });
+
+  // Reemplazar en origen
+  if(origen[nombreViejo] !== undefined){
+    origen[nombreNuevo] = origen[nombreViejo];
+    delete origen[nombreViejo];
+  }
+
+  // Reemplazar en porteros
+  const pIdx = porteros.indexOf(nombreViejo);
+  if(pIdx >= 0){
+    porteros[pIdx] = nombreNuevo;
+    // Avisar a Firebase del cambio de nombre (porteros va aparte del guardado general)
+    if(typeof window.fbTogglePortero === 'function'){
+      window.fbTogglePortero(nombreViejo, false);
+      window.fbTogglePortero(nombreNuevo, true);
+    }
+  }
+
+  // Reemplazar en listaUYL
+  const uIdx = listaUYL.indexOf(nombreViejo);
+  if(uIdx >= 0) listaUYL[uIdx] = nombreNuevo;
+
+  // Reemplazar en plantillas
+  Object.keys(plantillas).forEach(eq => {
+    const arr = plantillas[eq];
+    if(!Array.isArray(arr)) return;
+    const idx = arr.indexOf(nombreViejo);
+    if(idx >= 0) arr[idx] = nombreNuevo;
+  });
+
+  // Reemplazar en promInfo (destinos de promoción)
+  DIAS.forEach(d => {
+    EQUIPOS.forEach(eq => {
+      const pi = promInfo[d]?.[eq];
+      if(pi && pi[nombreViejo] !== undefined){
+        pi[nombreNuevo] = pi[nombreViejo];
+        delete pi[nombreViejo];
+      }
+    });
+  });
+
+  autoGuardar();
+  renderCards();
+  toast('✓ Renombrado a ' + nombreNuevo);
+  return true;
+}
+
+function buildListaView(eq, d){
+  const diaKey = d || dia;
+  const eqData = data[diaKey][eq] || {};
+  const wrap = mk('div','card-lista-wrap');
+
+  const zonas = [
+    { key:'campo',          label:'LISTADO DE JUGADORES',  color:'#2563eb' },
+    { key:'banquillo',      label:'BANQUILLO',     color:'#d97706' },
+    { key:'promovidos_1er', label: colNames[eq]?.[0]||'PROMOCIONADOS', color:'#d97706' },
+    { key:'lesionados',     label: colNames[eq]?.[1]||'LESIONADOS',    color:'#dc2626' },
+    { key:'otros',          label: colNames[eq]?.[2]||'OTROS',     color:'#6b7280' },
+    { key:'extra',          label: colNames[eq]?.[3]||'EXTRA',     color:'#7c3aed' },
+  ];
+
+  // Barra de acciones
+  const acciones = mk('div','card-lista-acciones');
+
+  // Botón copiar texto
+  const btnCopiar = mk('button','card-lista-btn');
+  btnCopiar.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar';
+  btnCopiar.onclick = (e) => {
+    e.stopPropagation();
+    const [_fD,_fM] = (FECHAS[diaKey]||'').split('/');
+    const _fAA = new Date().getFullYear().toString().slice(2);
+    const fechaFmt = (_fD&&_fM) ? _fD.padStart(2,'0')+'/'+_fM.padStart(2,'0')+'/'+_fAA : '';
+    let texto = eq + ' - ' + diaKey + ' ' + fechaFmt + '\n';
+    texto += '='.repeat(26) + '\n';
+    zonas.forEach(({key, label}) => {
+      const jugs = eqData[key] || [];
+      if(!jugs.length) return;
+      let labelOut = label.toUpperCase();
+      if(key === 'campo'){
+        // Listado de jugadores: contador con porteros separados (21+3)
+        const numPorteros = jugs.filter(n => porteros.includes(n)).length;
+        const numNormal = jugs.length - numPorteros;
+        labelOut += ' (' + numNormal + (numPorteros>0 ? '+'+numPorteros : '') + ')';
+      } else if(key === 'banquillo'){
+        // Banquillo: solo el total
+        labelOut += ' (' + jugs.length + ')';
+      }
+      // Promocionados y demás zonas: sin número
+      if(key === 'promovidos_1er' && eq === 'CASTILLA'){
+        labelOut += ' A 1ER EQUIPO';
+      }
+      texto += '\n*' + labelOut + ':*\n';
+      const siglas = {'CASTILLA':'CAST','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA','1ER EQUIPO':'1ER'};
+      // En el Campo: primero los propios del equipo, externos al final. Dentro de cada
+      // grupo, porteros primero, manteniendo el orden relativo original.
+      let jugsOrdenados;
+      if(key === 'campo'){
+        jugsOrdenados = [...jugs].sort((a, b) => {
+          const aExt = (origen[a] && origen[a] !== eq) ? 1 : 0;
+          const bExt = (origen[b] && origen[b] !== eq) ? 1 : 0;
+          if(aExt !== bExt) return aExt - bExt; // propios (0) antes que externos (1)
+          const aPor = porteros.includes(a) ? 0 : 1;
+          const bPor = porteros.includes(b) ? 0 : 1;
+          return aPor - bPor;
+        });
+      } else {
+        // Resto de zonas: solo porteros primero (comportamiento igual que antes)
+        jugsOrdenados = [...jugs].sort((a, b) => {
+          const aPor = porteros.includes(a) ? 0 : 1;
+          const bPor = porteros.includes(b) ? 0 : 1;
+          return aPor - bPor;
+        });
+      }
+      jugsOrdenados.forEach(n => {
+        const esPor = porteros.includes(n);
+        let linea = '  - ' + n + (esPor ? ' (POR)' : '');
+        // Si es prestado de otro equipo, identificarlo entre paréntesis (Youth League
+        // se marca aparte: "JA-YL" en vez de solo "JA", para no confundirlo con una
+        // promoción normal — punto pendiente 14.2/14.4 ya decidido así)
+        const eqReal = origen[n];
+        const esExterno = eqReal && eqReal !== eq;
+        if(esExterno){
+          const esYL = eq==='JUVENIL A' && typeof esUYL==='function' && esUYL(diaKey);
+          linea += ' (' + (esYL ? 'JA-YL' : (siglas[eqReal]||eqReal)) + ')';
+        }
+        if(key === 'promovidos_1er' && eq !== 'CASTILLA'){
+          const destinos = getDestinos(diaKey, eq, n);
+          destinos.forEach(destino=>{
+            if(destino === '1ER EQUIPO') linea += '  A 1ER EQUIPO';
+            else linea += '  → ' + (siglas[destino]||destino);
+          });
+        }
+        // En Campo, los jugadores externos van en cursiva (formato WhatsApp: _texto_)
+        if(key === 'campo' && esExterno) linea = '_' + linea + '_';
+        texto += linea + '\n';
+      });
+    });
+    navigator.clipboard.writeText(texto).then(()=>toast('✓ Copiado al portapapeles')).catch(()=>toast('❌ Error al copiar'));
+  };
+  acciones.appendChild(btnCopiar);
+  wrap.appendChild(acciones);
+
+  // Zonas
+  let hayJugadores = false;
+  zonas.forEach(({key, label, color}) => {
+    const jugadores = eqData[key] || [];
+    if(!jugadores.length) return;
+    hayJugadores = true;
+
+    const seccion = mk('div','card-lista-seccion');
+    const lbl = mk('div','card-lista-lbl');
+    lbl.textContent = label;
+    lbl.style.color = color;
+    lbl.style.borderLeftColor = color;
+    seccion.appendChild(lbl);
+
+    jugadores.forEach(nombre => {
+      const row = mk('div','card-lista-row');
+      row.textContent = nombre;
+      seccion.appendChild(row);
+    });
+
+    wrap.appendChild(seccion);
+  });
+
+  if(!hayJugadores){
+    const empty = mk('div','card-lista-empty');
+    empty.textContent = 'Sin jugadores';
+    wrap.appendChild(empty);
+  }
+
+  return wrap;
+}
+
+function capturarLista(eq, diaKey, zonas, eqData){
+  if(typeof html2canvas === 'undefined'){ toast('❌ html2canvas no cargado'); return; }
+  toast('Generando imagen…');
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const fecha = FECHAS[diaKey] || '';
+  const W = 700;
+  const HEADER_H = 70;
+  const ROW_H = 30;
+  const LABEL_H = 26;
+  const PAD = 16;
+
+  // Calcular altura total
+  let totalH = HEADER_H + PAD;
+  zonas.forEach(({key}) => {
+    const jugs = eqData[key] || [];
+    if(!jugs.length) return;
+    totalH += LABEL_H + jugs.length * ROW_H + 8;
+  });
+  totalH += PAD;
+
+  const DPR = Math.min(window.devicePixelRatio||2, 3);
+  const cv = document.createElement('canvas');
+  cv.width = W * DPR; cv.height = totalH * DPR;
+  const ctx = cv.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  // Fondo blanco
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, totalH);
+
+  // Header azul
+  ctx.fillStyle = '#2563eb';
+  ctx.fillRect(0, 0, W, HEADER_H);
+  ctx.fillStyle = 'rgba(255,255,255,.7)';
+  ctx.font = '600 13px Segoe UI, sans-serif';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  ctx.fillText(eq, PAD, 10);
+  const partesFecha = fecha.split('/');
+  const aaStr = new Date().getFullYear().toString().slice(2);
+  const fechaFmt = partesFecha.length===2
+    ? (diaKey + '  ' + partesFecha[0] + '/' + partesFecha[1] + '/' + aaStr)
+    : diaKey;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 28px Segoe UI, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(fechaFmt, PAD, HEADER_H/2 + 6);
+
+  // Zonas
+  let y = HEADER_H + PAD;
+  zonas.forEach(({key, label, color}) => {
+    const jugs = eqData[key] || [];
+    if(!jugs.length) return;
+
+    // Label con barra de color
+    ctx.fillStyle = color;
+    ctx.fillRect(PAD, y, 4, LABEL_H);
+    ctx.fillStyle = color;
+    ctx.font = '700 11px Segoe UI, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.fillText(label.toUpperCase(), PAD + 10, y + LABEL_H/2);
+    y += LABEL_H;
+
+    jugs.forEach((nombre, i) => {
+      ctx.fillStyle = i%2===0 ? '#f8fafd' : '#ffffff';
+      ctx.fillRect(PAD, y, W - PAD*2, ROW_H);
+      // Borde
+      ctx.strokeStyle = '#e8eef8';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(PAD, y, W - PAD*2, ROW_H);
+      ctx.fillStyle = '#1a1d23';
+      ctx.font = '600 14px Segoe UI, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(nombre, PAD + 10, y + ROW_H/2);
+      y += ROW_H;
+    });
+    y += 8;
+  });
+
+  _exportarImagen(cv, eq, diaKey, fecha, isIOS);
+}
+
+function renderCards(){
+  // Guardar posición vertical y horizontal antes de reconstruir el grid
+  const scrollYPrevio = window.scrollY;
+  const scrollXPrevio = window.scrollX;
+
+  // Guardar la primera fila visible y su posición exacta (vista semana)
+  let anclaIdx = -1;
+  let anclaTop = 0;
+  if(vistaActual === 'semana'){
+    const filasActuales = document.querySelectorAll('.semana-tr-eq');
+    for(let i = 0; i < filasActuales.length; i++){
+      const rect = filasActuales[i].getBoundingClientRect();
+      if(rect.bottom > 0 && rect.top < window.innerHeight){
+        anclaIdx = i;
+        anclaTop = rect.top;
+        break;
+      }
+    }
+  }
+  function restaurarPosicion(){
+    if(vistaActual === 'semana' && anclaIdx >= 0){
+      const filasNuevas = document.querySelectorAll('.semana-tr-eq');
+      const filaNueva = filasNuevas[anclaIdx];
+      if(filaNueva){
+        const nuevoTop = filaNueva.getBoundingClientRect().top;
+        const diferencia = nuevoTop - anclaTop;
+        if(Math.abs(diferencia) > 1){
+          window.scrollBy(0, diferencia);
+        }
+        return;
+      }
+    }
+    window.scrollTo(scrollXPrevio, scrollYPrevio);
+  }
+
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  grid.className='cards-grid view-'+vistaActual;
+  if(vistaActual==='semana'){
+    renderFiltrosSemana();
+    renderCardsSemana(grid);
+    initDrag();
+    // Vigilar CUALQUIER cambio posterior (igualarZonasSemana, etc.) y corregir el
+    // scroll cada vez, venga la causa de donde venga (más fiable que temporizadores).
+    // Los avisos se agrupan (debounce) para no disparar la corrección decenas de veces
+    // seguidas durante la reconstrucción inicial del grid, que ralentizaría la carga.
+    let _obsDebounce = null;
+    const _restaurarAgrupado = ()=>{
+      clearTimeout(_obsDebounce);
+      _obsDebounce = setTimeout(restaurarPosicion, 50);
+    };
+    if(window.ResizeObserver){
+      const ro = new ResizeObserver(_restaurarAgrupado);
+      ro.observe(grid);
+      setTimeout(()=>ro.disconnect(), 1000);
+    }
+    if(window.MutationObserver){
+      const mo = new MutationObserver(_restaurarAgrupado);
+      mo.observe(grid, { childList:true, attributes:true }); // sin subtree: mucho más barato
+      setTimeout(()=>mo.disconnect(), 1000);
+    }
+    requestAnimationFrame(() => {
+      igualarZonasSemana(grid);
+      sincronizarScrollBar(grid);
+      // Restaurar después de modificar las alturas
+      restaurarPosicion();
+      // Segunda corrección cuando el navegador termine la maquetación
+      requestAnimationFrame(restaurarPosicion);
+      setTimeout(restaurarPosicion, 120);
+      setTimeout(restaurarPosicion, 300);
+      setTimeout(restaurarPosicion, 600);
+    });
+    return;
+  }
+  if(eqF==='1ER EQUIPO'){
+    grid.appendChild(buildCardPrimerEquipo());
+  } else if(vistaActual==='2col' || vistaActual==='3col'){
+    // Vista multi: mostrar equipos seleccionados (o todos si eqF=TODOS)
+    const lista = eqF==='TODOS' ? EQUIPOS.filter(e=>eqsMultiSel.has(e)) : [eqF];
+    lista.forEach(eq=>grid.appendChild(buildCard(eq)));
+  } else {
+    const lista=eqF==='TODOS'?EQUIPOS:[eqF];
+    lista.forEach(eq=>grid.appendChild(buildCard(eq)));
+  }
+  initDrag();
+  requestAnimationFrame(() => {
+    equalizarCards();
+    restaurarPosicion();
+    requestAnimationFrame(restaurarPosicion);
+  });
+}
+
+function sincronizarScrollBar(grid){
+  const bar = document.getElementById('scroll-sync-bar');
+  const inner = document.getElementById('scroll-sync-inner');
+  if(!bar || !inner || !grid) return;
+  // El ancho del inner debe igualar el scrollWidth del grid
+  inner.style.width = grid.scrollWidth + 'px';
+  // Sincronizar scroll en ambas direcciones, evitando bucle infinito
+  let syncing = false;
+  grid.onscroll = () => {
+    if(syncing) return;
+    syncing = true;
+    bar.scrollLeft = grid.scrollLeft;
+    syncing = false;
+  };
+  bar.onscroll = () => {
+    if(syncing) return;
+    syncing = true;
+    grid.scrollLeft = bar.scrollLeft;
+    syncing = false;
+  };
+}
+
+function igualarZonasSemana(grid){
+  const rows = grid.querySelectorAll('.semana-tr-eq');
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('.semana-td-card');
+
+    // Reset alturas previas
+    cells.forEach(td => {
+      const z = td.querySelector('.zona-disponibles');
+      const c = td.querySelector('.cols-estado');
+      const cw = td.querySelector('.campo-wrap');
+      if(z) z.style.minHeight = '';
+      if(c) c.style.minHeight = '';
+      if(cw) cw.style.marginTop = '';
+    });
+
+    // Igualar inicio del campo: medir altura de todo lo que hay ENCIMA del campo
+    // (card-hdr + partido-banner + tipo-partido-sel)
+    let maxPreCampo = 0;
+    cells.forEach(td => {
+      const card = td.querySelector('.card');
+      const cw = td.querySelector('.campo-wrap');
+      if(!card || !cw) return;
+      const cardTop = card.getBoundingClientRect().top;
+      const cwTop = cw.getBoundingClientRect().top;
+      const preCampo = cwTop - cardTop;
+      maxPreCampo = Math.max(maxPreCampo, preCampo);
+    });
+    // Añadir margin-top al campo de los días que tienen menos elementos encima
+    cells.forEach(td => {
+      const card = td.querySelector('.card');
+      const cw = td.querySelector('.campo-wrap');
+      if(!card || !cw) return;
+      const cardTop = card.getBoundingClientRect().top;
+      const cwTop = cw.getBoundingClientRect().top;
+      const preCampo = cwTop - cardTop;
+      const diff = maxPreCampo - preCampo;
+      if(diff > 2) cw.style.marginTop = diff + 'px';
+    });
+
+    // Igualar zona-disponibles
+    let maxDisp = 0;
+    cells.forEach(td => {
+      const z = td.querySelector('.zona-disponibles');
+      if(z) maxDisp = Math.max(maxDisp, z.scrollHeight);
+    });
+    if(maxDisp > 0){
+      cells.forEach(td => {
+        const z = td.querySelector('.zona-disponibles');
+        if(z) z.style.minHeight = maxDisp + 'px';
+      });
+    }
+
+    // Igualar cols-estado
+    let maxCols = 0;
+    cells.forEach(td => {
+      const c = td.querySelector('.cols-estado');
+      if(c) maxCols = Math.max(maxCols, c.scrollHeight);
+    });
+    if(maxCols > 0){
+      cells.forEach(td => {
+        const c = td.querySelector('.cols-estado');
+        if(c) c.style.minHeight = maxCols + 'px';
+      });
+    }
+  });
+}
+
+// Exponer al scope global las funciones/variables que otros archivos o el HTML necesitan
+window.render = render;
+window.renderDias = renderDias;
+window.abrirCal = abrirCal;
+window.cerrarCal = cerrarCal;
+window.renderCal = renderCal;
+window.resetCal = resetCal;
+window.aplicarSemana = aplicarSemana;
+window.renderEqs = renderEqs;
+window.renderCopyBar = renderCopyBar;
+window.toggleVistaListaGlobal = toggleVistaListaGlobal;
+window.toggleVistaListaCard = toggleVistaListaCard;
+window.esVistaLista = esVistaLista;
+window.reordenarEnZona = reordenarEnZona;
+window.renombrarJugadorGlobal = renombrarJugadorGlobal;
+window.buildListaView = buildListaView;
+window.capturarLista = capturarLista;
+window.renderCards = renderCards;
+window.sincronizarScrollBar = sincronizarScrollBar;
+window.igualarZonasSemana = igualarZonasSemana;
+window.EQ_LABEL = EQ_LABEL;
+Object.defineProperty(window, '_calFecha', { get:()=>_calFecha, set:(v)=>{_calFecha=v;}, configurable:true });
+Object.defineProperty(window, '_calLunesSel', { get:()=>_calLunesSel, set:(v)=>{_calLunesSel=v;}, configurable:true });
+Object.defineProperty(window, '_calModoCopia', { get:()=>_calModoCopia, set:(v)=>{_calModoCopia=v;}, configurable:true });
 })();
+}
+
