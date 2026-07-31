@@ -1,186 +1,20 @@
-
-Todos los proyectos
-RM
-
-
-
-Escribe / para habilidades
-
-
-Recientes
-Promotions
-ahora
-Memoria
-Solo tú
-La memoria del proyecto aparecerá aquí después de algunos chats.
-
-Instrucciones
-Añadir instrucciones para personalizar las respuestas de Claude
-
-Archivos
-11% de la capacidad del proyecto utilizada
-Modo de búsqueda
-
-campograma-plantillas-new.js
-253 líneas
-
-js
-
-
-
-vercel.json
-475 líneas
-
-json
-
-
-
-campograma-extras.js
-2613 líneas
-
-js
-
-
-
-manifest.json
-803 líneas
-
-json
-
-
-
-campograma-stats-new.js
-402 líneas
-
-js
-
-
-
-campograma-temporadas-new.js
-861 líneas
-
-js
-
-
-
-campograma-render-new.js
-445 líneas
-
-js
-
-
-
-campograma-modos-new.js
-801 líneas
-
-js
-
-
-
-campograma-firebase-init-new.js
-26 líneas
-
-js
-
-
-
-campograma-modales.css
-454 líneas
-
-css
-
-
-
-campograma-captura-new.js
-589 líneas
-
-js
-
-
-
-campograma-darkmode-new.js
-63 líneas
-
-js
-
-
-
-campograma-core-new.js
-264 líneas
-
-js
-
-
-
-campograma-base.css
-1 línea
-
-css
-
-
-
-campograma-drag-new.js
-208 líneas
-
-js
-
-
-
-index.html
-1029 líneas
-
-html
-
-
-
-campograma-copiar-new.js
-680 líneas
-
-js
-
-
-
-campograma-semana.css
-253 líneas
-
-css
-
-
-
-campograma-buildcard-new.js
-665 líneas
-
-js
-
-
-
-CHECKLIST_Campograma_editable.xlsx
-xlsx
-
-
-campograma-extras.js
 // ================================================
 // CAMPOGRAMA-LOGIC.JS — Lógica principal (Fase 1: monolito intacto)
 // ================================================
- 
+
 // ══════════════════════════════════════════════════
 // DATOS
 // ══════════════════════════════════════════════════
-// Calcular fechas de la semana actual (lunes = día 0)
-var _semanaKeyActual = null; // fecha ISO del lunes de la semana activa (identifica la semana)
+var _semanaKeyActual = null;
 function calcFechasSemana(lunesBase){
   const base = lunesBase ? new Date(lunesBase) : (()=>{
     const hoy = new Date();
-    const d = hoy.getDay(); // 0=dom
+    const d = hoy.getDay();
     const diff = d===0 ? -6 : 1-d;
     const lun = new Date(hoy); lun.setDate(hoy.getDate()+diff); return lun;
   })();
   _semanaKeyActual = base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0');
   const fechas = {};
-  // FECHAS_COMPLETAS[dia] = "AAAA-MM-DD" — la fecha real y única de cada día de esta
-  // semana (con año), en paralelo a FECHAS (que solo da "DD/M" para mostrar en pantalla).
-  // Es la base para identificar cada día sin ambigüedad, sin tener que cambiar cómo se
-  // guardan internamente los datos (que siguen usando "LUNES"/"MARTES" como clave).
   window.FECHAS_COMPLETAS = window.FECHAS_COMPLETAS || {};
   DIAS.forEach((dia,i)=>{
     const f = new Date(base); f.setDate(base.getDate()+i);
@@ -189,9 +23,6 @@ function calcFechasSemana(lunesBase){
   });
   return fechas;
 }
-// Devuelve la fecha real completa ("AAAA-MM-DD") de un día de la semana ACTIVA.
-// Si se pasa una semana distinta (lunesKey), la calcula para esa semana en concreto
-// sin alterar la semana activa actual.
 function fechaCompletaDeDia(diaNombre, lunesKey){
   if(!lunesKey) return (window.FECHAS_COMPLETAS||{})[diaNombre] || '';
   const idx = DIAS.indexOf(diaNombre);
@@ -200,18 +31,14 @@ function fechaCompletaDeDia(diaNombre, lunesKey){
   const f = new Date(base); f.setDate(base.getDate()+idx);
   return f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0')+'-'+String(f.getDate()).padStart(2,'0');
 }
-// Devuelve la letra abreviada (L/M/X/J/V/S/D) del día de la semana que corresponde a
-// una fecha completa "AAAA-MM-DD", calculándolo directamente (no depende de qué nombre
-// de día se use internamente).
 function abrevDiaDesdeFecha(fechaCompleta){
-  const ABREV = ['D','L','M','X','J','V','S']; // getDay(): 0=domingo...6=sábado
+  const ABREV = ['D','L','M','X','J','V','S'];
   const f = new Date(fechaCompleta+'T00:00:00');
   if(isNaN(f.getTime())) return '?';
   return ABREV[f.getDay()];
 }
-var dia   = sessionStorage.getItem("rm_dia") || "LUNES"; // día activo global (se corrige abajo al de hoy)
+var dia   = sessionStorage.getItem("rm_dia") || "LUNES";
 var FECHAS = calcFechasSemana();
-// Al arrancar, siempre partir del día de HOY (no de lo que quedara guardado de otra sesión)
 (function(){
   var hoy = new Date();
   DIAS.forEach(function(d){
@@ -223,18 +50,14 @@ var FECHAS = calcFechasSemana();
   });
 })();
 var origen = {};
-// Histórico INMUTABLE por día: una vez que un jugador tiene "foto" guardada para un día
-// concreto, esa foto NUNCA se toca aunque su equipo/promoción actual cambie después.
-// historicoJugador[dia][nombre] = { equipoOrigen, entrenoCon, promocionado, promocionadoDesde }
 var historicoJugador = {};
-var movimientos = {}; // movimientos[dia][eq][nombre] = {ts, user}
-var porteros = []; // array de nombres marcados como portero
+var movimientos = {};
+var porteros = [];
 // ══════════════════════════════════════════════════
 // ESTADO
 // ══════════════════════════════════════════════════
 var data = JSON.parse(JSON.stringify(RAW));
-// ── Independencia entre semanas: guarda una "foto" por semana (clave = lunes ISO) ──
-var _semanasGuardadas = {}; // { '2026-07-06': {data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido, primerEquipoJugadores, notas}, ... }
+var _semanasGuardadas = {};
 function guardarFotoSemanaActual(){
   if(!_semanaKeyActual) return;
   _semanasGuardadas[_semanaKeyActual] = JSON.parse(JSON.stringify({
@@ -249,22 +72,15 @@ function cargarFotoSemana(key){
   modoPartido = foto.modoPartido; modoDescanso = foto.modoDescanso; tipoPartido = foto.tipoPartido;
   primerEquipoJugadores = foto.primerEquipoJugadores || {};
   window._notasData = foto.notas || {};
-  // El equipo de cada jugador se recuerda TAL COMO ERA esa semana (histórico real para stats)
   if(foto.origen) origen = foto.origen;
-  // El histórico inmutable por día viaja con su semana — cada semana tiene sus propias fotos
   historicoJugador = foto.historicoJugador || {};
-  // 'porteros' NO se guarda por semana a propósito: es un rasgo del jugador (como su posición
-  // real), no algo que cambie semana a semana — se queda igual pase lo que pase con las semanas.
   return true;
 }
 function crearSemanaVacia(){
   data = JSON.parse(JSON.stringify(RAW));
   pos = {}; promInfo = {}; multiEq = {}; modoPartido = {}; modoDescanso = {};
   tipoPartido = {}; primerEquipoJugadores = {}; window._notasData = {};
-  historicoJugador = {}; // semana nueva → fotos históricas nuevas, empieza de cero
-  // Una semana NUEVA parte de los equipos actuales de cada jugador (no toca 'origen':
-  // se queda con el valor vivo de ahora mismo, que es lo correcto para una semana que empieza hoy)
-  // Rellenar disponibles con la plantilla de cada equipo
+  historicoJugador = {};
   EQUIPOS.forEach(eq=>{
     (plantillas[eq]||[]).forEach(nombre=>{
       DIAS.forEach(d=>{
@@ -277,30 +93,22 @@ for(const d of DIAS) for(const e of EQUIPOS){
   if(!data[d])  data[d]={};
   if(!data[d][e]) data[d][e]={};
   for(const z of ZONAS) if(!data[d][e][z]) data[d][e][z]=[];
-  // migrar disponibles antiguo si no tiene banquillo
   if(data[d][e].banquillo === undefined) data[d][e].banquillo = [];
 }
-// dia declarada en campograma-constants.js
 var eqF  = "TODOS";
-var pos  = {};   // "dia|eq|nombre" → [top,left]
-// Nombres editables de columnas por equipo: colNames[eq] = ['PROMOCIONADOS','LESIONADOS','OTROS']
+var pos  = {};
 var colNames = {};
-// Info de promoción: promInfo[dia][eqOrigen][nombre] = 'CASTILLA' (equipo destino)
 var promInfo = {};
 var multiEq    = {};
-var primerEqVisible = false; // pestaña 1er Equipo visible o no
-var promDestinos = {}; // promDestinos[dia][eq][nombre] = 'RMC' | '1ER EQUIPO' | 'CASTILLA'... // multiEq[dia][nombre] = [eq1, eq2, ...] — jugadores en varios equipos
-var modoPartido = {}; // modoPartido[dia][eq] = true/false
-var modoDescanso = {}; // modoDescanso[dia][eq] = true/false
-var modoUYL     = {}; // modoUYL[dia] = true/false (solo Juvenil A)
-var listaUYL    = []; // jugadores elegibles para Youth League (fija temporada)
-var rivales     = {}; // rivales[dia][eq] = 'Nombre rival'
-var tipoPartido  = {}; // tipoPartido[dia][eq] = key del tipo
-// Configuración de tipos por equipo — editable por el usuario
-// { key, label, color (hex), esUYL? }
-// tiposConfig[eq] = [{k,l,c,uyl?}] — null = usar base
+var primerEqVisible = false;
+var promDestinos = {};
+var modoPartido = {};
+var modoDescanso = {};
+var modoUYL     = {};
+var listaUYL    = [];
+var rivales     = {};
+var tipoPartido  = {};
 var tiposConfig = {};
-// Inicializar con valores por equipo
 function initTiposConfig(){
   const defaults = {
     'CASTILLA':  [...TIPOS_BASE, {k:'intl',l:'🌍 Internacional',c:'#10b981'},{k:'premier',l:'⚽ Premier League',c:'#e11d48'}],
@@ -312,11 +120,10 @@ function initTiposConfig(){
   };
   EQUIPOS.forEach(eq=>{ if(!tiposConfig[eq]) tiposConfig[eq]=defaults[eq]||[...TIPOS_BASE]; });
 }
-var calendarioPartidos = {}; // calendarioPartidos[eq] = [{fecha:'YYYY-MM-DD', rival:'...'}]
+var calendarioPartidos = {};
 function initPromInfo(){ DIAS.forEach(d=>{ promInfo[d]={}; EQUIPOS.forEach(eq=>{ promInfo[d][eq]={}; }); }); }
 initPromInfo();
 EQUIPOS.forEach(eq=> colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS']);
-// Zonas extra (4ª columna) por equipo: extraZonas[eq] = bool
 var extraZonas = {};
 EQUIPOS.forEach(eq=> extraZonas[eq]=false);
 var drag = null;
@@ -324,20 +131,14 @@ var dOff = {x:0,y:0};
 var key    = (d,e,n) => d+'|'+e+'|'+n;
 var getPos = (d,e,n,i) => pos[key(d,e,n)] || POS_DEF[i%POS_DEF.length] || [50,50];
 var savePos= (d,e,n,t,l) => pos[key(d,e,n)] = [clamp(t,0,100), clamp(l,0,100)];
-// Zona del área (portero) — viewBox 0 0 100 118 — portero a partir de top 85%
 function esPortero(eq,nombre,i){
   const [t,l]=getPos(dia,eq,nombre,i);
   return t>84 && l>=24 && l<=76;
 }
-// Asegura que TODOS los jugadores presentes en un día concreto (en cualquier equipo/zona)
-// tengan su "foto" histórica guardada. Si ya la tienen, NO se toca — es inmutable.
-// Solo se rellena la primera vez que se detecta al jugador ese día.
 function asegurarHistoricoJugador(diaP){
   if(!diaP || !data[diaP]) return;
   if(!historicoJugador[diaP]) historicoJugador[diaP] = {};
   const registro = historicoJugador[diaP];
-  // Salida rápida: si TODOS los jugadores presentes ese día ya tienen foto, no hace
-  // falta recalcular nada (evita repetir un cálculo caro en cada acción/render).
   let hayAlguienSinFoto = false;
   EQUIPOS.forEach(eq=>{
     if(hayAlguienSinFoto) return;
@@ -347,9 +148,6 @@ function asegurarHistoricoJugador(diaP){
     });
   });
   if(!hayAlguienSinFoto && (primerEquipoJugadores[diaP]||[]).every(n=>registro[n])) return;
-  // Recopilar evidencia de promociones de ESE día usando promInfo (que sobrevive a
-  // cambios de equipo posteriores) — más fiable que el equipo actual del jugador.
-  // promEvidencia[nombre] = { origenReal, destino }
   const promEvidencia = {};
   EQUIPOS.forEach(eqOrigenPosible=>{
     const infoEq = promInfo[diaP]?.[eqOrigenPosible];
@@ -363,25 +161,20 @@ function asegurarHistoricoJugador(diaP){
   EQUIPOS.forEach(eq=>{
     ZONAS.forEach(z=>{
       (data[diaP][eq]?.[z]||[]).forEach(nombre=>{
-        if(registro[nombre]) return; // ya tiene foto ese día — inmutable, no tocar
+        if(registro[nombre]) return;
         let eqOrigen, entrenoCon, promocionado, promocionadoDesde;
         const ev = promEvidencia[nombre];
         if(z === 'promovidos_1er'){
-          // Aparece en la columna "Promocionados" de SU PROPIO equipo (eq es su origen real)
           eqOrigen = eq;
           entrenoCon = (ev && ev.origenReal===eq) ? ev.destino : eq;
           promocionado = true;
           promocionadoDesde = eq;
         } else if(ev && ev.destino === eq){
-          // Está en el equipo DESTINO de una promoción registrada — el origen real es
-          // el de promInfo, NO el equipo actual del jugador (que puede haber cambiado)
           eqOrigen = ev.origenReal;
           entrenoCon = eq;
           promocionado = true;
           promocionadoDesde = ev.origenReal;
         } else {
-          // Sin evidencia de promoción ese día: usar el equipo actual como mejor
-          // aproximación (caso normal, jugador no promocionado)
           eqOrigen = origen[nombre] || eq;
           entrenoCon = eq;
           promocionado = eq !== eqOrigen;
@@ -391,7 +184,6 @@ function asegurarHistoricoJugador(diaP){
       });
     });
   });
-  // 1ER EQUIPO tiene su propia estructura (no usa data[dia][eq])
   (primerEquipoJugadores[diaP]||[]).forEach(nombre=>{
     if(registro[nombre]) return;
     const ev = promEvidencia[nombre];
@@ -405,20 +197,14 @@ function asegurarHistoricoJugador(diaP){
     };
   });
 }
-// Devuelve el equipo con el que un jugador entrenó un día concreto, según su foto
-// histórica si existe; si no (días muy antiguos sin foto todavía), usa el equipo actual.
 function equipoHistorico(diaP, nombre){
   return historicoJugador[diaP]?.[nombre]?.entrenoCon || origen[nombre];
 }
-// Índice de HOY dentro de DIAS (0=LUNES...6=DOMINGO), para saber qué días son "pasado"
-// (antes de hoy → históricos, inmutables) y cuáles son "hoy en adelante" (se actualizan).
-// Copia de seguridad diaria: solo una vez al día (por navegador), para no saturar
-// Firebase. Usa localStorage para recordar el último día que se hizo.
 function hacerBackupDiarioSiHaceFalta(){
   try{
     const hoy = new Date().toISOString().slice(0,10);
     const ultimo = localStorage.getItem('rm_ultimo_backup');
-    if(ultimo === hoy) return; // ya se hizo hoy
+    if(ultimo === hoy) return;
     if(typeof window.fbGuardarBackupDiario !== 'function') return;
     const payload = buildPayload(false);
     window.fbGuardarBackupDiario(payload).then(res=>{
@@ -429,39 +215,26 @@ function hacerBackupDiarioSiHaceFalta(){
     });
   }catch(e){ console.warn('Error en backup diario:', e); }
 }
-// ── FRENO DE EMERGENCIA ──
-// Si la app está a punto de guardar 'plantillas' con MUCHOS MENOS jugadores de golpe
-// que la última vez que se cargó correctamente, algo probablemente ha ido mal (como
-// pasó una vez: un fallo dejó 'plantillas' vacía y se guardó por encima de la buena).
-// En vez de guardar sin más, se avisa y se pide confirmación explícita.
-var _ultimoTotalJugadoresConocido = null; // se fija justo tras cargar bien al arrancar
+var _ultimoTotalJugadoresConocido = null;
 function fijarTotalJugadoresConocido(){
   _ultimoTotalJugadoresConocido = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
 }
 function hayQueFrenarGuardado(){
-  if(_ultimoTotalJugadoresConocido === null || _ultimoTotalJugadoresConocido < 5) return false; // aún no hay referencia fiable
+  if(_ultimoTotalJugadoresConocido === null || _ultimoTotalJugadoresConocido < 5) return false;
   const totalActual = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
-  // Frenar si se ha perdido más de la mitad de los jugadores de golpe
   return totalActual < _ultimoTotalJugadoresConocido * 0.5;
 }
 function diaHoyIdx(){
-  const d = new Date().getDay(); // 0=domingo
+  const d = new Date().getDay();
   return d===0 ? 6 : d-1;
 }
-// Modal para elegir desde qué día aplica un cambio de equipo (por defecto, hoy — pero
-// permite elegir otro día para tapar huecos si se te olvidó hacerlo a tiempo).
-// Modal para copiar un equipo de un día concreto a otro día: elegir origen, destino
-// (por defecto distinto al origen) y si solo el campo o todo el equipo.
-// Modal con calendario NATIVO de verdad (input type=date) para elegir desde qué fecha
-// aparece disponible un jugador nuevo. Limitado a los días de la semana ACTIVA, que es
-// lo único que la app puede usar ahora mismo (los datos se guardan por semana visible).
 function abrirCalendarioFechaModal(nombre, onConfirmar){
   const fechasSemana = DIAS.map(d=>(window.FECHAS_COMPLETAS||{})[d]).filter(Boolean);
-  if(!fechasSemana.length){ onConfirmar(0); return; } // fallback de seguridad
+  if(!fechasSemana.length){ onConfirmar(0); return; }
   const minFecha = fechasSemana[0];
   const maxFecha = fechasSemana[fechasSemana.length-1];
   const hoyFecha = (window.FECHAS_COMPLETAS||{})[dia] || minFecha;
- 
+
   const overlay = mk('div','');
   overlay.style.cssText = 'position:fixed;inset:0;z-index:10400;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);';
   const box = mk('div','');
@@ -516,11 +289,11 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
   const body = mk('div','');
   body.style.cssText = 'padding:16px 18px;';
   const diaAbrev = {'LUNES':'L','MARTES':'M','MIÉRCOLES':'X','JUEVES':'J','VIERNES':'V','SÁBADO':'S','DOMINGO':'D'};
- 
+
   let diaOrigen = diaOrigenDefecto || dia;
   let diaDestino = DIAS.find(d=>d!==diaOrigen) || diaOrigenDefecto;
-  let modo = 'todo'; // 'todo' | 'campo'
- 
+  let modo = 'todo';
+
   function filaDias(label, actual, onElegir){
     const lbl = mk('div','');
     lbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.4px;';
@@ -546,7 +319,6 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
       grid.appendChild(btn);
     });
     body.appendChild(grid);
-    // Pintar selección inicial
     botones.forEach((b,i)=>{
       const sel = DIAS[i]===actual();
       b.style.borderColor = sel ? '#2563eb' : '#dfe1e6';
@@ -554,10 +326,10 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
       b.style.color       = sel ? '#fff' : '#1a1d23';
     });
   }
- 
+
   filaDias('Copiar DESDE (origen)', ()=>diaOrigen, (d)=>{ diaOrigen = d; });
   filaDias('Copiar HACIA (destino)', ()=>diaDestino, (d)=>{ diaDestino = d; });
- 
+
   const modoLbl = mk('div','');
   modoLbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.4px;';
   modoLbl.textContent = 'Qué copiar';
@@ -590,12 +362,12 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
   marcarModo();
   modoRow.appendChild(btnTodo); modoRow.appendChild(btnCampo); modoRow.appendChild(btnInferiores);
   body.appendChild(modoRow);
- 
+
   const aviso = mk('div','');
   aviso.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;color:#9ca3af;margin-bottom:14px;line-height:1.4;';
   aviso.textContent = 'Se sobrescribirá lo que hubiera en el día destino para este equipo. Si algún jugador está prestado en otro equipo ese día, se le quitará de ahí primero.';
   body.appendChild(aviso);
- 
+
   const btnRow = mk('div','');
   btnRow.style.cssText = 'display:flex;gap:8px;';
   const cancelBtn = document.createElement('button');
@@ -606,7 +378,7 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
   okBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
   btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
   body.appendChild(btnRow);
- 
+
   box.appendChild(hdr); box.appendChild(body);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
@@ -619,23 +391,16 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
     copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo);
   };
 }
-// Copia un equipo de un día a otro. modo='todo' copia todas las zonas (disponibles,
-// campo, banquillo, promocionados, lesionados, otros) + promociones; modo='campo' copia
-// solo el campo (posiciones incluidas). Si algún jugador copiado está prestado en OTRO
-// equipo el día destino, se le quita de ahí primero para no duplicarlo.
 function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
   const origenData = data[diaOrigen]?.[eq];
   if(!origenData){ toast('❌ No hay datos de '+eq+' en '+diaOrigen); return; }
- 
-  // Qué zonas se copian según el modo elegido
+
   const zonasACopiar = modo === 'campo' ? ['campo']
     : modo === 'inferiores' ? ['lesionados','otros','promovidos_1er','extra']
-    : ZONAS.slice(); // 'todo'
+    : ZONAS.slice();
   const nombresACopiar = new Set();
   zonasACopiar.forEach(z=>(origenData[z]||[]).forEach(n=>nombresACopiar.add(n)));
- 
-  // Quitar a esos jugadores de CUALQUIER OTRO equipo en el día DESTINO (evitar duplicados
-  // si estaban prestados ahí)
+
   EQUIPOS.forEach(otroEq=>{
     if(otroEq === eq) return;
     ZONAS.forEach(z=>{
@@ -650,26 +415,21 @@ function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
       nombresACopiar.forEach(n=>{ delete promInfo[diaDestino][otroEq][n]; });
     }
   });
- 
+
   if(!data[diaDestino][eq]) data[diaDestino][eq] = {};
   ZONAS.forEach(z=>{ if(!data[diaDestino][eq][z]) data[diaDestino][eq][z] = []; });
   if(modo === 'campo'){
-    // Solo el campo: sustituir el campo destino por el de origen, con sus posiciones
     data[diaDestino][eq].campo = [...(origenData.campo||[])];
     (origenData.campo||[]).forEach(n=>{
       const p = pos[key(diaOrigen,eq,n)];
       if(p) pos[key(diaDestino,eq,n)] = [...p];
     });
   } else if(modo === 'inferiores'){
-    // Solo cuadros inferiores: NO se toca campo/disponibles/banquillo del destino —
-    // los que estaban en campo de origen se quedan disponibles en destino, tal cual estén
     zonasACopiar.forEach(z=>{
       data[diaDestino][eq][z] = [...(origenData[z]||[])];
     });
     if(!promInfo[diaDestino]) promInfo[diaDestino] = {};
     promInfo[diaDestino][eq] = JSON.parse(JSON.stringify(promInfo[diaOrigen]?.[eq] || {}));
-    // Quitar de Disponibles del destino a quien acabe de entrar en un cuadro inferior
-    // (para no dejarlo duplicado en las dos zonas a la vez)
     const disp = data[diaDestino][eq].disponibles;
     if(Array.isArray(disp)){
       nombresACopiar.forEach(n=>{
@@ -678,7 +438,6 @@ function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
       });
     }
   } else {
-    // Todo el equipo: sustituir TODAS las zonas + posiciones del campo + promociones
     ZONAS.forEach(z=>{
       data[diaDestino][eq][z] = [...(origenData[z]||[])];
     });
@@ -768,18 +527,14 @@ function updateCount(eq){
 // ══════════════════════════════════════════════════
 // SNAP AL SLOT MÁS CERCANO
 // ══════════════════════════════════════════════════
-// Devuelve posiciones reales de todos los jugadores en campo (excepto el que movemos)
 function posOcupadas(eq, nombreMovido){
   const campo = data[dia][eq].campo;
   return campo
     .filter(n => n !== nombreMovido)
     .map((n,i) => pos[key(dia,eq,n)] || POS_DEF[i % POS_DEF.length] || [50,50]);
 }
-// Distancia mínima entre punto y lista de posiciones ocupadas
-// Las fichas son rectángulos ANCHOS (mucho más anchas que altas), no círculos:
-// hace falta más separación horizontal que vertical para no solaparse de verdad.
-var GAP_V = 2;  // % mínimo vertical — solo un hueco fino
-var GAP_H = 4;  // % mínimo horizontal — solo un hueco fino
+var GAP_V = 2;
+var GAP_H = 4;
 function distMinOcupadas(t, l, ocupadas, gaps){
   if(!ocupadas.length) return 999;
   const gV = gaps?.gapV ?? GAP_V;
@@ -789,7 +544,6 @@ function distMinOcupadas(t, l, ocupadas, gaps){
     const dt = Math.abs(t-ot), dl = Math.abs(l-ol);
     const faltaV = Math.max(0, gV - dt);
     const faltaH = Math.max(0, gH - dl);
-    // Solo hay colisión real si falta espacio en LOS DOS ejes a la vez
     if(faltaV > 0 && faltaH > 0){
       const gravedad = Math.max(faltaV, faltaH);
       peor = Math.min(peor, RADIO_MIN - gravedad);
@@ -797,20 +551,14 @@ function distMinOcupadas(t, l, ocupadas, gaps){
   });
   return peor;
 }
-// Radio de exclusión — usado como umbral de "libre" junto con distMinOcupadas
-var RADIO_MIN = 4; // % del campo — margen mínimo, solo un hueco fino visible
+var RADIO_MIN = 4;
 function snapToGrid(eq, nombre, rawTop, rawLeft, gaps){
   const ocupadas = posOcupadas(eq, nombre);
   const gV = gaps?.gapV ?? GAP_V;
   const gH = gaps?.gapH ?? GAP_H;
-  // 1. Si el punto exacto de drop está libre, usarlo tal cual
   if(distMinOcupadas(rawTop, rawLeft, ocupadas, gaps) >= RADIO_MIN){
     return [rawTop, rawLeft];
   }
-  // 2. Hay solapamiento: empujar en la MISMA dirección en la que se soltó, respecto al
-  //    jugador ocupado más cercano — no saltar a cualquier lado libre. Si se soltó más
-  //    abajo, baja (misma horizontal); si más a la derecha, va a la derecha (misma
-  //    altura); y así con los 4 lados.
   let masCercanaIdx = -1, menorDist = Infinity;
   ocupadas.forEach(([ot,ol], i)=>{
     const d = Math.hypot(rawTop-ot, rawLeft-ol);
@@ -819,19 +567,14 @@ function snapToGrid(eq, nombre, rawTop, rawLeft, gaps){
   if(masCercanaIdx >= 0){
     const [ot, ol] = ocupadas[masCercanaIdx];
     const dt = rawTop - ot, dl = rawLeft - ol;
-    // Tratar el margen mínimo como una "elipse" alrededor del ocupado (gH horizontal,
-    // gV vertical) y empujar el punto HACIA AFUERA en la MISMA dirección exacta en la
-    // que se soltó — si el solape es solo lateral, el empuje es solo lateral (misma
-    // altura); si es solo vertical, solo vertical; si es diagonal, empuja en diagonal.
-    const nx = dl / gH, ny = dt / gV; // posición normalizada respecto a la elipse
+    const nx = dl / gH, ny = dt / gV;
     const dist = Math.hypot(nx, ny);
     let t, l;
     if(dist < 1e-6){
-      // Soltado justo encima: por defecto, a la derecha
       t = clamp(rawTop, 0, 100);
       l = clamp(ol + gH, 0, 100);
     } else {
-      const factor = 1 / dist; // estirar hasta el borde de la elipse, preservando dirección
+      const factor = 1 / dist;
       t = clamp(ot + ny * gV * factor, 0, 100);
       l = clamp(ol + nx * gH * factor, 0, 100);
     }
@@ -839,9 +582,7 @@ function snapToGrid(eq, nombre, rawTop, rawLeft, gaps){
       return [t, l];
     }
   }
-  // 3. Fallback (campo muy lleno / varios jugadores en conflicto a la vez):
-  //    búsqueda en espiral como red de seguridad
-  const step = Math.max(1.5, gV/2); // % del campo por paso
+  const step = Math.max(1.5, gV/2);
   for(let radio = step; radio <= Math.max(gH,gV) * 3; radio += step){
     for(let ang = 0; ang < 360; ang += 30){
       const rad = ang * Math.PI / 180;
@@ -852,18 +593,14 @@ function snapToGrid(eq, nombre, rawTop, rawLeft, gaps){
       }
     }
   }
-  // 3. Fallback: posición exacta aunque haya solapamiento (campo muy lleno)
   return [rawTop, rawLeft];
 }
-// Reordenar todos los jugadores del campo — garantiza sin solapamientos
 function autoAlinear(eq, diaP){
   diaP = diaP || dia;
   const campo = data[diaP][eq].campo;
   if(campo.length === 0) return;
-  // Asignar slots en orden estricto: cada jugador al siguiente slot libre
   const asignados = new Set();
   campo.forEach((nombre) => {
-    // Encontrar el primer slot libre
     let idx = 0;
     while(idx < SNAP_SLOTS.length && asignados.has(idx)) idx++;
     const [t,l] = SNAP_SLOTS[idx] || [50, 50];
@@ -880,18 +617,15 @@ function autoAlinear(eq, diaP){
 function candidatos(eq, zona, diaParam){
   const d0 = diaParam || dia;
   const todos = new Set();
-  // Solo jugadores de OTROS equipos (nunca del propio)
   EQUIPOS.forEach(e=>{
     if(e===eq) return;
     (plantillas[e]||[]).forEach(n=>todos.add(n));
   });
-  // Añadir jugadores en data de otros equipos por si no están en plantillas
   DIAS.forEach(d=> EQUIPOS.forEach(e=>{
     if(e===eq) return;
     ZONAS.forEach(z=> (data[d][e][z]||[]).forEach(n=>todos.add(n)));
   }));
   const enZona = new Set(data[d0][eq][zona]||[]);
-  // También excluir los que ya están en cualquier zona de este equipo hoy
   const enEquipo = new Set();
   ZONAS.forEach(z=>(data[d0][eq][z]||[]).forEach(n=>enEquipo.add(n)));
   return [...todos]
@@ -903,10 +637,6 @@ function candidatos(eq, zona, diaParam){
     });
 }
 function buildAddInput(eq, zona){
-  // Capturar el día ACTUAL en el momento en que se construye este desplegable (importante
-  // en la vista semana, donde el día global cambia varias veces seguidas al construir
-  // todas las tarjetas — sin esto, el desplegable de una fila usaría el día que quedó
-  // puesto al final, no el de su propia fila).
   const diaLocal = dia;
   const wrap  = mk('div','zona-add');
   const input = mk('input','zona-add-input');
@@ -923,7 +653,6 @@ function buildAddInput(eq, zona){
     const todos = candidatos(eq,zona,diaLocal).filter(n=>!q||n.toLowerCase().includes(q));
     const hayResultados = todos.length > 0;
     if(hayResultados){
-      // Agrupar por equipo de origen
       const grupos = {};
       todos.forEach(nombre=>{
         const eqO = origen[nombre] || '—';
@@ -948,7 +677,6 @@ function buildAddInput(eq, zona){
     else list.classList.remove('open');
   }
   function elegirPrueba(nombre){
-    // Jugador a prueba: se marca en origen como null/'PRUEBA'
     origen[nombre] = 'PRUEBA';
     data[diaLocal][eq].disponibles.push(nombre);
     toast('⚡ '+nombre+' añadido a prueba en '+eq);
@@ -958,28 +686,21 @@ function buildAddInput(eq, zona){
   function elegir(nombre){
     const eqPropio = origen[nombre];
     const esPromocionCruzada = eqPropio && eqPropio !== eq && eqPropio !== 'PRUEBA';
- 
+
     if(esPromocionCruzada){
-      // Quitarlo de donde esté AHORA en su equipo origen (campo, disponibles, banquillo...)
-      // — es una transferencia real, no debe quedarse duplicado ahí.
       ZONAS_ACTIVAS.forEach(z=>{
         const arr = data[diaLocal][eqPropio]?.[z];
         if(!arr) return;
         const i = arr.indexOf(nombre);
         if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(diaLocal,eqPropio,nombre)]; }
       });
-      // Misma función que usa el flujo "promocionar desde origen" — comportamiento idéntico
-      // sea cual sea el punto desde el que se inicie la acción. Siempre a Disponibles,
-      // nunca directo al campo (el usuario lo coloca él mismo después si quiere).
       ejecutarPromocion(nombre, eqPropio, eq, diaLocal);
       toast(nombre+' promocionado a '+eq);
       input.value=''; list.classList.remove('open');
       render();
       return;
     }
- 
-    // Caso normal (mismo equipo, o jugador a prueba): sin promoción, comportamiento de siempre
-    // Evitar duplicado dentro del MISMO equipo: quitarlo de cualquier otra zona suya en este equipo
+
     ZONAS_ACTIVAS.forEach(z=>{
       if(z===zona) return;
       const arr = data[diaLocal][eq]?.[z];
@@ -989,13 +710,12 @@ function buildAddInput(eq, zona){
       }
     });
     if(zona==='campo'){
-      // Buscar slot libre sin solapar con los ya colocados
       const ocupadas = posOcupadas(eq, nombre);
       let bestIdx = 0;
       for(let i = 0; i < SNAP_SLOTS.length; i++){
         const [t,l] = SNAP_SLOTS[i];
         if(distMinOcupadas(t, l, ocupadas) >= RADIO_MIN){ bestIdx = i; break; }
-        bestIdx = i; // fallback: último índice si todo lleno
+        bestIdx = i;
       }
       const [t,l] = SNAP_SLOTS[bestIdx] || [50,50];
       savePos(diaLocal,eq,nombre,t,l);
@@ -1024,10 +744,8 @@ function buildAddInput(eq, zona){
 function abrirFbPanel(){
   if(!window._fbReady){ toast('⏳ Firebase no conectado aún'); return; }
   document.getElementById('fb-overlay').classList.add('open');
-  // Mostrar sesión activa
   const actLbl = document.getElementById('fb-sesion-activa-lbl');
   if(actLbl) actLbl.textContent = _fbSesionActiva ? '🔄 Sync: '+_fbSesionActiva : 'Sin sesión activa';
-  // Rellenar el nombre con la fecha de hoy por defecto (se puede cambiar si se quiere)
   const inp = document.getElementById('fb-nueva-inp');
   if(inp){
     const hoy = new Date();
@@ -1075,15 +793,13 @@ async function fbGuardarActual(){
   const nombre = inp.value.trim();
   if(!nombre){ toast('⚠️ Escribe un nombre'); return; }
   toast('☁️ Guardando...');
-  const payload = buildPayload(false); // payload completo (histórico, semanas, todo)
+  const payload = buildPayload(false);
   const res = await window.fbGuardarSesion(nombre, payload);
   if(res.ok){
     _fbSesionActiva = nombre;
     toast('✅ Guardado en la nube: '+nombre);
     inp.value = '';
     renderFbLista();
-    // Descargar automáticamente las 2 copias en el ordenador, para no tener que
-    // pulsar nada más aparte
     exportarDatos();
     exportarPDF();
   } else {
@@ -1125,20 +841,16 @@ async function fbCargar(nombre){
   if(payload.primerEquipoJugadores) primerEquipoJugadores = payload.primerEquipoJugadores;
   if(payload.fechas)                Object.assign(FECHAS, payload.fechas);
   
-  // ── Asegurar estructura completa ──
   for(const d of DIAS) for(const e of EQUIPOS){
     if(!data[d])    data[d]={};
     if(!data[d][e]) data[d][e]={};
     for(const z of ZONAS) if(!data[d][e][z]) data[d][e][z]=[];
   }
-  // Asegurar estructura promInfo
   DIAS.forEach(d=>{ if(!promInfo[d]) promInfo[d]={}; EQUIPOS.forEach(eq=>{ if(!promInfo[d][eq]) promInfo[d][eq]={}; }); });
-  // Asegurar colNames
   EQUIPOS.forEach(eq=>{
     if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
     
   });
-  // Sincronizar plantillas → disponibles (exacto igual que cargarGuardado)
   EQUIPOS.forEach(eq=>{
     (plantillas[eq]||[]).forEach(nombre=>{
       DIAS.forEach(d=>{
@@ -1149,14 +861,12 @@ async function fbCargar(nombre){
       });
     });
   });
-  // Reconstruir origen desde plantillas si viene vacío
   if(!payload.origen || Object.keys(payload.origen).length===0){
     EQUIPOS.forEach(eq=>{
       (plantillas[eq]||[]).forEach(nombre=>{ origen[nombre]=eq; });
     });
   }
   _fbSesionActiva = nombre;
-  // Diagnóstico en consola
   console.log('[fbCargar] Sesión:', nombre);
   EQUIPOS.forEach(eq=>{
     const disp = (data[DIAS[0]]?.[eq]?.disponibles||[]).length;
@@ -1178,9 +888,6 @@ async function fbCargar(nombre){
     toast('⚠️ Datos cargados, pero hubo un error al pintar la pantalla: ' + (e.message || e));
   }
 }
-// Limpieza de campos residuales (data_por_eq.*/prominfo_por_eq.*) — restos muertos de
-// una función revertida hace tiempo, confirmados sin uso por el código actual.
-// Pide confirmación explícita antes de borrar nada.
 async function limpiarCamposResidualesConfirmar(){
   if(!window._fbReady){ toast('⏳ Firebase no conectado'); return; }
   toast('🔍 Comprobando...');
@@ -1220,9 +927,7 @@ async function fbBorrar(nombre, btn){
     btn.textContent = '🗑️';
   }
 }
-// Cerrar al clicar fuera
 document.addEventListener('DOMContentLoaded',()=>{
-  // Cerrar modal copiar al click fuera
   document.getElementById('copy-modal-overlay').addEventListener('click',e=>{
     if(e.target===document.getElementById('copy-modal-overlay')) cerrarCopiarModal();
   });
@@ -1235,11 +940,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('fb-overlay').addEventListener('click', e=>{
     if(e.target===document.getElementById('fb-overlay')) cerrarFbPanel();
   });
-  // Cargar plantillas Firebase cuando esté listo
   window.addEventListener('firebase-ready', ()=>{
     if(window._fbPlantillas){
-      // Firebase es la única fuente de verdad
-      const hayLocal = false; // localStorage desactivado
+      const hayLocal = false;
       if(!hayLocal){
         Object.assign(plantillas, window._fbPlantillas);
         if(window._fbOrigen) Object.assign(origen, window._fbOrigen);
@@ -1254,7 +957,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ══════════════════════════════════════════════════
 var _fotoEqsSel = new Set();
 function abrirFotoMultiModal(){
-  // Preseleccionar equipos visibles en la vista actual
   const enVista = (vistaActual==='2col'||vistaActual==='3col')
     ? new Set(EQUIPOS.filter(e=>eqsMultiSel.has(e)))
     : (eqF==='TODOS' ? new Set(EQUIPOS) : new Set([eqF]));
@@ -1288,25 +990,21 @@ function cerrarFotoMultiModal(){
 async function generarFotoMulti(){
   if(!_fotoEqsSel.size){ toast('Selecciona al menos un equipo'); return; }
   if(_fotoEqsSel.size === 1){
-    // Un solo equipo → usar capturarCampo normal
     const eq = [..._fotoEqsSel][0];
     const card = document.querySelector(`[data-eq-card="${eq}"]`);
     if(card){ cerrarFotoMultiModal(); capturarCampo(eq, card); return; }
   }
   cerrarFotoMultiModal();
   toast('Generando foto conjunta…');
-  // Capturar cada campo con html2canvas en orden del grid
   const equiposOrden = EQUIPOS.filter(e => _fotoEqsSel.has(e));
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   try{
-    // Capturar todos los campos
     const capturas = [];
     for(const eq of equiposOrden){
       const card = document.querySelector(`[data-eq-card="${eq}"]`);
       if(!card) continue;
       const cWrap = card.querySelector('.campo-wrap');
       if(!cWrap) continue;
-      // Ocultar escudo antes de capturar
       const shieldEl = cWrap.querySelector('.campo-shield');
       if(shieldEl) shieldEl.style.visibility='hidden';
       const fc = await html2canvas(cWrap,{
@@ -1317,14 +1015,12 @@ async function generarFotoMulti(){
       capturas.push({eq, fc, cWrap});
     }
     if(!capturas.length){ toast('❌ No se pudo capturar ningún equipo'); return; }
-    // Construir canvas compuesto: cada equipo apilado verticalmente
     const W = 800;
-    // Usar la proporción real del campo de la primera captura
     const _fc0 = capturas[0].fc;
     const BLOQUE_H = Math.round(W * (_fc0.height / _fc0.width));
-    const HDR_H = 36; // cabecera por equipo
-    const SEP = 6;    // separador entre equipos
-    const TOP_H = 60; // cabecera global (día + fecha)
+    const HDR_H = 36;
+    const SEP = 6;
+    const TOP_H = 60;
     const H = TOP_H + capturas.length * (HDR_H + BLOQUE_H + SEP);
     const DPR2 = Math.min(window.devicePixelRatio || 2, 3);
     const cv = document.createElement('canvas');
@@ -1333,17 +1029,14 @@ async function generarFotoMulti(){
     cv.style.height = H + 'px';
     const ctx = cv.getContext('2d');
     ctx.scale(DPR2, DPR2);
-    // Fondo global
     ctx.fillStyle = '#07101e';
     ctx.fillRect(0,0,W,H);
-    // Cabecera global
     const grad = ctx.createLinearGradient(0,0,W,0);
     grad.addColorStop(0,'#001a52'); grad.addColorStop(1,'#0a1628');
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,W,TOP_H);
     ctx.fillStyle='#C8A800';
     ctx.fillRect(0,TOP_H-1,W,1);
-    // Fecha y día en cabecera global
     const fecha = FECHAS[dia]||'';
     const partes = fecha.split('/');
     const aaStr = new Date().getFullYear().toString().slice(2);
@@ -1360,24 +1053,19 @@ async function generarFotoMulti(){
     ctx.textAlign='right';
     ctx.fillText(fechaFmt, W-16, TOP_H/2);
     ctx.textAlign='left';
-    // Dibujar cada equipo
     let yOff = TOP_H;
     for(const {eq, fc} of capturas){
-      // Cabecera equipo
       const dotColor = EQ_DOT_COLORS[eq]||'#888';
       ctx.fillStyle = 'rgba(255,255,255,.04)';
       ctx.fillRect(0, yOff, W, HDR_H);
-      // Punto color equipo
       ctx.fillStyle = dotColor;
       ctx.beginPath();
       ctx.arc(20, yOff+HDR_H/2, 5, 0, Math.PI*2);
       ctx.fill();
-      // Nombre equipo
       ctx.fillStyle='#fff';
       ctx.font='bold 16px sans-serif';
       ctx.textBaseline='middle';
       ctx.fillText(eq, 34, yOff+HDR_H/2);
-      // Partido?
       if(modoDescanso[dia]?.[eq]){
         td.textContent='-';
         td.style.cssText='text-align:center;color:#64748b;font-weight:700;font-size:13px;';
@@ -1392,11 +1080,9 @@ async function generarFotoMulti(){
         ctx.textAlign='left';
       }
       yOff += HDR_H;
-      // Campo capturado
       ctx.drawImage(fc, 0, yOff, W, BLOQUE_H);
       yOff += BLOQUE_H + SEP;
     }
-    // Exportar
     cv.toBlob(blob=>{
       if(!blob){toast('❌ Error generando imagen');return;}
       const blobUrl = URL.createObjectURL(blob);
@@ -1479,26 +1165,20 @@ function renderControlEqsRow(){
 function cerrarControl(){
   document.getElementById('control-overlay').classList.remove('open');
 }
-// Devuelve la lista de jugadores que PERTENECÍAN a un equipo en un día concreto, según
-// su foto histórica — no la plantilla actual (que puede haber cambiado desde entonces).
 function jugadoresHistoricosDeEquipo(diaP, eq){
   const historico = historicoJugador[diaP];
   if(historico && Object.keys(historico).length){
     return Object.keys(historico).filter(n => historico[n].equipoOrigen === eq);
   }
-  return plantillas[eq] || []; // sin foto histórica todavía (no debería pasar tras el arranque)
+  return plantillas[eq] || [];
 }
 function getEstadoJugador(nombre, eq, diaP){
   const diaC = diaP || dia;
-  // Devuelve {estado, multi} donde estado es dónde está en su equipo
   const d = data[diaC][eq];
   if(!d) return {estado:'vacio', multi:false};
-  // Si el equipo está en día de descanso, todos aparecen como "Descansa"
   if(esDescanso(eq, diaC)) return {estado:'descansa', multi:false};
-  // ¿Está en otro equipo además del suyo?
   const eqsActivos = eqsDeNombre(diaC, nombre);
   const multi = eqsActivos.length > 1;
-  // Estado en su propio equipo
   if((d.campo||[]).includes(nombre))           return {estado:'campo',     multi};
   if((d.banquillo||[]).includes(nombre))       return {estado:'banquillo', multi};
   if((d.lesionados||[]).includes(nombre))      return {estado:'lesion',    multi};
@@ -1530,7 +1210,6 @@ function renderControl(){
     'JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'
   };
   const eqsVisibles = (_controlEqsActivos.has('1ER EQUIPO') ? ['1ER EQUIPO'] : []).concat(EQUIPOS.filter(eq=>_controlEqsActivos.has(eq)));
-  // ── Colgroup: fija el ancho real (table-layout:fixed usa la 1ª fila si no hay colgroup)
   const oldColgroup = document.getElementById('control-colgroup');
   if(oldColgroup) oldColgroup.remove();
   const colgroup = document.createElement('colgroup');
@@ -1541,7 +1220,6 @@ function renderControl(){
     colgroup.appendChild(colJ); colgroup.appendChild(colE);
   });
   document.getElementById('control-table').insertBefore(colgroup, document.getElementById('control-table').firstChild);
-  // ── FILA 1 cabecera: nombre equipo (colspan 2)
   const trH1 = document.createElement('tr');
   eqsVisibles.forEach(eq=>{
     const color = eq==='1ER EQUIPO' ? '#000' : (EQ_DOT_COLORS[eq]||'#888');
@@ -1552,7 +1230,6 @@ function renderControl(){
     if(eq==='1ER EQUIPO'){
       countStr = (primerEquipoJugadores[diaC]||[]).length + '/' + (plantillas['1ER EQUIPO']||[]).length;
     } else {
-      // Contar jugadores: propios en campo + los que están en alguna zona activa
       const totalJugs = (plantillas[eq]||[]).length;
       const enCampo = (data[diaC][eq]?.campo||[]).length;
       const prestados = EQUIPOS.filter(e=>e!==eq).reduce((acc,e)=>
@@ -1563,7 +1240,6 @@ function renderControl(){
     trH1.appendChild(th);
   });
   thead.appendChild(trH1);
-  // ── FILA 2 cabecera: Jugador | Estado por cada equipo
   const trH2 = document.createElement('tr');
   eqsVisibles.forEach(eq=>{
     const thJ = document.createElement('th');
@@ -1576,7 +1252,6 @@ function renderControl(){
     trH2.appendChild(thE);
   });
   thead.appendChild(trH2);
-  // ── FILAS de datos
   const maxJug = Math.max(...eqsVisibles.map(eq=>eq==='1ER EQUIPO' ? (plantillas[eq]||[]).length : jugadoresHistoricosDeEquipo(diaC,eq).length), 0);
   for(let i=0; i<maxJug; i++){
     const tr = document.createElement('tr');
@@ -1637,8 +1312,6 @@ function renderControl(){
           if(estado==='promo' && promInfo[diaC]?.[eq]?.[nombre]){
             const dest=promInfo[diaC][eq][nombre];
             const destCorto = dest==='1ER EQUIPO'?'1ER':(eqsShort[dest]||dest);
-            // 14.2: si es dinámica Youth League (destino JA con YL activa ese día), no
-            // se identifica como "promoción" normal — se marca como YL, aparte
             const esYL = dest==='JUVENIL A' && typeof esUYL==='function' && esUYL(diaC);
             lbl = esYL
               ? `<span class="ctrl-badge ctrl-uyl">⚽ YOUTH LEAGUE</span>`
@@ -1656,9 +1329,8 @@ function renderControl(){
 // ══════════════════════════════════════════════════
 // MODAL DESTINO PROMOCIÓN
 // ══════════════════════════════════════════════════
-var _promoCallback = null; // fn a llamar con el destino elegido
+var _promoCallback = null;
 function abrirPromoDestModal(nombre, eqOrigen, callback){
-  // Castilla es el paso justo antes del Primer Equipo: no hace falta preguntar, va directo
   if(eqOrigen === 'CASTILLA'){
     callback('1ER EQUIPO');
     return;
@@ -1668,13 +1340,11 @@ function abrirPromoDestModal(nombre, eqOrigen, callback){
   document.getElementById('promo-dest-sub').textContent = 'Equipo de origen: '+eqOrigen;
   const opts = document.getElementById('promo-dest-opts');
   opts.innerHTML='';
-  // Opción 1er Equipo siempre primera
   const opt1er = mk('div','promo-dest-opt promo-dest-1er');
   opt1er.innerHTML=`<span class="promo-dest-dot" style="background:#C8A800;"></span>
     <span class="promo-dest-nombre">1ER EQUIPO</span>`;
   opt1er.onclick=()=>{ cerrarPromoDestModal(); callback('1ER EQUIPO'); };
   opts.appendChild(opt1er);
-  // Equipos superiores (todos menos el propio)
   const superiores = EQUIPOS.filter(e=>e!==eqOrigen);
   superiores.forEach(eq=>{
     const opt=mk('div','promo-dest-opt');
@@ -1690,19 +1360,15 @@ function cerrarPromoDestModal(){
   document.getElementById('promo-dest-overlay').classList.remove('open');
   _promoCallback=null;
 }
-// Ejecutar promoción con destino elegido
 function ejecutarPromocion(nombre, eqOrigen, destino, diaP){
   diaP = diaP || dia;
-  // Siempre queda en promovidos_1er del equipo origen
   if(!data[diaP][eqOrigen].promovidos_1er) data[diaP][eqOrigen].promovidos_1er=[];
   if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
     data[diaP][eqOrigen].promovidos_1er.push(nombre);
   }
-  // Guardar destino
   if(!promInfo[diaP]) promInfo[diaP]={};
   if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
   promInfo[diaP][eqOrigen][nombre]=destino;
-  // Si va a otro equipo cantera → añadir a disponibles de ese equipo
   if(destino!=='1ER EQUIPO'){
     if(!data[diaP][destino]) data[diaP][destino]={campo:[],disponibles:[],promovidos_1er:[],lesionados:[],otros:[]};
     limpiarEquipoExcepto(nombre, destino, 'disponibles', diaP);
@@ -1710,10 +1376,6 @@ function ejecutarPromocion(nombre, eqOrigen, destino, diaP){
       data[diaP][destino].disponibles.push(nombre);
     }
   }
-  // Si va a 1ER EQUIPO → aparece en Disponibles del 1er equipo (vía promInfo);
-  // solo se añade al campo cuando se arrastra ahí manualmente.
-  // Registrar la foto histórica AHORA MISMO (no esperar al backfill pasivo) — así queda
-  // fijada la promoción real de este día, sobreviva o no promInfo a cambios posteriores.
   if(!historicoJugador[diaP]) historicoJugador[diaP] = {};
   if(!historicoJugador[diaP][nombre]){
     historicoJugador[diaP][nombre] = {
@@ -1729,12 +1391,10 @@ function ejecutarPromocion(nombre, eqOrigen, destino, diaP){
 // ══════════════════════════════════════════════════
 // CARD PRIMER EQUIPO
 // ══════════════════════════════════════════════════
-// Acumula jugadores que han sido promocionados a 1ER EQUIPO
-var primerEquipoJugadores = {}; // primerEquipoJugadores[dia] = [nombres]
+var primerEquipoJugadores = {};
 function buildCardPrimerEquipo(){
   const card=mk('div','card');
   card.dataset.eqCard='1ER EQUIPO';
-  // Header
   const hdr=mk('div','card-hdr');
   const nm=mk('div','card-hdr-name');
   nm.textContent='PRIMER EQUIPO';
@@ -1746,7 +1406,6 @@ function buildCardPrimerEquipo(){
   right.appendChild(camBtn);
   hdr.appendChild(right);
   card.appendChild(hdr);
-  // Campo
   const cWrap=mk('div','campo-wrap dz');
   cWrap.dataset.eq='1ER EQUIPO'; cWrap.dataset.zona='campo';
   cWrap.innerHTML=`
@@ -1757,21 +1416,16 @@ function buildCardPrimerEquipo(){
       <rect x="26" y="100" width="48" height="16" fill="none" stroke="rgba(255,255,255,.38)" stroke-width=".6"/>
       <circle cx="50" cy="59" r="8.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
     </svg>
-    <img class="campo-shield" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADOAM4DASIAAhEBAxEB/8QAHQABAAIDAQEBAQAAAAAAAAAAAAcIAwUGBAIJAf/EAEQQAAEDAwEFBQQHBQYGAwAAAAECAwQABREGBxIhMUETIlFhcQgUMoEVI0JSkaGxFkNicoIkM1NjorIlRFXB0eFkktL/xAAcAQEAAgMBAQEAAAAAAAAAAAAABQYDBAcBAgj/xAA9EQABAwIEAwYEAggGAwAAAAABAAIDBBEFITFBElFhBhMycYGRFCKhwUKxFTNSkqLR4fAHIzRicrJTgsL/2gAMAwEAAhEDEQA/AKZUpSiJSlKIlKUoiUpSiJSlKIlKUoiUpSiJSlKIlKUoiUpSiJSlKIlKUoiUpSiJSlKIlKUoiUpSiJSlKIlKUoiUpWysNhvN+moh2e2yJj6wVJS2jOQOZzyol7LyQYcufJTFhRnZL687rbSCpRwMnAHlWEggkEYIqx3s2bOtcWXUDd5uNngwrc+0s781oKfJAUnDfAlJyob3lw61wu0fZTtGRqR6Y9p1h5MtxQaVa2wlhQQMEpTw3Rw/HPWo+PEoX1b6UOF2tB1zzvt0y33CyGJwjEhGRJHt/f0UVUrNKjSIrqmpLDjLiVFJStJBBBwRx86w1ILHqlKUoiUpSiJSlKIlKUoiUpSiJSlKIlKUoiUpSiJSlKIlbrTWldQajcCbNapMpHaJaU6lB3EKP3lchXQbF9nlz2iao+j4CWlMxUh+UFr3SpsHKkp8yAqrL6u1rojZBaTYLBbSqVcEtLTaWCklxeBha1Y7iSocAO8RzrQra74ciNjS57r2A6ewA0ub5XBWSOPjuSbAalRRs+9nm/DW5ia7gPxrNG3RJdjKyQpQ7oxwPj4E44VJ2qNpui9j8O36ftMf3m62xKgy3ESlLrYIAHbOHIBwPhwT3jnxrstR364QdnSrumLJt13kxk5YkryhL6z9WrA+IJBUcnPLhiqyI2dW999yVdrjNnSnlFbrm8E7yick9T+dRUUkmIyuMzuBjDawJuXa6jSwtmLHiuA6wzn8N7P1lczjpWcXU2AHodSfXK1xc5S/sS20y9e61Tp+VYVw4Tcd15Hur6nXU4xkJCxujJwScccVzsn2mLhZtVSYUnToLMGQ8w26xLUlxKd4hRSlQKRvZJIGOdZ9gmm7VpnaKxPgP3OKVRnW3HGEreUkEcDhODzGM561xl60HY514nTJSZoffkuOL3nN0glROMEZHoazMwzD2ykhtjYZhx4umYdxWFha+Qtlus7MAxWWqdRC3E0XIytnbpa+ef1UwRkbNdt2mWEDLSLelxa2mmtyU24Qop7TjxBJxvDhwGfKBLzsF2hQ/piSzZ1KiW4hfeV9YttXwEADmRjgcZ6Vv9G6dc0ZqqJqCwXF5PZKxIjPAFL7J+NBI8R5c8VP+1LV69KaUb1GxZp95jqcSJy+27qGVAbigo8d4JxwVnpjArX7+ooJRBF/mNcLtubHLItubDdtshccVyXC50sTwWooSDVN4Cd9QeuV/XllkAVRi72u42iYYd0gvw5ASFdm8gpVg8jxrx1dK/2jSW3jSsm7WVpufqCWEMRpLpS25GcAJ3FpAGD14cCM1T/VFlmad1BNsk/szJhultwoVlJPiDU1R1rKppLQQQbEEWIPX6H1ChXxmM2K1tKUrcXwlKUoiUpSiJSlKIlKUoiUpSiJSlKIlKUoit37MNkTY9kEjUU+xxgZTq3WZ2/lS0ISVFsgeIHI8ufOuNet8ORd5F5lsNyLlKcLzsh3vK3j4E/CB0xyxU57LYOmZewe1uOTWA+qC2wYkVHdW2UgLxgbxVjeJIPAjGPHlLTBgt6U+ipenZ0mXcJLpYdajD3hLSSN1072N0dMEjPGqlJXmmqpJXtzdwjIjJt3XuctLEkEnQZ5WFy7O1VHSwudLGHu2uNL6kA3udAMh6byK/puBddnob1HfhImxi032ZXhagnAC0knIGFKIwN0DOetRPpvSCL9cbvGiXVtLUFe6y5ub3bZKgk8COHd5jx4V0ztoctESLbkaqb7TtC4+2+2p9xSNzdDIZST3MFWRnnjwr1ybDbZURiFbdP3xlkOhwojBMftnQO6e+d/hxwByqDGKEMDYHkF9gHBuRIObrPsLuGQaCetrBZaGvlw0SsjkNuQ29PLoFi2HXrS9r7X6WtyX5LQcMtLiBjdKgEElXd4E7u6ccSTWl1XFtep9oTVttCPcnVKdTNWWzhBSSQMHBUUpG7vcAeHGtzqqXbE29uFerdHQlW6tSDdN15/hwUsNpJV45NekIZv1jEWLa3JUdSQ2ty33JK3nEpGd1ZUApQAGcHw419jEZ3WkbGW8RdY3YQC4Wve/wA9tmG2gF8hbxlU6GqdXjiBdfOztTr+G3PLbLM534+3aWgJ1tLsNzuAU3Hb3kFJ3C8ohJCevHCuIHE44V3u3GzsQdJpg2m9NTLY0lpb7KD9Wv7CUYBKcgYI64GD0rXSbbAbhMOe43CJcWEJRHuUyF7yUJHwklolJIHAKPEYrXzdPpulsizXbw/eDDQhEiJAX2nb7p4K3VKG6ojAVwJ8K9hxhjiySVxuC0cVja48RFvls/TM3adRYBZJ659ZVxyzPuGgHhOenT05ZriNl7MKyayaXAZRGbuP9lkoQPq15+BRTyylWDn1rkvbI08YGqrZfY9kj22HcIw3VNuFReUPtnPHjx4nj+AqZHItuueq7Hc2LI/BhFlWUtxyndkoUd1DgSO7jAPHnwrnfbjj2CJpC0NWu4R5y1ykuBxaQHQSlW8E4A4HgSOnDxqcw+rfPWCYNtxNAcCRcEFw6kkWzzGVtbZRvaSelqHtkgZwZZgaXv6aix019zUOlKVaVV0pSlESlKURKUpREpSlESlKURKUpREpSlEXut94u1vLfuFzmxezXvo7F9SN1XiMHgasZ7PO0K4anYGmtS3GQ6iIgr7VMnslKaGVKW6o8VY5DKgOIyKrjabbNusxESBHW86sgAJGedWJ2Xezu6ptE/VchcdKxxjI+NQ8COQ+efQVEY46gipe8r3hg/CSLm4/ZAzJHTnmRdZ6QymXhhaXHcDIWPM6DnnrbQrrdoGudnioDliss67SUBxQLNkabSHRnuh1zG6TjGcEjPjXn0vqPaBGtzcXRmzxyEyk7yZU+U4p1SsY3t4boB9Diu+jMaB0L2cOLGiMzCAG2WWy/KX6AAq/QV0EP9vLwAuy6AnoZPwvXWQiIMeO4cr/ACqpUtRUVUPBhlC+SPi4w6V/A0u5gAtBtt87iFuyxRxScVTO1rrWswcRtyvY+vyhRVPt+2e7spTOtOlQhPwpcjoUU+hLhNZ4z23K0NoTGs+nnG287qYyOxIyMHBQ4CMgkfOpfb0btadG8WtHRc/ZVIfcI+YSBXw9pPazFG99GaVuAH2WJzrSj/8AdGK2hQY80C1FT5G4AcQQeYPeZHrdeGopCOEzy28svbh+ygDV+oLvKdYd1poC7W1xggCbaJJT3R03VjdPkc5rudKau2fanYZgpu0hd2baIZ9+CY80uZG6CvukjGeKCTy512Fxut+sqFftTom9W1gfHIYQJkcDxKm8kD1Fc3d9FbPNfwVSIzUNaz/zEIhKkq/iT4+ozWlVVfwrI48TpJIGsvwuae8jBItuchvZr/RfUUPeuc6mlbIXWuCOFxt9+pb6qum27alqOffFWS2XebEgwipGUP4eUTwUhxaQneAxjB/E1EsuZLllBlSn3ygbqO1cKt0eAzyqYtq+wm+acD1ztSzcYIJUpaclSf5geI9eI86hl5txl1TTqFIWk4UlQwRV6w4UZpWvoS0xbFunruDuQbHmo6dzzKRKCHcjt5a3GwNyF8UpSt1Y0pSlESlKURKUpREpSlESlKURKUpRErd6N01c9U3pm12xhbrjigk7ozitZb4j06a1EjpKnHFboFXV2MaFtmzrRxulz7NmatntZLzn7lGM7vr4/IdKisaxiLCKXv3t4nuNmN3c787De3QDMhZqamfVS9202AzJ5D+Z299lm2b7PtNbM9Pm4z1x/e20bz8tz4WvJHn0zzPTwrPfL/dLm63GSmfbmZKN+Nb4gH0nMQeTiie7FaP3ld4jkDWF+Rc7/e4zvu6fpBSRIt0OQjeZtbB+GXITyW+scW2zwAwo9K6JTmndDW1Uq4zil2W6C/MkKLkiU6TxUo8z4+AFU2pa3DJ21GJM+KxCTwxatjGw4Ry2A9LeM78ZNUwx0zu6p26u0LueZ/P3/ZUg7AF6Kds77VjsDVmvsRXZ3WM8rtJSVn7RdV3nEK5hXI+VSjVd7pCmGdE1VpaY3GvkVGY7wOWpbR4llzHxIV0PQ8RXe2jbXolywty75cE2e5oUWpVsdSpchp0cwEJBKk+CgMEVcsCx2PtBB3sYtI3xs1LTzG5adjtoeZjqukOHO7t/h2OgP9efPUdJLpUXL222BRzC03q6ajo43aylJ9N9QrIxtv0clYTdYmoLKk/vJ1rcSgeqkbwqVaWudwNcC7kCCfa91gMjQLnTnY291JtV620u6TlauXF01puXIvkHv3S6WV5LDsXPJGPgfc6lCugxkHl0uvdpyL2hGndnNyZlSpTYXLuzJ32oDJ8D1dPHCenM1ySndPaFsDSJEgRY3aYK15W4+4r4lqxxUo8yar+P9o/0Q5tLBH3tQ/IR2JyP7QGZvs3fU5Wvt0lCK0GR7uGNurstehOWW59BnpqrHq1TMZs3mSxNtrjnYIu7LZbSlw/upTR4sOevdPQ4qPtu2xWFeYj1+0wwlmYhJW5HbHBY55QB/t/DwMo3mytXJJvunnYgmvs7q98BcW4sn90+nktJ6K5pPEHhWl0nek2dTcdXbtWVyR7qGpK956zyjxEZxX2mlc23Oo4cxVXpHRyNfi3Z9vBIz9dTnQjcgfla1tuE2B3pQ5jm0mIG7T4JBqD1P8/W4zFGZsZ+HJXGkNlDqDgg1hqz/tR7MG3I69W2WOEqB/tbaByUftehP5+tVgPA4NXzDsQp8SpWVdOfldtuCNWnqPqLHdRksUkEhhl8Q+o2I6H+myUpStxfCUpSiJSlKIlKUoiUpSiJSlfbLanXkNI4qWoJHqa9AJNgvCbZqd/ZL0Qi7X5zUc5kKjQsFsKHBS890fiCf6R41OmuLoJdzXG93EyFa3WgqKfhn3BzixHPihOC4vyTjrWHZXAi6I2PMy3UBO7FVNd8Vd3uj8An8a+9EWx12+som99doY94lE/buMsBx0nzQ2UN+WDVFdXRSYjV41MOKKjHBGNi+9r/AL2+oDmn8KkDC/4eGjZk+c8Tjyby9vexG63KFQ9E6Wl3a8yjJluKMifJPxypCug+fADkAKrprHUlx1ReXLlcHOfBpoHuMo6JH/nrXZ7ftSKuOpE2Jhz+y27+8APBTxHE/IcPxrW7HtGjVF8VImoJtkIhTw/xVdEf9z5etWrshQQYFhcnabFzeaUcRJ1DT4Wt6uy5ahuQCg8bqZMRrG4VRZMabW5kak9B/MqQfZ+/aYWRwT0/8FIzDLpPab2eO5/B69eXWpKESKmWqYIrIkqSAp0NjfUByGedcRtV10zpGA3bbYlpVzdb+qRgbkdHIKI/QVw+yzadKhzzbdTTHJESQ4VIlOnKmVk9T9wn8PSucV3ZnGe00VR2hp4RG15uGNvxPbuQNzlc6cRuQNL2inxahwl8WGSSFxGrjoDsOn2GpUn27Vz13kS2bFpTUl1MNzspJYipHZq8CFKBz8q9Vn1PGuN5kWN23XWBco6At+NMjFBbB5bxyQM54Z50uVvu0a6o1Lo65NWy9FrsnHFJ32ZTR6OJ5KI5pPlWJpFr0ZYZEybKdfddc7WVKc778x9X5qUTwA6VEVMPZyfDYxQxvNU8hoZckh2VycrEH8NrE3ztYreifiUdS7v3jum5k2FiOmdwed8h1ut5FiRYoWIsZlgOL319k2E7yvE45mtfsqVbG9qklOuWgb1I3m9PrXgw+xI7yG88nj13uJHLz+2dDbRn7GrWSJYZuiu+3ptwDsjGHENqV0fPPPIHgfLQ6gu+nL5oYzpzrzDa17rKUpIlMSknglCRx7VKug/Sp3CcMxHsrXRz1EYlbNZhLbucxx2HXyuHAEArSq6qnxSBzIzwFnzAHIOA3/vMGxIXSa/00Nm92F6tSCnSE94JmRh8NseWeDiPBpR4Eckk8Odc7ry2ssod1AmKZcYse73iIj/m4Z4kj/MbOFoV0Iqa9Dx7xqLZdEg6+tqUTZkMsTmFkEuJIIClAfCopwSOhqJNKsyrW9dNHXRZelWN/wB2C1834yhvMrPqg4PpU92qp5cIqmY9R+OMgSAaPaTa58/CTzLTqCVpYa5lXEaCXwuF23/CdbfcDzGmS8elXU3C2TtL3d5FwVGaSgP9JsN1OWXx/MkjPgQapntm0m7pDXE23qSexKyppWOCgeIPzBB+Zq1kLOnrwwkkhNkni3rJ+1bphK2CfJt4KT/UBXFe2NpxMmwwtQNN/WMKLLpA6DJT+W/+VfdCYsNxzuqf/T1jO8ZyDgL26XF8h+00bL4e59RRB8n6yE8Luovb6HfoeaqnSlKt600pSlESlKURKUpREpSlESt3oaGZ+rLdFAyVvAfPp+daSu02JISvabZUq5e8t/7019xv7t3Hyz9s1imF4yOeXuro60itOW2yadGEsT7nEhrH+UlQUv5bqDWPQcofsnL1HI4KuMmVc3SfBS1EfglIFZNZKI1FpvH2X5bg/mTEdIrVNqMfYOFN8CLDn8WuP61yBsRf2VpIL/r57uPu37A+ishfw4tNJ/448vofuV7LhsltN/8AZ6i6plLRB1AiK/eHZhHB1Kyp0tueI3cAHofLNf3Znb4+m9nENx4dnmOZsk9cqTvHPonA+VSXtFbMT2Z5zMfgG9PNtjH3ezSD+WajnXayzsuuZZ4Ytu6MeBSB+lXH/ECeWqho8N4rMlmt5AcIA8vn06KJwGGOCSapt8zY/fU/ZVt1HdpN8vku7SlEuyXCvB+yOiR5AYFa+s8+HKt8x2FNjuR5LKt1xpxOFJPmKwoSVLCRzJxXd4Io4ImxxCzWgAAaADT6Lmsj3yPLn5knPzUo7JtpYsrIs2oHXF29KSY74BUpnH2COZSenh6cs1k2tMp2q2/Ud7tKZlmhLKY8Q8VR88O2A5KcHPj6DHA1hTsTv5SD9L2viM/vP/zXzI2LX5mO48q7WwhtBWQO0yQBn7tcqgr+wkWJyYjHM3vZBbewJ1IFsnO3P8ze4vg7ROpWUzmHgbnttoDnmBt/QK7diutuvlojXa0y25cKSgOMutnIUD+h8R0rmrfs00rD1/M1qmEXLlJUHEJWctMOYwtxCeQWrAyrnw4YyaqXsD2tztnl2EOaXZWnZS8yY44qYUf3rY8fEdR54q7louMG72yPc7ZKalQ5LYcZebVlK0nqKnK6jmoHkA/Kd/slHVRVrASPmGy9VQvteiC2bW7DdmxuovVvegv46uMkONk+eFKFTRUT+0OAmRoh0f3ib7ug+SmHc/pVfxSBtRh9RE7Qxv8Ao0kexAKk4nlk0bxs5v5gH6KMdfQS9enmUDjdrBNj8P8AFjgSWj65bP415tqbSNSbE5EojeLsJmUPUgZ/Imuh1KkHVWks/anvNn+VUZ0H8q0ML63YGAv/AKKofgk4/SufU87jg2DVR8Uc3D6F5+zQFKysAra2IaOZf2aPuSVRRQKVFJ5g4r+VmnACa+ByDiv1rDXUHCxIUM03AKUpSvlepSlKIlKUoiUpSiJXUbKpiYOvrTJUcBEhKj8iD/2rl69Nqke6XKPJzjs3Ao+meNZIuHjAdpv5brHKCWEDVfoDq5KBedLSVkBoXlEdxXQJfQtrP+sVrNJxl3PZGm1KGHhCegrT1StG8jH4iv4465qrZEzNhK3phhtyGVDmH2SFDH9SPzr1aNnsKv1yaYwmLd0N36AOm4+PrkD+R0LBrkfczDsvJEP1tHPcjkLkf9ifRpVi42HFWvPgnjy/vyH1Up6SSjXHs9RIiSCufYjDV5OhstnPopNRdZE/tPsxbiPd16RAVEeB5odSkoUD6KFdlsLuabHqe86Fkq3GX3FXW055KQs/XNjzSvjjwUTWo1ZbTonaRJjqTuWPUrypUJz7LMw/3rJ8N/4x55FW3tZC7FsKZX0WbmESt/42+Yebcif+JCjMLeKWp7mfQgsd57eh28wtXdtn8PbDsjtV+tyWomsLXG9xk54B51kbimnfA8MpV03h05VhlwpdtuzkCfGdjS473ZvMuJ3VIUDxBFWsttwuOg9TyNSWuK7OtE/H0zb2hlwKHASGh1WBwUn7Q86xe0PpzRuudn7m0zTs6O5MgpbK32OPvCN9KezcHNK054Z4jkfK+9lu1MOJ0zZIzdrtRuxx/Cel9DuM+dq5jODOgeQcnN/iA3HXn1Xh2my7jC0FOlWp19qYhLfZqZGVjK0g4+Wagl3VW0FTS0uXO8lBSQrKFYxjj0qxOpb1G07p968S23XGY6U7yWsbxyQOGfWo/uG2bTsi3yY6IF0CnWVoBKUYBKSPvVyLsBVVkVE5sGFtqW8Z+c8OWTcs2nTX1Vt7SRQPnBkqzEeHwi+eZz19PRQRUs+z7tembP7mLXdFuydNyXMutjiqKo/vED9U9efPnG2n7Ncr9cm7da4y331+HJI+8o9B51udfaIumkJLQlFMiK8B2cltJCSrHFJ8CPzFfoasxDDnVLcNnkHePBIbfMgbj7c7G17Fc0poKuOM1cTTwtNidl+g9tnQ7lb2Lhb5LUmLIQHGXW1ZStJ5EGon26yBK11oqzIOVMLlXF4fdSlvs0n5qWagj2eNsMnQlwRZL044/puS53hxUqGo/bSPu/eT8xx5yhAuR1drK8a3wr3N/EC07wxmK0TleP415V6YrnHbS+CYbUPefE0tb1LwW+4BJ9FcsFmGJTRtbqCCegbn7E2HqtdrCUljU1ndJ7tvg3K5OeQbiqSn/UsCtXe/+D7BlNu91SLO22r+ZYSD/urBqRarvcL12Ks+/vx9NRCOqQoSJix5BKUJPrWp9qi9N2jZoYDaghcxwJSkfdSP/JTVHZRmKDBMMPiLu9cOTb8f5Fw9FLum45K6pGluAeZ+X8wD6qmb6+0fcX95RP518UpXRSbm6iwLCyUpSvF6lKUoiUpSiJSlKIlKUoitn7Iur03DTz+mpLo7eMe1ZBPMcAofofxrt3IUq2T3rbAaK59mcdu1mbHOXBc4y4g8VIP1iR61TrZrqmXpHVcS7RnN0NrG+OhHn5cwfImrupfZ1lpq3ah07MEW4xliVb5AOSw+nmhXik/CR1BqnYk5mC4sa6UXpaocEo2DrWufMZ8832zst2Fjqul+HYf82I8TOo5eh/8AlfeoHY1z09D1XaLo1Ck28Cfb56jhLZA4pX/CoZSoVLFqRC2s7KIq9RWWRATcWQstL7q2nB8LrR5jj3kk8cHjUbbL9Haf1tfX7nIkLiQ4kgP3HSah9XHn9VfxMKxvpTyJPlirCJASkJSAABgAdKncCwh2CU7qZs3eN4uJn+1pztfe+pt8u41K1amq+Ok70s4crO6nn0tpz56BV0nvXnQlwRZtbEqiqVuQb6lOGJI6Jd/w3PHPA8681/0ZZb21IeYdkQHJiR27sF3cTITkEdokd1YyAeIz51Yy4wodxhOwrhFYlxXk7rjLyAtCx4EHgahHavs6gaG0jc9V6MutytHuYS4q3doHoi8rSkgIXko+LoflULV9kXfF/F4NMaeY7Z8BPp4QeVnN5WGS2m4mBD3VazvIx+8PfXzuD5rV67sb2odJS7LHfbZcfCAlbgO6N1QPHHpUeWbYiwh0LvF7U6gHi3Ga3c/1Kz+lSLrW7S7Nph+5Qm2XJKVNJQl4HcytaU8ccetezUWz3a79AzJMPUFgExpsqaiw4qsu45pC3DwOOXDn4VV+xY7Tvw90WFztiic83Jtfis2+fC4jK2ikMbbhZqQ+qiL3hoyGlrm24Gt14I0bS+h7KooEW1xE8VrUe84fMnvKPlUJbVNob2qlfRtvQuPaW172FDvvqHJSvAeA/Hy4+/zLxMuTv05IluzGllDiZKjvNqBwU4PLB6Vr6632V/w4gwup/SNfKZ6jW50B5i9yT1PoAVScY7USVcXwtOzu4tLDU9Og6D3W80LaYV71VBttwmIiRnXO+tRxvfwA9CeQqymoppsdlYg2eKlc+QpEK1xED4nVcEjHgnmT4CqoDORjOc8MVOunImpCmJBuMx5zVT8Lst9XOyQFjvLV/wDJdT3QDxSnieJ4fHb3s23EaqnrqycCmhBLmHpncW55A728OZssnZvEzTQyU8Md5X2s4fl6aj65BdDoy3MOXdC4r3vNtsLS4ESR0lylq3pckeIUvug/dTVcPas1ei+60+i4ru/FgDsxg8CQTk/M5+QFT3td1Zbdm+z9MG3lLMhTHYQ20nvITyK/XwPUnPQ1SOfKdmzHZT6suOqKjVSwAyYrWzY7M2wf8kQOzBq710yyuXqw1bG0sTKFhvw/M8/7th6a+jVgpSlWtaaUpSiJSlKIlKUoiUpSiJSlKIlS77P+1R/Rt0TbbitTtqkKCVpz8PgR5j8+XhiIqVingiqYXQTt4mOFiOY+xGoOxzQFzXB7DZwzB/v6r9Ci2qe/D1lou6tRbs23hmSni1Jb6svJ6p/NJqUNnm022aikCy3dk2PUiB9ZAkK4O/xMr5OJPlxHUV+eOyLa3etESksLcMq3LI7RlZJH/o+Y4+vKrSWDU2h9ptqaa32XXviSw4rdeaV4tqHHI8UnPjVPY+v7Lt7uRpnoxo4eOMciOX8PItJIUgRDiDuJpEcx1B8L+oPP68wdVaiuf2i6aGsNF3LTapphCc2lHbhvfKMKCs7uRnl41ElovW0TSqQ1bLqxqa3I4JiXdRTIQPBL6ef9YNdND21W9gBGpNKaiszg+JaY3vTI9Ft5P5CrNhuNUFdZ9HO1x5Xs7911j7AjqtGpppYQWzsIHuPcZfkVq7jsW1Dcogh3HaMp+KVoWtsWZtO9uKCgMheRxAqaaj1nbVsxcTlWqWWT1S9HebI+SkCviRtt2bNjDF+cmr6Iiwn3FH8EYqSioTBHwRQhjbk2a0NFza5yAGwzWt8RE53E6S50zdc/UnmuU9o7Yw1rCM7qbTTCGtQMoy8ynATNSBy8nB0PXkemKlWfT97vF4NottrlSZyVFLjKWyFN44HfzwQB1JwBVyZ+2G4zQW9K6Guj5PASbqpMNkee7xWR8hXGTrPeNQvyZWrbnHDElfayLdamvdYzivF1Q7739RpJ27oMEhLKmUOI0a08TvKw0/8AYt81rSdnpcQlD4WEX1JFh53P2BUc6C0k1bJg+h1xLzqBs4cuW72lutR/yyeEh8dMdxJ48eY7W+3bT+zPS70yZIU9IdUp1a3nN5+a8ea1qPHnzPTkK57aJtd0noa2m32j3aVKbTuNMxwAy3+HP0HzIqp2vta3rWV2cnXWStYUe6jPADoMcseVVGpbifa2Vs2JNMNKDcR/ifyLuQ9svCCSXKZp2U2EsMdIQ+XQu2bztzP9mwyWTaZrS5a11E9cprpKCr6tHIJHTA6AdB/7rlaUq1gAANaLACwA0AGgHQLVAslKUovUpSlESlKURKUpREpSlESlKURKUpREr1224zra+H4UlxhYOcpNeSlfTXOabtNivHNDhYi6mfRntCatsyER7kU3JhPDDw3jj1zvfnUp2L2k9LyUJFxt8iKvqW1hQ/1Y/Wqi0qEruzmEV5Lp6dvFzbdp/hIB8yCtmGsqoBaOQgcjmPrf6FXea24bOpCd5U9wH+NpJ/71il7eNnsRBLcuQ4fBDaU5/FVUmpUSOweB38D/AC48v+t/qtn9MV37Q/d/qrVai9pm0spUmzWhby+i3lk/kMfrUP6420ay1OlbDk0xoqv3TXdTj0HP55qNaVOYfgmG4aQ6kga13PNzvQuJI9LLTnqJ6gWmkLhy0HsLA+t19vvOvul15xTizzUo5Jr4pSpQkk3KwgACwSlKV4vUpSlESlKURKUpREpSlESlKURKUpREpSlESlKURKUpREpSlESlKURKUpREpSlESlKURKUpREpSlEX/2Q==" alt="RM"/>
     <div class="campo-players"></div>`;
-  // Jugadores del primer equipo este día
   const jugsHoy = primerEquipoJugadores[dia] || [];
   const pw=cWrap.querySelector('.campo-players');
-  // Recoger los que han sido marcados con destino 1ER EQUIPO
   const dePromocion = [];
   EQUIPOS.forEach(eq=>{
-    // Desde promInfo (destino explícito, puede ser 1 o varios destinos)
     const prom = promInfo[dia]?.[eq]||{};
     Object.keys(prom).forEach(nombre=>{
       if(getDestinos(dia,eq,nombre).includes('1ER EQUIPO') && !dePromocion.includes(nombre)) dePromocion.push(nombre);
     });
   });
-  // Solo poner en campo los que ya tienen posición guardada
   jugsHoy.forEach((nombre,i)=>{
     const pos2=getPos(dia,'1ER EQUIPO',nombre,i);
     const pof=mk('div','pof');
@@ -1783,7 +1437,6 @@ function buildCardPrimerEquipo(){
     pw.appendChild(pof);
   });
   card.appendChild(cWrap);
-  // Disponibles: nativos de la plantilla 1ER EQUIPO + promocionados desde cantera, menos los que ya están en el campo
   const enCampo = new Set(jugsHoy);
   const nativos = (plantillas['1ER EQUIPO'] || []).filter(n=>!enCampo.has(n) && !dePromocion.includes(n));
   const disponiblesHoy = [...nativos, ...dePromocion.filter(n=>!enCampo.has(n))];
@@ -1824,12 +1477,10 @@ function setView(n){
   sessionStorage.setItem('rm_vista', n);
   const grid = document.getElementById('grid');
   if(grid) grid.className = 'cards-grid view-'+n;
-  // Botones activos
   ['1','2col','3col','semana'].forEach(v=>{
     const btn=document.getElementById('vbtn-'+v);
     if(btn) btn.classList.toggle('active', v===String(n));
   });
-  // Barra multi-eq solo en vistas multi-columna
   const bar = document.getElementById('multi-eq-bar');
   if((n==='2col' || n==='3col') && eqF==='TODOS'){
     bar.classList.add('visible');
@@ -1842,7 +1493,6 @@ function setView(n){
 function renderMultiEqBar(){
   const bar=document.getElementById('multi-eq-bar');
   bar.innerHTML='';
-  // Botón "Todos"
   const btnTodos=document.createElement('button');
   btnTodos.className='meq-btn'+(eqsMultiSel.size===EQUIPOS.length?' sel':'');
   btnTodos.innerHTML='<span style="font-size:10px;">≡</span> Todos';
@@ -1868,7 +1518,6 @@ function renderMultiEqBar(){
     };
     bar.appendChild(btn);
   });
-  // Botón foto — captura los equipos visibles
   const btnFoto=document.createElement('button');
   btnFoto.className='meq-btn meq-foto';
   btnFoto.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Foto`;
@@ -1878,9 +1527,6 @@ function renderMultiEqBar(){
   };
   bar.appendChild(btnFoto);
 }
-// ── Exportar datos a fichero JSON
-// PDF legible con todas las plantillas (equipo por equipo) — para leer/imprimir,
-// aparte del .json funcional (ese sí sirve para restaurar; este es solo para consulta).
 function exportarPDF(){
   try{
     if(typeof window.jspdf === 'undefined'){ toast('❌ No se pudo cargar el generador de PDF'); return; }
@@ -1891,7 +1537,7 @@ function exportarPDF(){
     const anchoUtil = 210 - margenIzq*2;
     doc.setFont('helvetica','bold');
     doc.setFontSize(16);
-    doc.setTextColor(37,99,235); // #2563eb
+    doc.setTextColor(37,99,235);
     doc.text('Real Madrid Cantera — Plantillas', margenIzq, y);
     y += 6;
     doc.setFontSize(9);
@@ -1902,7 +1548,6 @@ function exportarPDF(){
     const equiposOrden = ['1ER EQUIPO', ...EQUIPOS];
     equiposOrden.forEach(eq=>{
       const jugs = (plantillas[eq]||[]).slice().sort((a,b)=>a.localeCompare(b,'es'));
-      // Salto de página si no cabe ni la cabecera + 2 líneas
       if(y > 270){ doc.addPage(); y = 20; }
       doc.setFillColor(37,99,235);
       doc.rect(margenIzq, y-4.5, anchoUtil, 7, 'F');
@@ -1958,12 +1603,10 @@ function exportarDatos(){
     toast('✅ Copia de seguridad completa descargada');
   }catch(e){ toast('❌ Error al exportar: '+e.message); }
 }
-// ── Abrir selector de fichero
 function importarDatos(){
   document.getElementById('import-file').value = '';
   document.getElementById('import-file').click();
 }
-// ── Cargar fichero JSON importado
 function cargarFicheroImport(ev){
   const file = ev.target.files[0];
   if(!file) return;
@@ -1996,7 +1639,7 @@ function cargarFicheroImport(ev){
       if(payload.semanasGuardadas)      _semanasGuardadas = payload.semanasGuardadas;
       if(payload.notas)                 window._notasData = payload.notas;
       if(payload.fechas)                Object.assign(FECHAS, payload.fechas);
-      window._saltarFrenoGuardado = true; // restauración explícita ya confirmada por el usuario
+      window._saltarFrenoGuardado = true;
       autoGuardar();
       render();
       renderDias();
@@ -2008,10 +1651,8 @@ function cargarFicheroImport(ev){
 // ══════════════════════════════════════════════════
 // EXPORTAR EXCEL
 // ══════════════════════════════════════════════════
-// Exportar un equipo en un día concreto (al pulsar el contador)
 function exportarEquipoDia(eq, d){
   const rows = [];
-  // Título
   rows.push(['REAL MADRID CANTERA — '+eq+' — '+d]);
   rows.push(['']);
   const equipoData = data[d][eq];
@@ -2049,7 +1690,6 @@ function exportarEquipoDia(eq, d){
   URL.revokeObjectURL(url);
   toast('📥 Exportando '+eq+' — '+d);
 }
-// Exportar semana completa (todos los días, todos los equipos) → CSV multi-hoja simulado
 function exportarSemana(){
   const rows = [];
   rows.push(['REAL MADRID CANTERA — SEMANA COMPLETA']);
@@ -2076,7 +1716,6 @@ function exportarSemana(){
     });
     rows.push(['']);
   });
-  // Añadir tabla registro al final
   rows.push(['══ REGISTRO DE ENTRENAMIENTO ══']);
   const header = ['JUGADOR','EQUIPO',...DIAS,'TOTAL_CAMPO','TOTAL_BANQUILLO'];
   rows.push(header);
@@ -2124,13 +1763,11 @@ function generarFotoLista(eq){
   const esCas      = eq === 'CASTILLA';
   const esPartidoHoy = esPartido(eq);
   const countTxt   = campo.length ? countLabel(eq, campo) : '0';
-  // ── Canvas ──
   const W = 640;
   const FONT = "'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif";
   const PAD = 28;
   const LINE_H = 28;
-  const SEC_H  = 36; // cabecera sección
-  // Calcular altura total
+  const SEC_H  = 36;
   const secciones = [
     { label: 'CAMPO', items: campo, extra: countTxt, color: '#4ade80' },
   ];
@@ -2146,7 +1783,6 @@ function generarFotoLista(eq){
   if(otros.length){
     secciones.push({ label: colN[2]||'OTROS', items: otros, color: '#94a3b8' });
   }
-  // Zona extra (4ª columna: TTT o nombre personalizado)
   if(extraZonas[eq]){
     const extra = d.extra || [];
     const extraNombre = colN[3] || 'EXTRA';
@@ -2165,25 +1801,20 @@ function generarFotoLista(eq){
   cv.width = W * DPR; cv.height = totalH * DPR;
   const ctx = cv.getContext('2d');
   ctx.scale(DPR, DPR);
-  // Fondo
   ctx.fillStyle = '#0a1628';
   ctx.fillRect(0, 0, W, totalH);
-  // Cabecera
   const grad = ctx.createLinearGradient(0,0,W,0);
   grad.addColorStop(0,'#001a52'); grad.addColorStop(1,'#0a1628');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, HEADER_H);
   ctx.fillStyle = '#C8A800';
   ctx.fillRect(0, HEADER_H-2, W, 2);
-  // Escudo Real Madrid (arriba derecha)
   const shieldImgEl = document.querySelector('#hdr-escudo img');
   function dibujarCuerpoLista(){
-    // Emoji libreta
     ctx.font = '28px serif';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
     ctx.fillText('📋', PAD, HEADER_H/2 - 6);
-    // Equipo + fecha
     ctx.fillStyle = 'rgba(255,255,255,.55)';
     ctx.font = `600 12px ${FONT}`;
     ctx.textBaseline = 'top';
@@ -2197,7 +1828,6 @@ function generarFotoLista(eq){
   ctx.font = `700 26px ${FONT}`;
   ctx.textBaseline = 'middle';
   ctx.fillText(fechaFmt, PAD + 40, HEADER_H/2 + 6);
-  // Indicador partido + rival
   if(esPartidoHoy){
     const rivalVal = (window.rivales && window.rivales[dia] && window.rivales[dia][eq]) || '';
     const partidoTxt = '⚽ PARTIDO' + (rivalVal ? '  vs ' + rivalVal : '');
@@ -2207,11 +1837,8 @@ function generarFotoLista(eq){
     ctx.fillText(partidoTxt, W - PAD, HEADER_H/2 + 6);
     ctx.textAlign = 'left';
   }
-  // (contador eliminado — ya aparece en la sección CAMPO abajo)
-    // Secciones
     let y = HEADER_H + PAD;
   secciones.forEach(sec => {
-    // Cabecera sección
     ctx.fillStyle = sec.color + '22';
     ctx.fillRect(PAD, y, W - PAD*2, SEC_H);
     ctx.fillStyle = sec.color;
@@ -2226,21 +1853,17 @@ function generarFotoLista(eq){
       y += LINE_H;
     } else {
       sec.items.forEach((nombre, i) => {
-        // Fila alternada
         if(i % 2 === 0){
           ctx.fillStyle = 'rgba(255,255,255,.04)';
           ctx.fillRect(PAD, y, W - PAD*2, LINE_H);
         }
-        // Número
         ctx.fillStyle = 'rgba(255,255,255,.35)';
         ctx.font = `400 11px ${FONT}`;
         ctx.textBaseline = 'middle';
         ctx.fillText((i+1)+'', PAD + 8, y + LINE_H/2);
-        // Nombre
         ctx.fillStyle = '#ffffff';
         ctx.font = `600 14px ${FONT}`;
         ctx.fillText(nombre, PAD + 28, y + LINE_H/2);
-        // Destino promoción
         if(sec.destinos && sec.destinos[nombre]){
           const dest = sec.destinos[nombre];
           const destLbl = dest==='1ER EQUIPO' ? '1ER' : (eqsShort[dest]||dest);
@@ -2255,7 +1878,6 @@ function generarFotoLista(eq){
     }
     y += 12;
   });
-    // Exportar
     cv.toBlob(blob => {
     if(!blob){ toast('❌ Error generando lista'); return; }
     const blobUrl = URL.createObjectURL(blob);
@@ -2279,7 +1901,6 @@ function generarFotoLista(eq){
     document.body.appendChild(ov);
     }, 'image/png');
   } // fin dibujarCuerpoLista
-  // Dibujar escudo arriba a la derecha si existe
   if(shieldImgEl && shieldImgEl.src){
     const si = new Image();
     si.onload = () => {
@@ -2298,11 +1919,8 @@ function generarFotoLista(eq){
 // ══════════════════════════════════════════════════
 // DRAG
 // ══════════════════════════════════════════════════
-// ── Doble tap/click para eliminar chip ──
-var _tapTimer = new WeakMap();   // chip → timeout id
-var _tapCount = new WeakMap();   // chip → nº de taps
-// Devuelve un jugador a disponibles de su equipo propio desde eq/zona
-// Devuelve un jugador a disponibles de su equipo propio desde cualquier zona/equipo
+var _tapTimer = new WeakMap();
+var _tapCount = new WeakMap();
 function moveGhost(x,y){const g=document.getElementById('ghost');g.style.left=(x-dOff.x)+'px';g.style.top=(y-dOff.y)+'px';}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 function on(ev,fn,opts){document.addEventListener(ev,fn,opts);}
@@ -2313,11 +1931,8 @@ function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel='',on
   document.getElementById('alert-ok-btn').textContent=okLabel;
   // Estilo rojo si es destructivo
   const okBtn=document.getElementById('alert-ok-btn');
-  if(okLabel==='Eliminar'){ okBtn.style.background='#ef4444'; okBtn.style.borderColor='#ef4444'; }
+  if(okLabel==='Eliminar' || okLabel==='Volver a su equipo'){ okBtn.style.background='#ef4444'; okBtn.style.borderColor='#ef4444'; }
   else { okBtn.style.background=''; okBtn.style.borderColor=''; }
-  // Quitar el foco de cualquier botón ANTES de cerrar el modal: en algunos navegadores
-  // (Windows), ocultar un elemento que tiene el foco hace que la página salte de scroll
-  // sola buscando un nuevo elemento al que enfocar.
   function cerrarSinSaltoScroll(){
     const _sy = window.scrollY, _sx = window.scrollX;
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -2358,7 +1973,6 @@ function closeAlert(){
 }
 var tT=null;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),2200);}
-// ── Modo oscuro — el botón existía pero no llamaba a nada; se conecta aquí ──
 function toggleDarkMaestro(){
   const activo = document.body.classList.toggle('dark');
   try{ localStorage.setItem('rm_dark', activo ? '1' : '0'); }catch(e){}
@@ -2376,24 +1990,18 @@ function toggleDarkMaestro(){
     }
   }catch(e){}
 })();
-// Intentar cargar guardado previo
-// ── ARRANQUE: cargar sesión principal desde Firebase ──
-// Firebase es la fuente de verdad. localStorage solo como fallback mientras carga.
 initTiposConfig();
 async function arrancarDesdeFirebase(){
   try{
-    // Esperar Firebase listo (máx 6s)
     if(!window._fbReady){
       await new Promise((res,rej)=>{
         const t=setTimeout(()=>rej('timeout'),6000);
         window.addEventListener('firebase-ready',()=>{clearTimeout(t);res();},{once:true});
       });
     }
-    // 1. Cargar sesión principal
     const res = await window.fbCargarSesion('principal');
     if(res.ok && res.data && res.data.plantillas){
       const payload = res.data;
-      // Aplicar payload de Firebase (misma lógica que fbCargar pero silenciosa)
       if(payload.data        && typeof payload.data==='object')        data        = payload.data;
       if(payload.pos         && typeof payload.pos==='object')         pos         = payload.pos;
       if(payload.plantillas  && typeof payload.plantillas==='object')  plantillas  = payload.plantillas;
@@ -2410,10 +2018,6 @@ async function arrancarDesdeFirebase(){
       if(payload.multiEq     && typeof payload.multiEq==='object')     multiEq     = payload.multiEq;
       if(payload.semanasGuardadas && typeof payload.semanasGuardadas==='object') _semanasGuardadas = payload.semanasGuardadas;
       if(payload.historicoJugador && typeof payload.historicoJugador==='object') historicoJugador = payload.historicoJugador;
-      // ── Independencia entre semanas ──
-      // 'data' recién restaurado pertenece a la semana 'payload.ultimaSemanaKey' (la última que se guardó).
-      // 'FECHAS'/'_semanaKeyActual' ya están forzados a la semana de HOY (más arriba).
-      // Si no coinciden, hay que guardar esa foto y cargar (o crear) la de esta semana.
       if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
         _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
           data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
@@ -2421,34 +2025,24 @@ async function arrancarDesdeFirebase(){
         }));
         if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
       }
-      // Comprobación de seguridad (solo aviso, no bloquea nada): si el payload traía sus
-      // propias fechas y no coinciden con las de la semana activa, avisar en consola —
-      // ayuda a detectar antes cualquier futuro problema de semanas cruzadas.
       if(payload.fechas && typeof payload.fechas === 'object'){
         const distintas = Object.keys(FECHAS).some(d=>payload.fechas[d] && payload.fechas[d] !== FECHAS[d] && payload.ultimaSemanaKey === _semanaKeyActual);
         if(distintas) console.warn('[aviso semana] Las fechas guardadas no coinciden con las de la semana activa aunque la clave de semana sí — revisar.');
       }
-      // FECHAS no se restaura del guardado: la app siempre abre en la semana actual
       if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
-      // Normalizar colNames
       EQUIPOS.forEach(eq=>{
         if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
         if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIONADOS';
-        // Migrar nombres antiguos en singular a plural (solo si no fueron personalizados manualmente)
         if(colNames[eq][0]==='PROMOCIÓN') colNames[eq][0]='PROMOCIONADOS';
         if(colNames[eq][1]==='LESIÓN')    colNames[eq][1]='LESIONADOS';
       });
-      // Asegurar estructura completa
       for(const d of DIAS) for(const e of EQUIPOS){
         if(!data[d])    data[d]={};
         if(!data[d][e]) data[d][e]={};
         for(const z of ZONAS) if(!data[d][e][z]) data[d][e][z]=[];
       }
       DIAS.forEach(d=>{if(!promInfo[d])promInfo[d]={};EQUIPOS.forEach(eq=>{if(!promInfo[d][eq])promInfo[d][eq]={};});});
-      // Sincronizar plantillas → disponibles en TODOS los días de la semana activa —
-      // si un jugador de la plantilla no está en ninguna zona ese día, debe verse
-      // disponible, sin restringirlo a partir de hoy.
       EQUIPOS.forEach(eq=>{
         (plantillas[eq]||[]).forEach(nombre=>{
           DIAS.forEach((d)=>{
@@ -2458,25 +2052,12 @@ async function arrancarDesdeFirebase(){
           });
         });
       });
-      // Limpieza de "huérfanos": jugadores que aparecen en Disponibles/Campo/Banquillo de
-      // un equipo sin ser de ese equipo NI estar prestados ahí de verdad (con un registro
-      // real en promInfo) — sobras de reconstrucciones o borrados de antes de este arreglo.
       DIAS.forEach(d=>{
-        // Limpiar registros de promInfo "fantasma" PRIMERO: si dice que un jugador está
-        // promocionado DESDE un equipo donde ya ni siquiera está en la plantilla (se
-        // borró de ahí en algún momento sin limpiar este registro), el registro ya no
-        // significa nada real — quitarlo. Esto arregla rastros que quedaron mal ANTES
-        // de este arreglo, no solo previene nuevos. Va PRIMERO porque las comprobaciones
-        // de abajo dependen de que promInfo ya esté limpio para surtir efecto ya mismo.
         EQUIPOS.forEach(eqOrigen=>{
           const infoEq = promInfo[d]?.[eqOrigen];
           if(!infoEq) return;
           Object.keys(infoEq).forEach(nombre=>{
             const sigueEnPlantilla = (plantillas[eqOrigen]||[]).includes(nombre);
-            // Además del caso anterior: si ya NO está en la columna "Promocionados"
-            // visual de su equipo de origen ese día, el registro tampoco significa nada
-            // real — es justo el desajuste que hacía "volver" promociones ya quitadas
-            // (Primer Equipo lee promInfo directamente, no la columna visual).
             const sigueEnColumnaPromo = (data[d]?.[eqOrigen]?.promovidos_1er||[]).includes(nombre);
             if(!sigueEnPlantilla || !sigueEnColumnaPromo) delete infoEq[nombre];
           });
@@ -2498,11 +2079,6 @@ async function arrancarDesdeFirebase(){
             }
           });
         });
-        // Lo mismo, pero para "Primer Equipo" — es una estructura APARTE de 'data', y
-        // hasta ahora nadie la validaba nunca: si alguien quedaba "colgado" ahí por
-        // cualquier motivo, se quedaba para siempre. Un jugador solo pertenece de verdad
-        // a Primer Equipo si es de su plantilla propia, O si algún equipo de cantera
-        // tiene registrada una promoción real hacia 1ER EQUIPO ese día.
         const arr1er = primerEquipoJugadores[d];
         if(Array.isArray(arr1er)){
           for(let i=arr1er.length-1; i>=0; i--){
@@ -2518,23 +2094,14 @@ async function arrancarDesdeFirebase(){
           }
         }
       });
-      // Rellenar la foto histórica de días ya existentes que aún no la tengan
-      // (backfill: solo la primera vez que se detecta cada jugador en cada día;
-      // los días que YA tengan foto no se tocan, quedan tal y como estaban)
       DIAS.forEach(d=>asegurarHistoricoJugador(d));
-      // Limpieza puntual: 'origen' de un jugador que ya no está en la plantilla del
-      // equipo al que apunta (por ejemplo, se le borró de esa plantilla antes de que
-      // existiera la corrección de plantEliminar) — corregir apuntando a donde SÍ esté,
-      // o borrar origen si ya no está en ninguna plantilla.
       Object.keys(origen).forEach(nombre=>{
         const eqApuntado = origen[nombre];
-        if(eqApuntado && (plantillas[eqApuntado]||[]).includes(nombre)) return; // correcto, no tocar
+        if(eqApuntado && (plantillas[eqApuntado]||[]).includes(nombre)) return;
         const otroEqConEl = EQUIPOS.find(e=>(plantillas[e]||[]).includes(nombre));
         if(otroEqConEl) origen[nombre] = otroEqConEl;
         else delete origen[nombre];
       });
-      // Además: rellenar 'origen' para quien esté en una plantilla pero no tenga NINGÚN
-      // registro de origen todavía (el bucle de arriba solo corrige los que ya existían)
       EQUIPOS.forEach(eq=>{
         (plantillas[eq]||[]).forEach(nombre=>{
           if(!origen[nombre]) origen[nombre] = eq;
@@ -2542,18 +2109,12 @@ async function arrancarDesdeFirebase(){
       });
       initTiposConfig();
       _fbSesionActiva = 'principal';
-      // Guardar en local como caché
-      // localStorage desactivado
       render(); renderMultiEqBar();
       console.log('✅ Sesión principal cargada desde Firebase');
-      // Fijar la referencia de "jugadores conocidos" para el freno de emergencia
       fijarTotalJugadoresConocido();
-      // Copia de seguridad diaria automática (una vez al día, independiente del guardado normal)
       hacerBackupDiarioSiHaceFalta();
     } else {
-      // No existe sesión principal todavía — crearla con los datos actuales
       _fbSesionActiva = 'principal';
-      // Importar plantillas desde campograma/plantillas si existen
       try{
         const snap = await db.collection('campograma').doc('plantillas').get();
         if(snap.exists){
@@ -2577,14 +2138,13 @@ async function arrancarDesdeFirebase(){
       autoGuardar();
       console.log('ℹ️ Sesión principal creada en Firebase');
     }
-    // iniciarEscuchaEnVivo(); // DESACTIVADO — causaba que jugadores volvieran solos a su sitio anterior
   }catch(e){
     console.warn('[arranque] Firebase no disponible, usando datos locales:', e);
     if(!cargado){ initTiposConfig(); render(); }
   }
 }
 arrancarDesdeFirebase();
- 
+
 // ══════════════════════════════════════════════════
 // SINCRONIZACIÓN EN VIVO — aplica cambios de otras personas sin recargar
 // ══════════════════════════════════════════════════
@@ -2593,11 +2153,7 @@ function iniciarEscuchaEnVivo(){
   if(typeof window.fbEscucharSesion !== 'function') return;
   window.fbEscucharSesion('principal', (payload)=>{
     try{
-      // Si tengo un cambio local sin confirmar todavía (p.ej. acabo de mover un jugador y
-      // el guardado con retraso aún no ha salido), NO aplicar este eco: podría ser el
-      // estado de ANTES de mi cambio y me lo desharía.
       if(window._hayGuardadoPendiente) return;
-      // Evitar reprocesar el eco de nuestro propio guardado ya confirmado
       const tsNum = payload._ts && payload._ts.toMillis ? payload._ts.toMillis() : null;
       if(tsNum !== null){
         if(tsNum === _ultimoTsRemoto) return;
@@ -2609,11 +2165,8 @@ function iniciarEscuchaEnVivo(){
     }
   });
 }
-// Aplica un payload que llegó de OTRA persona. Solo actualiza variables y repinta —
-// NO llama a autoGuardar() (evitaríamos escribir de vuelta algo que ya está guardado).
 function aplicarPayloadRemoto(payload){
   if(!payload || typeof payload !== 'object' || !payload.plantillas) return;
-  // ── Cosas GLOBALES (no dependen de qué semana estés viendo tú ni el otro) ──
   if(payload.plantillas  && typeof payload.plantillas==='object')  plantillas  = payload.plantillas;
   if(payload.origen      && typeof payload.origen==='object')      origen      = payload.origen;
   if(payload.colNames    && typeof payload.colNames==='object')    colNames    = payload.colNames;
@@ -2625,12 +2178,10 @@ function aplicarPayloadRemoto(payload){
   if(Array.isArray(payload.listaUYLExcl)) window.listaUYLExcl = payload.listaUYLExcl;
   if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
   if(payload.semanasGuardadas && typeof payload.semanasGuardadas==='object'){
-    // Fusionar (no pisar) las fotos de semanas que el otro tenga y yo no
     Object.keys(payload.semanasGuardadas).forEach(k=>{
       if(k !== _semanaKeyActual) _semanasGuardadas[k] = payload.semanasGuardadas[k];
     });
   }
-  // ── Cosas de la semana EN CURSO — solo si es la MISMA semana que yo tengo abierta ──
   if(payload.ultimaSemanaKey === _semanaKeyActual){
     if(payload.data        && typeof payload.data==='object')        data        = payload.data;
     if(payload.pos         && typeof payload.pos==='object')         pos         = payload.pos;
@@ -2641,26 +2192,18 @@ function aplicarPayloadRemoto(payload){
     if(payload.multiEq     && typeof payload.multiEq==='object')     multiEq     = payload.multiEq;
     if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
   } else if(payload.semanasGuardadas && payload.semanasGuardadas[_semanaKeyActual]){
-    // El otro está en otra semana, pero SÍ tiene guardada una foto de la MI semana — usarla
     cargarFotoSemana(_semanaKeyActual);
   }
-  // FECHAS/semana activa NUNCA se toma de otra persona: cada uno navega su propia semana
   render();
   toast('☁️ Actualizado con cambios de otra persona');
 }
-// Un jugador puede tener 1 o varios destinos duplicados a la vez. Internamente
-// promInfo guarda un string (1 destino) o un array (2+). Este helper siempre
-// devuelve un array, sea cual sea el caso.
 function getDestinos(diaP, eqOrigen, nombre){
   const v = promInfo[diaP]?.[eqOrigen]?.[nombre];
   if(!v) return [];
   return Array.isArray(v) ? v.slice() : [v];
 }
-// Igual que getDestinos, pero busca en TODOS los equipos, no solo en el "origen" asumido.
-// Esto encuentra rastros "huérfanos" que quedaron archivados bajo un equipo antiguo
-// (por ejemplo, si al jugador le cambiaron de equipo por Plantillas mientras estaba doblado).
 function getDestinosEnCualquierEquipo(diaP, nombre){
-  const encontrados = []; // [{eqArchivo, destino}, ...]
+  const encontrados = [];
   EQUIPOS.forEach(eq=>{
     getDestinos(diaP, eq, nombre).forEach(destino=>{
       encontrados.push({eqArchivo: eq, destino});
@@ -2668,8 +2211,6 @@ function getDestinosEnCualquierEquipo(diaP, nombre){
   });
   return encontrados;
 }
-// Limpia TODOS los rastros de duplicado de un jugador, estén archivados bajo el equipo
-// que estén (incluso equipos "antiguos" tras un cambio de equipo). Red de seguridad final.
 function limpiarTodosLosRastros(nombre, diaP){
   diaP = diaP || dia;
   const encontrados = getDestinosEnCualquierEquipo(diaP, nombre);
@@ -2703,7 +2244,7 @@ function limpiarUnDestino(diaP, destino, nombre){
 }
 function doblarJugador(nombre, eqOrigen, destino, diaP, modo){
   diaP = diaP || dia;
-  modo = modo || 'cambiar'; // 'cambiar' = reemplaza destino(s) anterior(es) | 'anadir' = triplicar, mantiene los anteriores
+  modo = modo || 'cambiar';
   if(!promInfo[diaP]) promInfo[diaP]={};
   if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
   const previos = getDestinos(diaP, eqOrigen, nombre);
@@ -2712,14 +2253,11 @@ function doblarJugador(nombre, eqOrigen, destino, diaP, modo){
   }
   if(destino!=='1ER EQUIPO'){
     if(!data[diaP][destino]) { toast('❌ No se puede doblar ahí'); return; }
-    limpiarEquipoExcepto(nombre, destino, 'disponibles', diaP); // evitar duplicado en destino
+    limpiarEquipoExcepto(nombre, destino, 'disponibles', diaP);
     if(!data[diaP][destino].disponibles.includes(nombre)){
       data[diaP][destino].disponibles.push(nombre);
     }
   }
-  // Si destino es 1ER EQUIPO, aparece en Disponibles vía promInfo (más abajo);
-  // solo se añade al campo cuando se arrastra ahí manualmente.
-  // Marcar en PROMOCIONADOS del origen SIN quitarlo de donde está (es duplicado, no promoción real)
   if(!data[diaP][eqOrigen].promovidos_1er) data[diaP][eqOrigen].promovidos_1er=[];
   if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
     data[diaP][eqOrigen].promovidos_1er.push(nombre);
@@ -2730,7 +2268,6 @@ function doblarJugador(nombre, eqOrigen, destino, diaP, modo){
   render();
   toast(nuevaLista.length>1 ? '⧉ '+nombre+' triplicado ('+nuevaLista.join(', ')+')' : '⧉ '+nombre+' doblado en '+destino);
 }
-// Elimina TODOS los duplicados de un jugador, dejándolo solo en su equipo de origen
 function eliminarTodosLosDuplicados(nombre, eqOrigen, diaP){
   diaP = diaP || dia;
   const previos = getDestinos(diaP, eqOrigen, nombre);
@@ -2742,7 +2279,6 @@ function eliminarTodosLosDuplicados(nombre, eqOrigen, diaP){
   render();
   toast('✕ Duplicado(s) de '+nombre+' eliminado(s)');
 }
-// Quita SOLO un destino concreto, dejando el resto de duplicados intactos
 function quitarUnDestino(nombre, eqOrigen, destino, diaP){
   diaP = diaP || dia;
   limpiarUnDestino(diaP, destino, nombre);
@@ -2759,7 +2295,6 @@ function quitarUnDestino(nombre, eqOrigen, destino, diaP){
   autoGuardar();
   render();
 }
-// Asegura que un jugador solo esté en UNA zona activa por equipo (evita duplicados internos)
 function limpiarEquipoExcepto(nombre, eq, zonaMantener, diaP){
   diaP = diaP || dia;
   ZONAS_ACTIVAS.forEach(z=>{
@@ -2771,4 +2306,3 @@ function limpiarEquipoExcepto(nombre, eq, zonaMantener, diaP){
     }
   });
 }
- 
