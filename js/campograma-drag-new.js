@@ -613,11 +613,16 @@ function alinearSeleccionados(direccion){
     // Horizontal: todos al nivel del que está MÁS BAJO (top máximo).
     // Cada uno se queda en la POSICIÓN HORIZONTAL que ya tenía — solo se separan si
     // dos quedan demasiado pegados (mínimo RADIO_MIN entre ellos).
+    // OJO: el campo no es cuadrado (más alto que ancho, ratio ~1.18), así que 1% en
+    // horizontal (left) es MENOS distancia real en píxeles que 1% en vertical (top).
+    // Sin compensar esto, separar en horizontal con el mismo RADIO_MIN deja un hueco
+    // real más pequeño y los chips se siguen solapando visualmente.
+    const RADIO_MIN_H = RADIO_MIN * 1.18;
     const targetTop = Math.max(...tops);
     const orden = _campoSeleccion.map((s,i)=>({s, left:lefts[i]})).sort((a,b)=>a.left-b.left);
     for(let i=1;i<orden.length;i++){
-      if(orden[i].left - orden[i-1].left < RADIO_MIN){
-        orden[i].left = orden[i-1].left + RADIO_MIN;
+      if(orden[i].left - orden[i-1].left < RADIO_MIN_H){
+        orden[i].left = orden[i-1].left + RADIO_MIN_H;
       }
     }
     orden.forEach(({s,left})=>{
