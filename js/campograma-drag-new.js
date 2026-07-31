@@ -100,7 +100,7 @@ function dispararDobleTap(nombre, eq, zona, diaP){
         doblarJugador(nombre, eqPropio, destino, diaP, 'anadir');
       });
     };
-    showAlert(msg, onQuitarAqui, 'Quitar de aquí', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
+    showAlert(msg, onQuitarAqui, 'Volver a su equipo', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
     return;
   }
 
