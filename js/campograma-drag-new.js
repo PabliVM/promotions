@@ -612,12 +612,14 @@ function alinearSeleccionados(direccion){
   } else {
     // Horizontal: todos al nivel del que está MÁS BAJO (top máximo).
     // Cada uno se queda en la POSICIÓN HORIZONTAL que ya tenía — solo se separan si
-    // dos quedan demasiado pegados (mínimo RADIO_MIN entre ellos).
-    // OJO: el campo no es cuadrado (más alto que ancho, ratio ~1.18), así que 1% en
-    // horizontal (left) es MENOS distancia real en píxeles que 1% en vertical (top).
-    // Sin compensar esto, separar en horizontal con el mismo RADIO_MIN deja un hueco
-    // real más pequeño y los chips se siguen solapando visualmente.
-    const RADIO_MIN_H = RADIO_MIN * 1.18;
+    // dos quedan demasiado pegados.
+    // Las fichas son rectángulos ANCHOS (mucho más anchas que altas) — el hueco
+    // horizontal que hace falta para no solaparlas es el ANCHO REAL de una ficha en
+    // este campo concreto, no un ratio fijo adivinado (que fallaba en pantallas/tamaños
+    // distintos). Se mide igual que ya hace snapToGrid con medirGapReal().
+    const campoWrapEl = _campoSeleccion[0].pof.closest('.campo-wrap');
+    const gapsReal = campoWrapEl ? medirGapReal(campoWrapEl) : null;
+    const RADIO_MIN_H = (gapsReal && gapsReal.gapH) ? gapsReal.gapH : RADIO_MIN * 1.18;
     const targetTop = Math.max(...tops);
     const orden = _campoSeleccion.map((s,i)=>({s, left:lefts[i]})).sort((a,b)=>a.left-b.left);
     for(let i=1;i<orden.length;i++){
