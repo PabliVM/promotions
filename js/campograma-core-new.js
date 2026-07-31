@@ -2312,7 +2312,12 @@ async function arrancarDesdeFirebase(){
           if(!infoEq) return;
           Object.keys(infoEq).forEach(nombre=>{
             const sigueEnPlantilla = (plantillas[eqOrigen]||[]).includes(nombre);
-            if(!sigueEnPlantilla) delete infoEq[nombre];
+            // Además del caso anterior: si ya NO está en la columna "Promocionados"
+            // visual de su equipo de origen ese día, el registro tampoco significa nada
+            // real — es justo el desajuste que hacía "volver" promociones ya quitadas
+            // (Primer Equipo lee promInfo directamente, no la columna visual).
+            const sigueEnColumnaPromo = (data[d]?.[eqOrigen]?.promovidos_1er||[]).includes(nombre);
+            if(!sigueEnPlantilla || !sigueEnColumnaPromo) delete infoEq[nombre];
           });
         });
         EQUIPOS.forEach(eq=>{
