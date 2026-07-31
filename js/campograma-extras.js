@@ -1,7 +1,168 @@
+
+Todos los proyectos
+RM
+
+
+
+Escribe / para habilidades
+
+
+Recientes
+Promotions
+ahora
+Memoria
+Solo tú
+La memoria del proyecto aparecerá aquí después de algunos chats.
+
+Instrucciones
+Añadir instrucciones para personalizar las respuestas de Claude
+
+Archivos
+11% de la capacidad del proyecto utilizada
+Modo de búsqueda
+
+campograma-plantillas-new.js
+253 líneas
+
+js
+
+
+
+vercel.json
+475 líneas
+
+json
+
+
+
+campograma-extras.js
+2613 líneas
+
+js
+
+
+
+manifest.json
+803 líneas
+
+json
+
+
+
+campograma-stats-new.js
+402 líneas
+
+js
+
+
+
+campograma-temporadas-new.js
+861 líneas
+
+js
+
+
+
+campograma-render-new.js
+445 líneas
+
+js
+
+
+
+campograma-modos-new.js
+801 líneas
+
+js
+
+
+
+campograma-firebase-init-new.js
+26 líneas
+
+js
+
+
+
+campograma-modales.css
+454 líneas
+
+css
+
+
+
+campograma-captura-new.js
+589 líneas
+
+js
+
+
+
+campograma-darkmode-new.js
+63 líneas
+
+js
+
+
+
+campograma-core-new.js
+264 líneas
+
+js
+
+
+
+campograma-base.css
+1 línea
+
+css
+
+
+
+campograma-drag-new.js
+208 líneas
+
+js
+
+
+
+index.html
+1029 líneas
+
+html
+
+
+
+campograma-copiar-new.js
+680 líneas
+
+js
+
+
+
+campograma-semana.css
+253 líneas
+
+css
+
+
+
+campograma-buildcard-new.js
+665 líneas
+
+js
+
+
+
+CHECKLIST_Campograma_editable.xlsx
+xlsx
+
+
+campograma-extras.js
 // ================================================
 // CAMPOGRAMA-LOGIC.JS — Lógica principal (Fase 1: monolito intacto)
 // ================================================
-
+ 
 // ══════════════════════════════════════════════════
 // DATOS
 // ══════════════════════════════════════════════════
@@ -300,7 +461,7 @@ function abrirCalendarioFechaModal(nombre, onConfirmar){
   const minFecha = fechasSemana[0];
   const maxFecha = fechasSemana[fechasSemana.length-1];
   const hoyFecha = (window.FECHAS_COMPLETAS||{})[dia] || minFecha;
-
+ 
   const overlay = mk('div','');
   overlay.style.cssText = 'position:fixed;inset:0;z-index:10400;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);';
   const box = mk('div','');
@@ -355,11 +516,11 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
   const body = mk('div','');
   body.style.cssText = 'padding:16px 18px;';
   const diaAbrev = {'LUNES':'L','MARTES':'M','MIÉRCOLES':'X','JUEVES':'J','VIERNES':'V','SÁBADO':'S','DOMINGO':'D'};
-
+ 
   let diaOrigen = diaOrigenDefecto || dia;
   let diaDestino = DIAS.find(d=>d!==diaOrigen) || diaOrigenDefecto;
   let modo = 'todo'; // 'todo' | 'campo'
-
+ 
   function filaDias(label, actual, onElegir){
     const lbl = mk('div','');
     lbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.4px;';
@@ -393,10 +554,10 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
       b.style.color       = sel ? '#fff' : '#1a1d23';
     });
   }
-
+ 
   filaDias('Copiar DESDE (origen)', ()=>diaOrigen, (d)=>{ diaOrigen = d; });
   filaDias('Copiar HACIA (destino)', ()=>diaDestino, (d)=>{ diaDestino = d; });
-
+ 
   const modoLbl = mk('div','');
   modoLbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.4px;';
   modoLbl.textContent = 'Qué copiar';
@@ -429,12 +590,12 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
   marcarModo();
   modoRow.appendChild(btnTodo); modoRow.appendChild(btnCampo); modoRow.appendChild(btnInferiores);
   body.appendChild(modoRow);
-
+ 
   const aviso = mk('div','');
   aviso.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;color:#9ca3af;margin-bottom:14px;line-height:1.4;';
   aviso.textContent = 'Se sobrescribirá lo que hubiera en el día destino para este equipo. Si algún jugador está prestado en otro equipo ese día, se le quitará de ahí primero.';
   body.appendChild(aviso);
-
+ 
   const btnRow = mk('div','');
   btnRow.style.cssText = 'display:flex;gap:8px;';
   const cancelBtn = document.createElement('button');
@@ -445,7 +606,7 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
   okBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
   btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
   body.appendChild(btnRow);
-
+ 
   box.appendChild(hdr); box.appendChild(body);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
@@ -465,14 +626,14 @@ function abrirCopiarDiaModal(eq, diaOrigenDefecto){
 function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
   const origenData = data[diaOrigen]?.[eq];
   if(!origenData){ toast('❌ No hay datos de '+eq+' en '+diaOrigen); return; }
-
+ 
   // Qué zonas se copian según el modo elegido
   const zonasACopiar = modo === 'campo' ? ['campo']
     : modo === 'inferiores' ? ['lesionados','otros','promovidos_1er','extra']
     : ZONAS.slice(); // 'todo'
   const nombresACopiar = new Set();
   zonasACopiar.forEach(z=>(origenData[z]||[]).forEach(n=>nombresACopiar.add(n)));
-
+ 
   // Quitar a esos jugadores de CUALQUIER OTRO equipo en el día DESTINO (evitar duplicados
   // si estaban prestados ahí)
   EQUIPOS.forEach(otroEq=>{
@@ -489,7 +650,7 @@ function copiarEquipoDeDiaADia(eq, diaOrigen, diaDestino, modo){
       nombresACopiar.forEach(n=>{ delete promInfo[diaDestino][otroEq][n]; });
     }
   });
-
+ 
   if(!data[diaDestino][eq]) data[diaDestino][eq] = {};
   ZONAS.forEach(z=>{ if(!data[diaDestino][eq][z]) data[diaDestino][eq][z] = []; });
   if(modo === 'campo'){
@@ -797,7 +958,7 @@ function buildAddInput(eq, zona){
   function elegir(nombre){
     const eqPropio = origen[nombre];
     const esPromocionCruzada = eqPropio && eqPropio !== eq && eqPropio !== 'PRUEBA';
-
+ 
     if(esPromocionCruzada){
       // Quitarlo de donde esté AHORA en su equipo origen (campo, disponibles, banquillo...)
       // — es una transferencia real, no debe quedarse duplicado ahí.
@@ -816,7 +977,7 @@ function buildAddInput(eq, zona){
       render();
       return;
     }
-
+ 
     // Caso normal (mismo equipo, o jugador a prueba): sin promoción, comportamiento de siempre
     // Evitar duplicado dentro del MISMO equipo: quitarlo de cualquier otra zona suya en este equipo
     ZONAS_ACTIVAS.forEach(z=>{
@@ -2220,21 +2381,6 @@ function toggleDarkMaestro(){
 // Firebase es la fuente de verdad. localStorage solo como fallback mientras carga.
 initTiposConfig();
 async function arrancarDesdeFirebase(){
-  // Carrera de arranque: este código puede ejecutarse ANTES de que el script que
-  // define window.render() termine de cargar (ej. si va con defer/module, o
-  // simplemente carga después en el HTML). Esperar a que exista, máx 3s.
-  async function _esperarRenderListo(){
-    if(typeof window.render === 'function') return;
-    await new Promise(res=>{
-      let intentos = 0;
-      const iv = setInterval(()=>{
-        intentos++;
-        if(typeof window.render === 'function' || intentos > 150){
-          clearInterval(iv); res();
-        }
-      }, 20);
-    });
-  }
   try{
     // Esperar Firebase listo (máx 6s)
     if(!window._fbReady){
@@ -2398,8 +2544,7 @@ async function arrancarDesdeFirebase(){
       _fbSesionActiva = 'principal';
       // Guardar en local como caché
       // localStorage desactivado
-      await _esperarRenderListo();
-      window.render(); renderMultiEqBar();
+      render(); renderMultiEqBar();
       console.log('✅ Sesión principal cargada desde Firebase');
       // Fijar la referencia de "jugadores conocidos" para el freno de emergencia
       fijarTotalJugadoresConocido();
@@ -2425,8 +2570,7 @@ async function arrancarDesdeFirebase(){
                 data[d][eq].disponibles.push(nombre);
             });
           });
-          await _esperarRenderListo();
-          window.render();
+          render();
           toast('☁️ Plantillas importadas desde Firebase');
         }
       }catch(e){ console.warn('Sin plantillas Firebase:', e); }
@@ -2436,11 +2580,11 @@ async function arrancarDesdeFirebase(){
     // iniciarEscuchaEnVivo(); // DESACTIVADO — causaba que jugadores volvieran solos a su sitio anterior
   }catch(e){
     console.warn('[arranque] Firebase no disponible, usando datos locales:', e);
-    if(!cargado){ initTiposConfig(); await _esperarRenderListo(); window.render(); }
+    if(!cargado){ initTiposConfig(); render(); }
   }
 }
 arrancarDesdeFirebase();
-
+ 
 // ══════════════════════════════════════════════════
 // SINCRONIZACIÓN EN VIVO — aplica cambios de otras personas sin recargar
 // ══════════════════════════════════════════════════
@@ -2627,3 +2771,4 @@ function limpiarEquipoExcepto(nombre, eq, zonaMantener, diaP){
     }
   });
 }
+ 
