@@ -33,6 +33,7 @@ function centrarDiaEnEscritorio(){
       if(td) td.scrollIntoView({behavior:'auto', block:'nearest', inline:'center'});
       return;
     }
+    // Si no hay card marcada como "hoy" (p.ej. semana sin hoy dentro), centrar en el día activo
     const hdrs = document.querySelectorAll('.card-hdr-fecha');
     hdrs.forEach(h=>{
       if(h.textContent.trim().startsWith(dia)){
@@ -43,8 +44,10 @@ function centrarDiaEnEscritorio(){
   });
 }
 function renderDias(){
+  // Actualizar etiqueta semana en botón
   const lunes = FECHAS['LUNES']||'';
   const domingo = FECHAS['DOMINGO']||'';
+  // Fechas apiladas: ini arriba, fin abajo
   const iniEl = document.getElementById('semana-fecha-ini');
   const finEl = document.getElementById('semana-fecha-fin');
   if(iniEl && finEl){
@@ -55,11 +58,13 @@ function renderDias(){
   if(subLbl) subLbl.textContent = (lunes && domingo) ? lunes + ' – ' + domingo : 'Semana';
   document.getElementById('top-semana-lbl').textContent =
     lunes ? lunes + ' – ' + domingo : 'Semana';
+  // Días strip
   const strip = document.getElementById('dias-strip');
   strip.innerHTML='';
   DIAS.forEach(d=>{
     const tieneDatos = EQUIPOS.some(e=>data[d][e].campo.length>0);
     const esP = EQUIPOS.some(e=>modoPartido[d]?.[e]);
+    // Escritorio: se marca el día activo normalmente. Móvil: solo si el usuario ya eligió uno.
     const marcado = esMovilVista() ? (_diaElegidoManualmente && d===dia) : (d===dia);
     const tab = mk('div','dia-tab'+(marcado?' active':'')+(tieneDatos?' tiene-datos':'')+(esP?' es-partido':''));
     tab.setAttribute('role','tab');
@@ -81,10 +86,11 @@ function renderDias(){
 // ══════════════════════════════════════════════════
 // CALENDARIO MINI
 // ══════════════════════════════════════════════════
-let _calFecha = new Date();
-let _calLunesSel = null;
+let _calFecha = new Date(); // mes visible en el calendario
+let _calLunesSel = null;    // lunes seleccionado
 const DIAS_DOW = ['L','M','X','J','V','S','D'];
 function abrirCal(){
+  // Iniciar en el lunes actual de FECHAS
   const partes = FECHAS['LUNES'] ? FECHAS['LUNES'].split('/') : null;
   if(partes){
     const hoy = new Date();
@@ -108,17 +114,20 @@ function cerrarCal(){
 function renderCal(){
   const mes = _calFecha.getMonth();
   const anyo = _calFecha.getFullYear();
+  // Nombre mes en inglés capitalizado (como en la foto)
   const mesNombre = _calFecha.toLocaleString('en-GB',{month:'long'});
   const mesLabel = mesNombre.charAt(0).toUpperCase()+mesNombre.slice(1)+' '+anyo;
   document.getElementById('cal-mes').textContent = mesLabel;
   const grid = document.getElementById('cal-grid');
   grid.innerHTML='';
+  // Cabecera días semana — MON TUE WED...
   ['MON','TUE','WED','THU','FRI','SAT','SUN'].forEach(d=>{
     const el=mk('div','cal-dow'); el.textContent=d; grid.appendChild(el);
   });
+  // Primer día del mes
   const primerDia = new Date(anyo, mes, 1);
   let dow = primerDia.getDay();
-  dow = dow===0 ? 6 : dow-1;
+  dow = dow===0 ? 6 : dow-1; // lunes=0
   for(let i=0;i<dow;i++){
     grid.appendChild(mk('div','cal-day vacio'));
   }
@@ -126,11 +135,12 @@ function renderCal(){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   for(let d=1;d<=diasEnMes;d++){
     const fecha = new Date(anyo, mes, d);
-    const dowDia = fecha.getDay();
+    const dowDia = fecha.getDay(); // 0=dom,1=lun...
     const esLunes = dowDia===1;
     const el=mk('div','cal-day');
     el.textContent=d;
     if(fecha.getTime()===hoy.getTime()) el.classList.add('hoy');
+    // Resaltar semana seleccionada
     if(_calLunesSel){
       const domingo = new Date(_calLunesSel);
       domingo.setDate(_calLunesSel.getDate()+6);
@@ -138,11 +148,15 @@ function renderCal(){
         el.classList.add('semana-sel');
         if(esLunes) el.classList.add('lunes-sel');
         if(dowDia===0) el.classList.add('domingo-sel');
+        // Día de hoy dentro de semana seleccionada → círculo azul
         if(fecha.getTime()===hoy.getTime()) el.classList.add('dia-sel');
       }
+      // Lunes seleccionado → círculo azul
       if(fecha.getTime()===_calLunesSel.getTime()) el.classList.add('dia-sel');
     }
+    // Todos los días son clicables — seleccionan la semana del lunes correspondiente
     el.onclick=()=>{
+      // Calcular el lunes de esa semana
       const d2 = new Date(anyo, mes, d);
       const dw = d2.getDay();
       const diff = dw===0 ? -6 : 1-dw;
@@ -158,10 +172,11 @@ function resetCal(){
   if(!_calModoCopia) FECHAS = calcFechasSemana(new Date());
   renderCal();
 }
-function aplicarSemana(){
+async function aplicarSemana(){
   if(!_calLunesSel){ toast('Selecciona un día'); return; }
   if(_calModoCopia === 'semana'){
     _copySemanaDestLunes = new Date(_calLunesSel);
+    // Resetear DESPUÉS para que cerrarCal no reabra el modal (lo hacemos nosotros)
     const modoBak = _calModoCopia;
     _calModoCopia = false;
     document.getElementById('cal-overlay').classList.remove('open');
@@ -173,6 +188,7 @@ function aplicarSemana(){
     _copyDiaSemanaLunes = new Date(_calLunesSel);
     _calModoCopia = false;
     document.getElementById('cal-overlay').classList.remove('open');
+    // Mostrar label y re-renderizar días de esa semana
     const fechas = calcFechasSemana(_copyDiaSemanaLunes);
     const lbl = document.getElementById('copy-dia-semana-lbl');
     lbl.textContent = 'Semana del ' + fechas['LUNES'] + ' al ' + fechas['DOMINGO'];
@@ -183,7 +199,11 @@ function aplicarSemana(){
   }
   guardarFotoSemanaActual();
   FECHAS = calcFechasSemana(_calLunesSel);
-  if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
+  if(!(await cargarFotoSemana(_semanaKeyActual))) crearSemanaVacia();
+  // Sincronizar plantillas → disponibles en la semana recién cargada/creada — por si se
+  // han añadido jugadores nuevos a la plantilla DESPUÉS de que esta semana se archivara
+  // (si no, esos jugadores nuevos no aparecerían en los días de una semana ya visitada).
+  // Solo AÑADE lo que falte, nunca quita ni sobrescribe nada que ya hubiera.
   EQUIPOS.forEach(eq=>{
     (plantillas[eq]||[]).forEach(nombre=>{
       DIAS.forEach(d=>{
@@ -195,6 +215,7 @@ function aplicarSemana(){
       });
     });
   });
+  // Si hoy cae dentro de esta semana, seleccionar ese día automáticamente
   DIAS.forEach(d=>{
     const [dd,mm] = (FECHAS[d]||'').split('/');
     const hoy = new Date();
@@ -214,6 +235,7 @@ function aplicarSemana(){
     renderControl();
   }
 }
+// Navegación meses
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('cal-prev').onclick=()=>{
     _calFecha.setMonth(_calFecha.getMonth()-1); renderCal();
@@ -221,6 +243,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('cal-next').onclick=()=>{
     _calFecha.setMonth(_calFecha.getMonth()+1); renderCal();
   };
+  // Cerrar al clicar fuera
   document.getElementById('cal-overlay').onclick=(e)=>{
     if(e.target===document.getElementById('cal-overlay')) cerrarCal();
   };
@@ -256,7 +279,7 @@ function renderCopyBar(){ /* eliminado — usar modal copiar */ }
 // VISTA LISTA — alternativa al campo
 // ══════════════════════════════════════════════════
 let _vistaListaGlobal = false;
-const _vistaListaCards = new Set();
+const _vistaListaCards = new Set(); // cards individuales en modo lista
 
 function toggleVistaListaGlobal(){
   _vistaListaGlobal = !_vistaListaGlobal;
@@ -301,6 +324,7 @@ function renombrarJugadorGlobal(nombreViejo, nombreNuevo){
   nombreNuevo = nombreNuevo.trim().toUpperCase();
   if(!nombreNuevo || nombreNuevo === nombreViejo) return false;
 
+  // Reemplazar en data: todas las zonas, todos los días, todos los equipos
   DIAS.forEach(d => {
     EQUIPOS.forEach(eq => {
       const eqData = data[d]?.[eq];
@@ -314,23 +338,28 @@ function renombrarJugadorGlobal(nombreViejo, nombreNuevo){
     });
   });
 
+  // Reemplazar en origen
   if(origen[nombreViejo] !== undefined){
     origen[nombreNuevo] = origen[nombreViejo];
     delete origen[nombreViejo];
   }
 
+  // Reemplazar en porteros
   const pIdx = porteros.indexOf(nombreViejo);
   if(pIdx >= 0){
     porteros[pIdx] = nombreNuevo;
+    // Avisar a Firebase del cambio de nombre (porteros va aparte del guardado general)
     if(typeof window.fbTogglePortero === 'function'){
       window.fbTogglePortero(nombreViejo, false);
       window.fbTogglePortero(nombreNuevo, true);
     }
   }
 
+  // Reemplazar en listaUYL
   const uIdx = listaUYL.indexOf(nombreViejo);
   if(uIdx >= 0) listaUYL[uIdx] = nombreNuevo;
 
+  // Reemplazar en plantillas
   Object.keys(plantillas).forEach(eq => {
     const arr = plantillas[eq];
     if(!Array.isArray(arr)) return;
@@ -338,6 +367,7 @@ function renombrarJugadorGlobal(nombreViejo, nombreNuevo){
     if(idx >= 0) arr[idx] = nombreNuevo;
   });
 
+  // Reemplazar en promInfo (destinos de promoción)
   DIAS.forEach(d => {
     EQUIPOS.forEach(eq => {
       const pi = promInfo[d]?.[eq];
@@ -368,8 +398,10 @@ function buildListaView(eq, d){
     { key:'extra',          label: colNames[eq]?.[3]||'EXTRA',     color:'#7c3aed' },
   ];
 
+  // Barra de acciones
   const acciones = mk('div','card-lista-acciones');
 
+  // Botón copiar texto
   const btnCopiar = mk('button','card-lista-btn');
   btnCopiar.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar';
   btnCopiar.onclick = (e) => {
@@ -384,28 +416,34 @@ function buildListaView(eq, d){
       if(!jugs.length) return;
       let labelOut = label.toUpperCase();
       if(key === 'campo'){
+        // Listado de jugadores: contador con porteros separados (21+3)
         const numPorteros = jugs.filter(n => porteros.includes(n)).length;
         const numNormal = jugs.length - numPorteros;
         labelOut += ' (' + numNormal + (numPorteros>0 ? '+'+numPorteros : '') + ')';
       } else if(key === 'banquillo'){
+        // Banquillo: solo el total
         labelOut += ' (' + jugs.length + ')';
       }
+      // Promocionados y demás zonas: sin número
       if(key === 'promovidos_1er' && eq === 'CASTILLA'){
         labelOut += ' A 1ER EQUIPO';
       }
       texto += '\n*' + labelOut + ':*\n';
       const siglas = {'CASTILLA':'CAST','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA','1ER EQUIPO':'1ER'};
+      // En el Campo: primero los propios del equipo, externos al final. Dentro de cada
+      // grupo, porteros primero, manteniendo el orden relativo original.
       let jugsOrdenados;
       if(key === 'campo'){
         jugsOrdenados = [...jugs].sort((a, b) => {
           const aExt = (origen[a] && origen[a] !== eq) ? 1 : 0;
           const bExt = (origen[b] && origen[b] !== eq) ? 1 : 0;
-          if(aExt !== bExt) return aExt - bExt;
+          if(aExt !== bExt) return aExt - bExt; // propios (0) antes que externos (1)
           const aPor = porteros.includes(a) ? 0 : 1;
           const bPor = porteros.includes(b) ? 0 : 1;
           return aPor - bPor;
         });
       } else {
+        // Resto de zonas: solo porteros primero (comportamiento igual que antes)
         jugsOrdenados = [...jugs].sort((a, b) => {
           const aPor = porteros.includes(a) ? 0 : 1;
           const bPor = porteros.includes(b) ? 0 : 1;
@@ -415,6 +453,9 @@ function buildListaView(eq, d){
       jugsOrdenados.forEach(n => {
         const esPor = porteros.includes(n);
         let linea = '  - ' + n + (esPor ? ' (POR)' : '');
+        // Si es prestado de otro equipo, identificarlo entre paréntesis (Youth League
+        // se marca aparte: "JA-YL" en vez de solo "JA", para no confundirlo con una
+        // promoción normal — punto pendiente 14.2/14.4 ya decidido así)
         const eqReal = origen[n];
         const esExterno = eqReal && eqReal !== eq;
         if(esExterno){
@@ -428,6 +469,7 @@ function buildListaView(eq, d){
             else linea += '  → ' + (siglas[destino]||destino);
           });
         }
+        // En Campo, los jugadores externos van en cursiva (formato WhatsApp: _texto_)
         if(key === 'campo' && esExterno) linea = '_' + linea + '_';
         texto += linea + '\n';
       });
@@ -437,6 +479,7 @@ function buildListaView(eq, d){
   acciones.appendChild(btnCopiar);
   wrap.appendChild(acciones);
 
+  // Zonas
   let hayJugadores = false;
   zonas.forEach(({key, label, color}) => {
     const jugadores = eqData[key] || [];
@@ -479,6 +522,7 @@ function capturarLista(eq, diaKey, zonas, eqData){
   const LABEL_H = 26;
   const PAD = 16;
 
+  // Calcular altura total
   let totalH = HEADER_H + PAD;
   zonas.forEach(({key}) => {
     const jugs = eqData[key] || [];
@@ -493,9 +537,11 @@ function capturarLista(eq, diaKey, zonas, eqData){
   const ctx = cv.getContext('2d');
   ctx.scale(DPR, DPR);
 
+  // Fondo blanco
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, totalH);
 
+  // Header azul
   ctx.fillStyle = '#2563eb';
   ctx.fillRect(0, 0, W, HEADER_H);
   ctx.fillStyle = 'rgba(255,255,255,.7)';
@@ -513,11 +559,13 @@ function capturarLista(eq, diaKey, zonas, eqData){
   ctx.textBaseline = 'middle';
   ctx.fillText(fechaFmt, PAD, HEADER_H/2 + 6);
 
+  // Zonas
   let y = HEADER_H + PAD;
   zonas.forEach(({key, label, color}) => {
     const jugs = eqData[key] || [];
     if(!jugs.length) return;
 
+    // Label con barra de color
     ctx.fillStyle = color;
     ctx.fillRect(PAD, y, 4, LABEL_H);
     ctx.fillStyle = color;
@@ -530,6 +578,7 @@ function capturarLista(eq, diaKey, zonas, eqData){
     jugs.forEach((nombre, i) => {
       ctx.fillStyle = i%2===0 ? '#f8fafd' : '#ffffff';
       ctx.fillRect(PAD, y, W - PAD*2, ROW_H);
+      // Borde
       ctx.strokeStyle = '#e8eef8';
       ctx.lineWidth = 1;
       ctx.strokeRect(PAD, y, W - PAD*2, ROW_H);
@@ -546,9 +595,11 @@ function capturarLista(eq, diaKey, zonas, eqData){
 }
 
 function renderCards(){
+  // Guardar posición vertical y horizontal antes de reconstruir el grid
   const scrollYPrevio = window.scrollY;
   const scrollXPrevio = window.scrollX;
 
+  // Guardar la primera fila visible y su posición exacta (vista semana)
   let anclaIdx = -1;
   let anclaTop = 0;
   if(vistaActual === 'semana'){
@@ -584,6 +635,10 @@ function renderCards(){
     renderFiltrosSemana();
     renderCardsSemana(grid);
     initDrag();
+    // Vigilar CUALQUIER cambio posterior (igualarZonasSemana, etc.) y corregir el
+    // scroll cada vez, venga la causa de donde venga (más fiable que temporizadores).
+    // Los avisos se agrupan (debounce) para no disparar la corrección decenas de veces
+    // seguidas durante la reconstrucción inicial del grid, que ralentizaría la carga.
     let _obsDebounce = null;
     const _restaurarAgrupado = ()=>{
       clearTimeout(_obsDebounce);
@@ -596,13 +651,15 @@ function renderCards(){
     }
     if(window.MutationObserver){
       const mo = new MutationObserver(_restaurarAgrupado);
-      mo.observe(grid, { childList:true, attributes:true });
+      mo.observe(grid, { childList:true, attributes:true }); // sin subtree: mucho más barato
       setTimeout(()=>mo.disconnect(), 1000);
     }
     requestAnimationFrame(() => {
       igualarZonasSemana(grid);
       sincronizarScrollBar(grid);
+      // Restaurar después de modificar las alturas
       restaurarPosicion();
+      // Segunda corrección cuando el navegador termine la maquetación
       requestAnimationFrame(restaurarPosicion);
       setTimeout(restaurarPosicion, 120);
       setTimeout(restaurarPosicion, 300);
@@ -613,6 +670,7 @@ function renderCards(){
   if(eqF==='1ER EQUIPO'){
     grid.appendChild(buildCardPrimerEquipo());
   } else if(vistaActual==='2col' || vistaActual==='3col'){
+    // Vista multi: mostrar equipos seleccionados (o todos si eqF=TODOS)
     const lista = eqF==='TODOS' ? EQUIPOS.filter(e=>eqsMultiSel.has(e)) : [eqF];
     lista.forEach(eq=>grid.appendChild(buildCard(eq)));
   } else {
@@ -631,7 +689,9 @@ function sincronizarScrollBar(grid){
   const bar = document.getElementById('scroll-sync-bar');
   const inner = document.getElementById('scroll-sync-inner');
   if(!bar || !inner || !grid) return;
+  // El ancho del inner debe igualar el scrollWidth del grid
   inner.style.width = grid.scrollWidth + 'px';
+  // Sincronizar scroll en ambas direcciones, evitando bucle infinito
   let syncing = false;
   grid.onscroll = () => {
     if(syncing) return;
@@ -652,6 +712,7 @@ function igualarZonasSemana(grid){
   rows.forEach(tr => {
     const cells = tr.querySelectorAll('.semana-td-card');
 
+    // Reset alturas previas
     cells.forEach(td => {
       const z = td.querySelector('.zona-disponibles');
       const c = td.querySelector('.cols-estado');
@@ -661,6 +722,8 @@ function igualarZonasSemana(grid){
       if(cw) cw.style.marginTop = '';
     });
 
+    // Igualar inicio del campo: medir altura de todo lo que hay ENCIMA del campo
+    // (card-hdr + partido-banner + tipo-partido-sel)
     let maxPreCampo = 0;
     cells.forEach(td => {
       const card = td.querySelector('.card');
@@ -671,6 +734,7 @@ function igualarZonasSemana(grid){
       const preCampo = cwTop - cardTop;
       maxPreCampo = Math.max(maxPreCampo, preCampo);
     });
+    // Añadir margin-top al campo de los días que tienen menos elementos encima
     cells.forEach(td => {
       const card = td.querySelector('.card');
       const cw = td.querySelector('.campo-wrap');
@@ -682,6 +746,7 @@ function igualarZonasSemana(grid){
       if(diff > 2) cw.style.marginTop = diff + 'px';
     });
 
+    // Igualar zona-disponibles
     let maxDisp = 0;
     cells.forEach(td => {
       const z = td.querySelector('.zona-disponibles');
@@ -694,6 +759,7 @@ function igualarZonasSemana(grid){
       });
     }
 
+    // Igualar cols-estado
     let maxCols = 0;
     cells.forEach(td => {
       const c = td.querySelector('.cols-estado');
@@ -708,6 +774,7 @@ function igualarZonasSemana(grid){
   });
 }
 
+// Exponer al scope global las funciones/variables que otros archivos o el HTML necesitan
 window.render = render;
 window.renderDias = renderDias;
 window.abrirCal = abrirCal;
