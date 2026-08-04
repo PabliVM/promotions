@@ -21,23 +21,12 @@ try {
     messagingSenderId: "365543412948",
     appId: "1:365543412948:web:19afe2a748305fd2f71741"
   };
-  // Evita "Firebase App named '[DEFAULT]' already exists" si el script se re-ejecuta.
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
+  firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  window.db = db; // red de seguridad: por si algún otro archivo usa "db" global en vez de "window._db"
   // Safari (y algunas redes/navegadores restrictivos) fallan con el canal de conexión
   // en tiempo real por defecto de Firestore ("access control checks" en el WebChannel).
   // Esto detecta el problema y usa long-polling en su lugar, mucho más compatible.
-  // BLINDADO: si settings() ya se llamó antes (doble carga del script, HMR, etc.),
-  // Firestore lanza "already been started" — sin este try/catch, ESE error tumbaba
-  // TODO el bloque de abajo y dejaba sin funcionar login, plantillas, auto-guardado, todo.
-  try {
-    db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
-  } catch (eSettings) {
-    console.warn('[Firebase] settings() ya estaba aplicado (doble carga del script) — se ignora y se continúa con normalidad:', eSettings.message);
-  }
+  db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
   const auth = firebase.auth();
   window._db = db;
   window._auth = auth;
@@ -142,61 +131,26 @@ try {
     }
     return out;
   }
-  function _desellarSnapshot(obj, esArchivada){
+  function _desellarSnapshot(obj){
     const out = { ...obj };
-    // Fechas reales de la semana ACTIVA ahora mismo (calculadas al arrancar la página,
-    // ej. {VIERNES:'2026-07-31', ...}). Si existen, son la ÚNICA fuente de verdad para
-    // decidir qué entrada usar — así ignoramos tanto semanas viejas como, ojo, semanas
-    // FUTURAS ya creadas (vacías) que por error "ganaban" antes por ser cronológicamente
-    // posteriores a hoy sin ser la semana real que se está viendo.
-    const fechasHoy = esArchivada ? {} : (window.FECHAS_COMPLETAS || {});
     _CAMPOS_POR_DIA.forEach(campo=>{
       if(!out[campo] || typeof out[campo] !== 'object') return;
       const nuevo = {};
-      const mejorFechaPorDia = {};
-      Object.keys(out[campo]).sort().forEach(k=>{
+      Object.keys(out[campo]).forEach(k=>{
         const idx = k.indexOf('_');
-        const esFechaValida = idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx));
-        if(!esFechaValida){ nuevo[k] = out[campo][k]; return; }
-        const fecha = k.slice(0,idx);
-        const diaLimpio = k.slice(idx+1);
-        const fechaEsperadaHoy = fechasHoy[diaLimpio];
-        if(fechaEsperadaHoy){
-          // Sabemos la fecha real de HOY para este día — solo esa entrada es válida,
-          // ignorar cualquier otra (pasada o futura), sea cual sea.
-          if(fecha === fechaEsperadaHoy) nuevo[diaLimpio] = out[campo][k];
-          return;
-        }
-        // Sin referencia de "hoy" disponible (ej. al desellar un snapshot archivado de
-        // otra semana): usar la más reciente de las que haya, como aproximación razonable.
-        if(!mejorFechaPorDia[diaLimpio] || fecha > mejorFechaPorDia[diaLimpio]){
-          mejorFechaPorDia[diaLimpio] = fecha;
-          nuevo[diaLimpio] = out[campo][k];
-        }
+        const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx))) ? k.slice(idx+1) : k;
+        nuevo[diaLimpio] = out[campo][k];
       });
       out[campo] = nuevo;
     });
     if(out.pos && typeof out.pos === 'object'){
       const nuevoPos = {};
-      const mejorFechaPorClave = {};
-      Object.keys(out.pos).sort().forEach(k=>{
+      Object.keys(out.pos).forEach(k=>{
         const partes = k.split('|');
         if(partes.length===3){
           const idx = partes[0].indexOf('_');
-          const esFechaValida = idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(partes[0].slice(0,idx));
-          if(!esFechaValida){ nuevoPos[k] = out.pos[k]; return; }
-          const fecha = partes[0].slice(0,idx);
-          const diaLimpio = partes[0].slice(idx+1);
-          const claveLimpia = diaLimpio+'|'+partes[1]+'|'+partes[2];
-          const fechaEsperadaHoy = fechasHoy[diaLimpio];
-          if(fechaEsperadaHoy){
-            if(fecha === fechaEsperadaHoy) nuevoPos[claveLimpia] = out.pos[k];
-            return;
-          }
-          if(!mejorFechaPorClave[claveLimpia] || fecha > mejorFechaPorClave[claveLimpia]){
-            mejorFechaPorClave[claveLimpia] = fecha;
-            nuevoPos[claveLimpia] = out.pos[k];
-          }
+          const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(partes[0].slice(0,idx))) ? partes[0].slice(idx+1) : partes[0];
+          nuevoPos[diaLimpio+'|'+partes[1]+'|'+partes[2]] = out.pos[k];
         } else {
           nuevoPos[k] = out.pos[k];
         }
@@ -210,7 +164,7 @@ try {
     if(out.semanasGuardadas && typeof out.semanasGuardadas === 'object'){
       const nuevasSemanas = {};
       Object.keys(out.semanasGuardadas).forEach(weekKey=>{
-        nuevasSemanas[weekKey] = _desellarSnapshot(out.semanasGuardadas[weekKey], true);
+        nuevasSemanas[weekKey] = _desellarSnapshot(out.semanasGuardadas[weekKey]);
       });
       out.semanasGuardadas = nuevasSemanas;
     }
@@ -258,7 +212,43 @@ try {
   };
   window.fbGuardarSesion = async function(nombre, payload){
     try{
-      const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payload)));
+      // IMPORTANTE: 'semanasGuardadas' NUNCA va dentro del documento principal — crece
+      // para siempre (una entrada por cada semana usada) y hace que el documento supere
+      // el límite de campos indexados de Firestore ("too many index entries"), lo que
+      // bloquea TODOS los guardados. Cada semana archivada se guarda en su PROPIO
+      // documento aparte (colección 'semanas'), y aquí solo se guarda la lista de qué
+      // semanas existen (claves), no su contenido.
+      const { semanasGuardadas, ...payloadSinSemanas } = payload;
+      if(semanasGuardadas && typeof semanasGuardadas === 'object'){
+        const claves = Object.keys(semanasGuardadas);
+        // Solo se reescriben las semanas marcadas como "sucias" (guardarFotoSemanaActual
+        // las marca cada vez que archiva un cambio real) — evita reescrituras redundantes
+        // sin arriesgarse a perder ediciones de una semana a la que se vuelve más tarde.
+        const sucias = window._semanasSucias || new Set();
+        for(const weekKey of claves){
+          if(!sucias.has(weekKey)) continue;
+          await window.fbGuardarSemanaArchivada(weekKey, semanasGuardadas[weekKey]);
+          sucias.delete(weekKey);
+        }
+        payloadSinSemanas.clavesSemanasArchivadas = claves;
+      }
+      const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payloadSinSemanas)));
+      // Borrar PRIMERO el campo problemático (si sigue ahí de antes de este arreglo) —
+      // si se deja para después, el propio guardado de abajo chocaría con el mismo
+      // límite antes de llegar a poder quitarlo (merge:true no toca lo que no se envía,
+      // así que el campo grande seguiría estando ahí y contando para el límite).
+      if(!window._semanasGuardadasYaLimpiadaDeDoc){
+        try{
+          await db.collection('sesiones').doc(nombre).update({
+            semanasGuardadas: firebase.firestore.FieldValue.delete()
+          });
+          window._semanasGuardadasYaLimpiadaDeDoc = true;
+        }catch(e2){
+          // Si el documento no existía todavía o el campo no estaba, no pasa nada —
+          // pero si falla por CUALQUIER otro motivo, lo intentamos igual una vez más
+          // la próxima vez (no marcamos como limpiado)
+        }
+      }
       await db.collection('sesiones').doc(nombre).set({
         ...clean,
         _nombre: nombre,
@@ -267,6 +257,33 @@ try {
       return { ok:true };
     }catch(e){
       console.error('fbGuardarSesion error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
+  // Guarda la foto de UNA semana archivada en su propio documento — evita que el
+  // documento principal crezca sin límite con cada semana nueva usada.
+  window.fbGuardarSemanaArchivada = async function(weekKey, snapshot){
+    try{
+      const clean = JSON.parse(JSON.stringify(snapshot));
+      await db.collection('semanas').doc(weekKey).set({
+        ...clean,
+        _weekKey: weekKey,
+        _ts: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      return { ok:true };
+    }catch(e){
+      console.error('fbGuardarSemanaArchivada error:', e);
+      return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
+    }
+  };
+  // Carga la foto de una semana archivada concreta
+  window.fbCargarSemanaArchivada = async function(weekKey){
+    try{
+      const snap = await db.collection('semanas').doc(weekKey).get();
+      if(!snap.exists) return { ok:false, reason:'not_found' };
+      return { ok:true, data: snap.data() };
+    }catch(e){
+      console.error('fbCargarSemanaArchivada error:', e);
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
     }
   };
