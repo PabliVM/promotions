@@ -20,6 +20,7 @@ function updateSaveTS(label){
 var _lastManualTS = null;
 function buildPayload(manualSave=false){
   if(manualSave) _lastManualTS = new Date().toISOString();
+  console.log('[diag-save] enviando a guardar — dia:', dia, '| CASTILLA campo:', data[dia]?.['CASTILLA']?.campo);
   return {
     data,pos,plantillas,origen,colNames,extraZonas,promInfo,multiEq,fechas:FECHAS,notas:window._notasData||{},movimientos,
     historicoJugador,
