@@ -80,9 +80,26 @@ function guardarFotoSemanaActual(){
     data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
     primerEquipoJugadores, notas: window._notasData || {}, origen, historicoJugador
   }));
+  // Marcar esta semana como "sucia" (cambiada de verdad) para que el próximo guardado
+  // en Firebase sepa que tiene que persistirla — el resto de semanas no cambiadas se
+  // saltan, para no reescribirlas sin necesidad en cada guardado.
+  window._semanasSucias = window._semanasSucias || new Set();
+  window._semanasSucias.add(_semanaKeyActual);
 }
-function cargarFotoSemana(key){
-  const foto = _semanasGuardadas[key];
+async function cargarFotoSemana(key){
+  let foto = _semanasGuardadas[key];
+  if(!foto){
+    // No está en la caché local de esta sesión — puede que exista guardada en su propio
+    // documento de Firebase (desde que se sacaron las semanas del documento principal
+    // para no superar el límite de campos). Se pide bajo demanda, solo cuando hace falta.
+    if(typeof window.fbCargarSemanaArchivada === 'function'){
+      const res = await window.fbCargarSemanaArchivada(key);
+      if(res && res.ok && res.data){
+        foto = res.data;
+        _semanasGuardadas[key] = foto; // cachear en memoria para no volver a pedirla
+      }
+    }
+  }
   if(!foto) return false;
   data = foto.data; pos = foto.pos; promInfo = foto.promInfo; multiEq = foto.multiEq;
   modoPartido = foto.modoPartido; modoDescanso = foto.modoDescanso; tipoPartido = foto.tipoPartido;
@@ -2152,7 +2169,7 @@ function showAlert(msg,onConfirm,okLabel='Añadir',onExtra=null,extraLabel='',on
   document.getElementById('alert-ok-btn').textContent=okLabel;
   // Estilo rojo si es destructivo
   const okBtn=document.getElementById('alert-ok-btn');
-  if(okLabel==='Eliminar' || okLabel==='Volver a su equipo'){ okBtn.style.background='#ef4444'; okBtn.style.borderColor='#ef4444'; }
+  if(okLabel==='Eliminar'){ okBtn.style.background='#ef4444'; okBtn.style.borderColor='#ef4444'; }
   else { okBtn.style.background=''; okBtn.style.borderColor=''; }
   // Quitar el foco de cualquier botón ANTES de cerrar el modal: en algunos navegadores
   // (Windows), ocultar un elemento que tiene el foco hace que la página salte de scroll
@@ -2220,21 +2237,6 @@ function toggleDarkMaestro(){
 // Firebase es la fuente de verdad. localStorage solo como fallback mientras carga.
 initTiposConfig();
 async function arrancarDesdeFirebase(){
-  // Carrera de arranque: este código puede ejecutarse ANTES de que el script que
-  // define window.render() termine de cargar (ej. si va con defer/module, o
-  // simplemente carga después en el HTML). Esperar a que exista, máx 3s.
-  async function _esperarRenderListo(){
-    if(typeof window.render === 'function') return;
-    await new Promise(res=>{
-      let intentos = 0;
-      const iv = setInterval(()=>{
-        intentos++;
-        if(typeof window.render === 'function' || intentos > 150){
-          clearInterval(iv); res();
-        }
-      }, 20);
-    });
-  }
   try{
     // Esperar Firebase listo (máx 6s)
     if(!window._fbReady){
@@ -2249,7 +2251,6 @@ async function arrancarDesdeFirebase(){
       const payload = res.data;
       // Aplicar payload de Firebase (misma lógica que fbCargar pero silenciosa)
       if(payload.data        && typeof payload.data==='object')        data        = payload.data;
-      console.log('[DIAG-1 recién cargado]', dia, 'CASTILLA.campo =', JSON.stringify(data[dia]?.['CASTILLA']?.campo));
       if(payload.pos         && typeof payload.pos==='object')         pos         = payload.pos;
       if(payload.plantillas  && typeof payload.plantillas==='object')  plantillas  = payload.plantillas;
       if(payload.origen      && typeof payload.origen==='object')      Object.assign(origen, payload.origen);
@@ -2270,12 +2271,13 @@ async function arrancarDesdeFirebase(){
       // 'FECHAS'/'_semanaKeyActual' ya están forzados a la semana de HOY (más arriba).
       // Si no coinciden, hay que guardar esa foto y cargar (o crear) la de esta semana.
       if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
-        console.warn('[DIAG-0 MISMATCH DE SEMANA]', 'payload.ultimaSemanaKey=', payload.ultimaSemanaKey, ' _semanaKeyActual=', _semanaKeyActual, '→ se va a ARCHIVAR y crear semana vacía');
         _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
           data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
           primerEquipoJugadores, notas: window._notasData || {}, origen, historicoJugador
         }));
-        if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
+        window._semanasSucias = window._semanasSucias || new Set();
+        window._semanasSucias.add(payload.ultimaSemanaKey);
+        if(!(await cargarFotoSemana(_semanaKeyActual))) crearSemanaVacia();
       }
       // Comprobación de seguridad (solo aviso, no bloquea nada): si el payload traía sus
       // propias fechas y no coinciden con las de la semana activa, avisar en consola —
@@ -2314,7 +2316,6 @@ async function arrancarDesdeFirebase(){
           });
         });
       });
-      console.log('[DIAG-2 tras sync plantillas→disponibles]', dia, 'CASTILLA.campo =', JSON.stringify(data[dia]?.['CASTILLA']?.campo));
       // Limpieza de "huérfanos": jugadores que aparecen en Disponibles/Campo/Banquillo de
       // un equipo sin ser de ese equipo NI estar prestados ahí de verdad (con un registro
       // real en promInfo) — sobras de reconstrucciones o borrados de antes de este arreglo.
@@ -2375,7 +2376,6 @@ async function arrancarDesdeFirebase(){
           }
         }
       });
-      console.log('[DIAG-3 tras limpieza huérfanos]', dia, 'CASTILLA.campo =', JSON.stringify(data[dia]?.['CASTILLA']?.campo), '| origen[nombre] ejemplo=', JSON.stringify(Object.keys(origen).slice(0,5)));
       // Rellenar la foto histórica de días ya existentes que aún no la tengan
       // (backfill: solo la primera vez que se detecta cada jugador en cada día;
       // los días que YA tengan foto no se tocan, quedan tal y como estaban)
@@ -2402,8 +2402,7 @@ async function arrancarDesdeFirebase(){
       _fbSesionActiva = 'principal';
       // Guardar en local como caché
       // localStorage desactivado
-      await _esperarRenderListo();
-      window.render(); renderMultiEqBar();
+      render(); renderMultiEqBar();
       console.log('✅ Sesión principal cargada desde Firebase');
       // Fijar la referencia de "jugadores conocidos" para el freno de emergencia
       fijarTotalJugadoresConocido();
@@ -2429,8 +2428,7 @@ async function arrancarDesdeFirebase(){
                 data[d][eq].disponibles.push(nombre);
             });
           });
-          await _esperarRenderListo();
-          window.render();
+          render();
           toast('☁️ Plantillas importadas desde Firebase');
         }
       }catch(e){ console.warn('Sin plantillas Firebase:', e); }
@@ -2440,7 +2438,7 @@ async function arrancarDesdeFirebase(){
     // iniciarEscuchaEnVivo(); // DESACTIVADO — causaba que jugadores volvieran solos a su sitio anterior
   }catch(e){
     console.warn('[arranque] Firebase no disponible, usando datos locales:', e);
-    if(!cargado){ initTiposConfig(); await _esperarRenderListo(); window.render(); }
+    if(!cargado){ initTiposConfig(); render(); }
   }
 }
 arrancarDesdeFirebase();
