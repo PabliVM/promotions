@@ -2294,6 +2294,9 @@ async function arrancarDesdeFirebase(){
     const res = await window.fbCargarSesion('principal');
     if(res.ok && res.data && res.data.plantillas){
       const payload = res.data;
+      console.log('[diag-load] payload.data existe:', !!payload.data, '| dia actual:', dia);
+      if(payload.data) console.log('[diag-load] payload.data['+dia+'] CASTILLA campo:', payload.data[dia]?.['CASTILLA']?.campo);
+      console.log('[diag-load] payload.ultimaSemanaKey:', payload.ultimaSemanaKey, '| _semanaKeyActual:', _semanaKeyActual);
       // Aplicar payload de Firebase (misma lógica que fbCargar pero silenciosa)
       if(payload.data        && typeof payload.data==='object')        data        = payload.data;
       if(payload.pos         && typeof payload.pos==='object')         pos         = payload.pos;
