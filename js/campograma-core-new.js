@@ -1009,10 +1009,7 @@ async function capturarCampo(eq, card){
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const elsAOcultar = [
     card.querySelector('.card-hdr-right'),
-    card.querySelector('.zona-banquillo'),
     card.querySelector('.zona-disponibles'),
-    card.querySelector('.cols-estado'),
-    card.querySelector('.card-notas-wrap'),
   ].filter(Boolean);
   const estilosPrevios = elsAOcultar.map(el => el.style.display);
   try{
