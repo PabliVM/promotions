@@ -21,12 +21,23 @@ try {
     messagingSenderId: "365543412948",
     appId: "1:365543412948:web:19afe2a748305fd2f71741"
   };
-  firebase.initializeApp(firebaseConfig);
+  // Evita "Firebase App named '[DEFAULT]' already exists" si el script se re-ejecuta.
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
   const db = firebase.firestore();
+  window.db = db; // red de seguridad: por si algún otro archivo usa "db" global en vez de "window._db"
   // Safari (y algunas redes/navegadores restrictivos) fallan con el canal de conexión
   // en tiempo real por defecto de Firestore ("access control checks" en el WebChannel).
   // Esto detecta el problema y usa long-polling en su lugar, mucho más compatible.
-  db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
+  // BLINDADO: si settings() ya se llamó antes (doble carga del script, HMR, etc.),
+  // Firestore lanza "already been started" — sin este try/catch, ESE error tumbaba
+  // TODO el bloque de abajo y dejaba sin funcionar login, plantillas, auto-guardado, todo.
+  try {
+    db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
+  } catch (eSettings) {
+    console.warn('[Firebase] settings() ya estaba aplicado (doble carga del script) — se ignora y se continúa con normalidad:', eSettings.message);
+  }
   const auth = firebase.auth();
   window._db = db;
   window._auth = auth;
@@ -131,26 +142,59 @@ try {
     }
     return out;
   }
-  function _desellarSnapshot(obj){
+  function _desellarSnapshot(obj, esArchivada){
     const out = { ...obj };
+    // Fechas reales de la semana ACTIVA ahora mismo (calculadas al arrancar la página,
+    // ej. {VIERNES:'2026-07-31', ...}). Si existen, son la ÚNICA fuente de verdad para
+    // decidir qué entrada usar — así ignoramos tanto semanas viejas como, ojo, semanas
+    // FUTURAS ya creadas (vacías) que por error "ganaban" antes por ser cronológicamente
+    // posteriores a hoy sin ser la semana real que se está viendo. No se aplica a
+    // snapshots de semanas ARCHIVADAS (esArchivada=true): esas tienen sus propias fechas
+    // pasadas legítimas, nada que ver con "hoy".
+    const fechasHoy = esArchivada ? {} : (window.FECHAS_COMPLETAS || {});
     _CAMPOS_POR_DIA.forEach(campo=>{
       if(!out[campo] || typeof out[campo] !== 'object') return;
       const nuevo = {};
-      Object.keys(out[campo]).forEach(k=>{
+      const mejorFechaPorDia = {};
+      Object.keys(out[campo]).sort().forEach(k=>{
         const idx = k.indexOf('_');
-        const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx))) ? k.slice(idx+1) : k;
-        nuevo[diaLimpio] = out[campo][k];
+        const esFechaValida = idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(k.slice(0,idx));
+        if(!esFechaValida){ nuevo[k] = out[campo][k]; return; }
+        const fecha = k.slice(0,idx);
+        const diaLimpio = k.slice(idx+1);
+        const fechaEsperadaHoy = fechasHoy[diaLimpio];
+        if(fechaEsperadaHoy){
+          if(fecha === fechaEsperadaHoy) nuevo[diaLimpio] = out[campo][k];
+          return;
+        }
+        if(!mejorFechaPorDia[diaLimpio] || fecha > mejorFechaPorDia[diaLimpio]){
+          mejorFechaPorDia[diaLimpio] = fecha;
+          nuevo[diaLimpio] = out[campo][k];
+        }
       });
       out[campo] = nuevo;
     });
     if(out.pos && typeof out.pos === 'object'){
       const nuevoPos = {};
-      Object.keys(out.pos).forEach(k=>{
+      const mejorFechaPorClave = {};
+      Object.keys(out.pos).sort().forEach(k=>{
         const partes = k.split('|');
         if(partes.length===3){
           const idx = partes[0].indexOf('_');
-          const diaLimpio = (idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(partes[0].slice(0,idx))) ? partes[0].slice(idx+1) : partes[0];
-          nuevoPos[diaLimpio+'|'+partes[1]+'|'+partes[2]] = out.pos[k];
+          const esFechaValida = idx>=0 && /^\d{4}-\d{2}-\d{2}$/.test(partes[0].slice(0,idx));
+          if(!esFechaValida){ nuevoPos[k] = out.pos[k]; return; }
+          const fecha = partes[0].slice(0,idx);
+          const diaLimpio = partes[0].slice(idx+1);
+          const claveLimpia = diaLimpio+'|'+partes[1]+'|'+partes[2];
+          const fechaEsperadaHoy = fechasHoy[diaLimpio];
+          if(fechaEsperadaHoy){
+            if(fecha === fechaEsperadaHoy) nuevoPos[claveLimpia] = out.pos[k];
+            return;
+          }
+          if(!mejorFechaPorClave[claveLimpia] || fecha > mejorFechaPorClave[claveLimpia]){
+            mejorFechaPorClave[claveLimpia] = fecha;
+            nuevoPos[claveLimpia] = out.pos[k];
+          }
         } else {
           nuevoPos[k] = out.pos[k];
         }
@@ -164,7 +208,7 @@ try {
     if(out.semanasGuardadas && typeof out.semanasGuardadas === 'object'){
       const nuevasSemanas = {};
       Object.keys(out.semanasGuardadas).forEach(weekKey=>{
-        nuevasSemanas[weekKey] = _desellarSnapshot(out.semanasGuardadas[weekKey]);
+        nuevasSemanas[weekKey] = _desellarSnapshot(out.semanasGuardadas[weekKey], true);
       });
       out.semanasGuardadas = nuevasSemanas;
     }
@@ -310,7 +354,11 @@ try {
       if(!snap.exists){
         return { ok:false, reason:'not_found', message:'La sesión no existe en Firebase.' };
       }
-      return { ok:true, data: _reconstruirDesdePorEq(snap.data()) };
+      const raw = snap.data();
+      console.log('[diag-raw] claves de raw.data (sin transformar):', raw.data ? Object.keys(raw.data) : 'NO EXISTE raw.data');
+      const claveMartes = raw.data ? Object.keys(raw.data).find(k=>k.includes('MARTES')) : null;
+      console.log('[diag-raw] clave que contiene MARTES:', claveMartes, '→ CASTILLA campo:', claveMartes ? raw.data[claveMartes]?.CASTILLA?.campo : 'n/a');
+      return { ok:true, data: _reconstruirDesdePorEq(raw) };
     }catch(e){
       console.error('fbCargarSesion error:', e);
       return { ok:false, reason:'error', error:e, message:fbErrorMsg(e) };
