@@ -1146,17 +1146,18 @@ function cerrarFotoMultiModal(){
 async function capturarCampo(eq, card){
   if(!card){ card = document.querySelector(`[data-eq-card="${eq}"]`); }
   if(!card){ toast('❌ No se encontró la tarjeta de '+eq); return; }
-  const cWrap = card.querySelector('.campo-wrap');
-  if(!cWrap){ toast('❌ No se encontró el campo de '+eq); return; }
   toast('📷 Generando foto de '+eq+'…');
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   try{
     // Ocultar el escudo mientras se captura, igual que en las demás fotos
-    const shieldEl = cWrap.querySelector('.campo-shield');
+    const shieldEl = card.querySelector('.campo-shield');
     if(shieldEl) shieldEl.style.visibility = 'hidden';
-    const fc = await html2canvas(cWrap, {
+    // Capturar la TARJETA ENTERA (cabecera con equipo/fecha/contador + campo +
+    // disponibles/lesionados/otros/promocionados), no solo el rectángulo verde —
+    // si no, la foto no muestra ni el equipo, ni el día, ni el resto de columnas.
+    const fc = await html2canvas(card, {
       scale: 2, useCORS: true, allowTaint: true,
-      backgroundColor: '#1a6b2a', logging: false, imageTimeout: 0
+      backgroundColor: '#ffffff', logging: false, imageTimeout: 0
     });
     if(shieldEl) shieldEl.style.visibility = '';
     fc.toBlob(blob=>{
