@@ -1141,6 +1141,50 @@ function abrirFotoMultiModal(){
 function cerrarFotoMultiModal(){
   document.getElementById('foto-multi-overlay').classList.remove('open');
 }
+// Captura la foto de UN solo campo (un equipo, el día actual) — usa el mismo patrón de
+// captura y visualización que ya funciona en generarFotoMulti/generarFotoLista.
+async function capturarCampo(eq, card){
+  if(!card){ card = document.querySelector(`[data-eq-card="${eq}"]`); }
+  if(!card){ toast('❌ No se encontró la tarjeta de '+eq); return; }
+  const cWrap = card.querySelector('.campo-wrap');
+  if(!cWrap){ toast('❌ No se encontró el campo de '+eq); return; }
+  toast('📷 Generando foto de '+eq+'…');
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  try{
+    // Ocultar el escudo mientras se captura, igual que en las demás fotos
+    const shieldEl = cWrap.querySelector('.campo-shield');
+    if(shieldEl) shieldEl.style.visibility = 'hidden';
+    const fc = await html2canvas(cWrap, {
+      scale: 2, useCORS: true, allowTaint: true,
+      backgroundColor: '#1a6b2a', logging: false, imageTimeout: 0
+    });
+    if(shieldEl) shieldEl.style.visibility = '';
+    fc.toBlob(blob=>{
+      if(!blob){ toast('❌ Error generando imagen'); return; }
+      const blobUrl = URL.createObjectURL(blob);
+      let ov = document.getElementById('photo-ov');
+      if(ov) ov.remove();
+      ov = document.createElement('div');
+      ov.id = 'photo-ov';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+      const instruccion = isIOS
+        ? '📥 Mantén pulsada la imagen → <b>Añadir a Fotos</b>'
+        : '📥 Mantén pulsada la imagen para guardarla';
+      const p = document.createElement('p');
+      p.innerHTML = instruccion;
+      p.style.cssText = 'color:#ffd700;font-family:sans-serif;font-size:15px;text-align:center;margin:0;font-weight:700;';
+      const imgEl = document.createElement('img');
+      imgEl.src = blobUrl;
+      imgEl.style.cssText = 'max-width:100%;max-height:72vh;border-radius:8px;border:2px solid #ffd700;display:block;';
+      const btnC = document.createElement('button');
+      btnC.textContent = 'Cerrar';
+      btnC.style.cssText = 'padding:13px 36px;background:#ffd700;border:none;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;';
+      btnC.onclick = ()=>{ ov.remove(); URL.revokeObjectURL(blobUrl); };
+      ov.appendChild(p); ov.appendChild(imgEl); ov.appendChild(btnC);
+      document.body.appendChild(ov);
+    }, 'image/png');
+  }catch(e){ toast('❌ Error: '+e.message); }
+}
 async function generarFotoMulti(){
   if(!_fotoEqsSel.size){ toast('Selecciona al menos un equipo'); return; }
   if(_fotoEqsSel.size === 1){
