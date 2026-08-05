@@ -135,8 +135,8 @@ var calendarioPartidos = {};
 function initPromInfo(){ DIAS.forEach(d=>{ promInfo[d]={}; EQUIPOS.forEach(eq=>{ promInfo[d][eq]={}; }); }); }
 initPromInfo();
 EQUIPOS.forEach(eq=> colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS']);
-colNames['CASTILLA'][0] = 'PROMOCIÓN A 1ER EQ.';
-colNames['CASTILLA'][3] = 'OTROS EQUIPOS';
+colNames['CASTILLA'][0] = 'PROMOCIÓN 1ER EQ.';
+colNames['CASTILLA'][3] = 'OTRO EQUIPO';
 var extraZonas = {};
 EQUIPOS.forEach(eq=> extraZonas[eq]=false);
 extraZonas['CASTILLA'] = true; // "Otros equipos" viene activada de fábrica en Castilla
@@ -2139,12 +2139,12 @@ async function arrancarDesdeFirebase(){
         if(colNames[eq][0]==='PROMOCIÓN') colNames[eq][0]='PROMOCIONADOS';
         if(colNames[eq][1]==='LESIÓN')    colNames[eq][1]='LESIONADOS';
       });
-      // Migración: en cuentas ya existentes, renombrar la columna de Castilla y
-      // activar/nombrar "Otros equipos" — solo si sigue con el nombre genérico por
-      // defecto (si el usuario ya la personalizó a mano, se respeta lo que puso).
-      if(colNames['CASTILLA'][0]==='PROMOCIONADOS') colNames['CASTILLA'][0]='PROMOCIÓN A 1ER EQ.';
+      // Migración: en cuentas ya existentes, renombrar las columnas de Castilla y
+      // activar "Otro equipo" — solo pisa el nombre si sigue siendo el genérico o el
+      // de la versión anterior (si el usuario ya lo personalizó a mano, se respeta).
+      if(colNames['CASTILLA'][0]==='PROMOCIONADOS' || colNames['CASTILLA'][0]==='PROMOCIÓN A 1ER EQ.') colNames['CASTILLA'][0]='PROMOCIÓN 1ER EQ.';
       if(!extraZonas['CASTILLA']) extraZonas['CASTILLA'] = true;
-      if(!colNames['CASTILLA'][3]) colNames['CASTILLA'][3] = 'OTROS EQUIPOS';
+      if(!colNames['CASTILLA'][3] || colNames['CASTILLA'][3]==='OTROS EQUIPOS') colNames['CASTILLA'][3] = 'OTRO EQUIPO';
       for(const d of DIAS) for(const e of EQUIPOS){
         if(!data[d])    data[d]={};
         if(!data[d][e]) data[d][e]={};
@@ -2154,7 +2154,7 @@ async function arrancarDesdeFirebase(){
       EQUIPOS.forEach(eq=>{
         (plantillas[eq]||[]).forEach(nombre=>{
           DIAS.forEach((d)=>{
-            const enAlgunaZona=ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre));
+            const enAlgunaZona=ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre)) || (data[d][eq].extra2||[]).includes(nombre);
             if(!enAlgunaZona && !data[d][eq].disponibles.includes(nombre))
               data[d][eq].disponibles.push(nombre);
           });
