@@ -2395,6 +2395,14 @@ function eliminarTodosLosDuplicados(nombre, eqOrigen, diaP){
   const promExtra = data[diaP][eqOrigen]?.extra;
   if(promExtra){ const ie=promExtra.indexOf(nombre); if(ie>=0) promExtra.splice(ie,1); }
   if(promInfo[diaP]?.[eqOrigen]) delete promInfo[diaP][eqOrigen][nombre];
+  // Si era una promoción simple (el jugador ya no estaba en ninguna zona activa de su
+  // equipo, se había ido de verdad), al quitarle la promoción hay que devolverlo a
+  // Disponibles — si no, se queda sin sitio hasta la próxima recarga.
+  const sigueActivo = ZONAS_ACTIVAS.some(z=>z!=='disponibles' && (data[diaP][eqOrigen]?.[z]||[]).includes(nombre));
+  if(!sigueActivo){
+    const disp = data[diaP][eqOrigen]?.disponibles;
+    if(disp && !disp.includes(nombre)) disp.push(nombre);
+  }
   autoGuardar();
   render();
   toast('✕ Duplicado(s) de '+nombre+' eliminado(s)');
