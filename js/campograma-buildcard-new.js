@@ -472,7 +472,7 @@ function buildCard(eq){
       // Duplicado en rojo: aplica igual a "Promocionados" y, para CASTILLA, también a
       // "Otros equipos" (misma lógica de promoción, distinta columna de origen).
       const esZonaPromo = zona==='promovidos_1er' || (zona==='extra' && eq==='CASTILLA');
-      if(esZonaPromo && ZONAS_ACTIVAS.some(z=>z!=='promovidos_1er' && (d[z]||[]).includes(n))){
+      if(esZonaPromo && ZONAS_ACTIVAS.some(z=>z!==zona && (d[z]||[]).includes(n))){
         ccChip = 'c-duplicado';
       }
       const c=chip(n,eq,zona,ccChip,'cz');
