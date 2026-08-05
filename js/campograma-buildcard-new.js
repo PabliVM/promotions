@@ -576,9 +576,14 @@ function borrarMultiEq(d, nombre, eq){
   if(multiEq[d][nombre].length<=1) delete multiEq[d][nombre];
 }
 function eqsDeNombre(d, nombre){
-  const eqs = EQUIPOS.filter(eq=>
-    ZONAS_ACTIVAS.some(z=>(data[d]?.[eq]?.[z]||[]).includes(nombre))
-  );
+  // "Otros equipos" de Castilla vive en la zona "extra", pero es una promoción, no una
+  // presencia activa real — igual que promovidos_1er (que ni siquiera está en
+  // ZONAS_ACTIVAS). Sin esta excepción, contaba como "en 2 equipos a la vez" y salía
+  // con el aviso naranja de multi-equipo aunque no fuera un caso real de eso.
+  const eqs = EQUIPOS.filter(eq=>{
+    const zonasChequear = (eq==='CASTILLA') ? ZONAS_ACTIVAS.filter(z=>z!=='extra') : ZONAS_ACTIVAS;
+    return zonasChequear.some(z=>(data[d]?.[eq]?.[z]||[]).includes(nombre));
+  });
   const enCampo1er = (primerEquipoJugadores[d]||[]).includes(nombre);
   const enDispo1er = EQUIPOS.some(eq => getDestinos(d, eq, nombre).includes('1ER EQUIPO'));
   if(enCampo1er || enDispo1er) eqs.push('1ER EQUIPO');
