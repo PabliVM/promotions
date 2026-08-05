@@ -2,8 +2,10 @@
 var _copyTipo = 'dia'; // 'dia' | 'semana'
 var _copyDiasDest = new Set();
 var _copyDiaSemanaLunes = null; // semana destino para modo día (null = semana actual)
+var _copyOrigenSemanaLunes = null; // semana origen (null = semana actual — la que se ve ahora)
 var _copyEqs = new Set(EQUIPOS);
 var _copyDiaOrigen = null; // día origen seleccionado
+var _copyModo = 'todo'; // 'todo' | 'campo' | 'inferiores' — qué se copia de cada jugador
 function abrirCopiarModal(){
   // Reset
   _copyTipo='dia';
@@ -11,7 +13,9 @@ function abrirCopiarModal(){
   _copyEqs=new Set(EQUIPOS);
   _copySemanaDestLunes=null;
   _copyDiaSemanaLunes=null;
+  _copyOrigenSemanaLunes=null;
   _copyDiaOrigen = dia; // por defecto el día activo
+  _copyModo = 'todo';
   // Equipos
   const checksEl=document.getElementById('copy-eq-checks');
   checksEl.innerHTML='';
@@ -20,22 +24,11 @@ function abrirCopiarModal(){
     lbl.innerHTML=`<input type="checkbox" checked onchange="toggleCopyEq('${eq}',this.checked)"><span>${eq}</span>`;
     checksEl.appendChild(lbl);
   });
-  // Día ORIGEN
-  const origenEl = document.getElementById('copy-origen-btns');
-  if(origenEl){
-    origenEl.innerHTML='';
-    DIAS.forEach(d=>{
-      const btn=mk('button','copy-dia-btn'+(d===_copyDiaOrigen?' sel':''));
-      btn.textContent=d.slice(0,3);
-      btn.title=d;
-      btn.onclick=()=>{
-        _copyDiaOrigen=d;
-        origenEl.querySelectorAll('.copy-dia-btn').forEach(b=>b.classList.remove('sel'));
-        btn.classList.add('sel');
-      };
-      origenEl.appendChild(btn);
-    });
-  }
+  // Qué copiar (modo)
+  renderCopyModoBtns();
+  // Día ORIGEN (semana actual por defecto)
+  actualizarLblOrigenSemana();
+  renderCopyOrigenBtns();
   // Días destino
   renderCopyDias();
   document.getElementById('ctype-dia').classList.add('active');
@@ -46,6 +39,59 @@ function abrirCopiarModal(){
 }
 function cerrarCopiarModal(){
   document.getElementById('copy-modal-overlay').classList.remove('open');
+}
+// Botones "Todo el equipo / Solo el campo / Solo cuadros inferiores"
+function renderCopyModoBtns(){
+  const cont = document.getElementById('copy-modo-btns');
+  if(!cont) return;
+  cont.innerHTML = '';
+  const opciones = [
+    {v:'todo', l:'Todo el equipo'},
+    {v:'campo', l:'Solo el campo'},
+    {v:'inferiores', l:'Solo cuadros inferiores'},
+  ];
+  opciones.forEach(({v,l})=>{
+    const btn = mk('button','copy-dia-btn'+(v===_copyModo?' sel':''));
+    btn.textContent = l;
+    btn.style.cssText = 'flex:1;';
+    btn.onclick = ()=>{
+      _copyModo = v;
+      cont.querySelectorAll('.copy-dia-btn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+    };
+    cont.appendChild(btn);
+  });
+}
+// Botones de día ORIGEN — usa la semana actual, salvo que se haya elegido otra semana
+// (_copyOrigenSemanaLunes) con "📅 Otra semana", en cuyo caso muestra los días de ESA
+// semana (con sus fechas reales) para elegir uno concreto.
+function renderCopyOrigenBtns(){
+  const origenEl = document.getElementById('copy-origen-btns');
+  if(!origenEl) return;
+  const fechasRef = _copyOrigenSemanaLunes ? calcFechasSemana(_copyOrigenSemanaLunes) : FECHAS;
+  origenEl.innerHTML='';
+  DIAS.forEach(d=>{
+    const btn=mk('button','copy-dia-btn'+(d===_copyDiaOrigen?' sel':''));
+    btn.textContent=d.slice(0,3)+' '+(fechasRef[d]||'');
+    btn.title=d;
+    btn.onclick=()=>{
+      _copyDiaOrigen=d;
+      origenEl.querySelectorAll('.copy-dia-btn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+    };
+    origenEl.appendChild(btn);
+  });
+}
+function actualizarLblOrigenSemana(){
+  const lbl = document.getElementById('copy-origen-semana-lbl');
+  if(!lbl) return;
+  if(!_copyOrigenSemanaLunes){
+    lbl.style.display = 'none';
+  } else {
+    const fechas = calcFechasSemana(_copyOrigenSemanaLunes);
+    lbl.textContent = 'Origen: semana del ' + fechas['LUNES'] + ' al ' + fechas['DOMINGO'];
+    lbl.style.display = 'block';
+  }
 }
 // Lunes de la semana destino para la copia semana completa
 var _copySemanaDestLunes = null;
@@ -69,7 +115,7 @@ function actualizarLblSemana(){
     btn.classList.add('has-sel');
   }
 }
-// Abrir calendario en modo copia de semana
+// Abrir calendario en modo copia de semana (destino, semana completa)
 function abrirCalCopia(){
   _calModoCopia = 'semana';
   _calLunesSel = _copySemanaDestLunes ? new Date(_copySemanaDestLunes) : null;
@@ -77,10 +123,19 @@ function abrirCalCopia(){
   renderCal();
   document.getElementById('cal-overlay').classList.add('open');
 }
+// Abrir calendario en modo copia de día (destino, día concreto de otra semana)
 function abrirCalCopiaDir(){
   _calModoCopia = 'dia';
   _calLunesSel = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : null;
   _calFecha = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : new Date();
+  renderCal();
+  document.getElementById('cal-overlay').classList.add('open');
+}
+// Abrir calendario en modo ORIGEN — elegir de qué semana pasada/futura viene el día a copiar
+function abrirCalCopiaOrigen(){
+  _calModoCopia = 'origen';
+  _calLunesSel = _copyOrigenSemanaLunes ? new Date(_copyOrigenSemanaLunes) : null;
+  _calFecha = _copyOrigenSemanaLunes ? new Date(_copyOrigenSemanaLunes) : new Date();
   renderCal();
   document.getElementById('cal-overlay').classList.add('open');
 }
@@ -108,68 +163,133 @@ function renderCopyDias(){
     cont.appendChild(btn);
   });
 }
-function copyDiaBase(from,to,eqs){
-  eqs.forEach(eq=>{
-    data[to][eq]=JSON.parse(JSON.stringify(data[from][eq]));
-    data[from][eq].campo.forEach(n=>{
-      const k=key(from,eq,n);
-      if(pos[k]) pos[key(to,eq,n)]=[...pos[k]];
-    });
-  });
+// Lee (sin tocar la sesión activa) la foto de una semana guardada — de caché en memoria
+// si ya se visitó esta sesión, o pidiéndola a Firebase si no. A diferencia de
+// cargarFotoSemana() (en campograma-core-new.js), esta NO sustituye 'data'/'pos'/
+// 'promInfo' en vivo — solo los devuelve para leer de ahí, sin tocar lo que se ve ahora.
+async function obtenerFotoSemanaSoloLectura(lunesKey){
+  if(_semanasGuardadas[lunesKey]) return _semanasGuardadas[lunesKey];
+  if(typeof window.fbCargarSemanaArchivada === 'function'){
+    const res = await window.fbCargarSemanaArchivada(lunesKey);
+    if(res && res.ok && res.data){
+      _semanasGuardadas[lunesKey] = res.data; // cachear para no volver a pedirla
+      return res.data;
+    }
+  }
+  return null;
 }
-function ejecutarCopia(){
+// Copia un equipo de un día concreto (de la semana ORIGEN indicada) a un día concreto
+// (de la semana actual, que es donde vive 'data' en vivo). Respeta el modo elegido
+// (todo/campo/inferiores) y, si el jugador copiado está promocionado a otro equipo,
+// copia también esa promoción (promInfo) y lo añade a Disponibles del equipo destino
+// de la promoción — igual que hace el sistema normal al promocionar, para que no
+// aparezca como "huérfano"/doblado.
+function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, fromDia, toDia, eq, modo){
+  const origenData = datosOrigenSemana?.[fromDia]?.[eq];
+  if(!origenData) return;
+  if(!data[toDia]) data[toDia] = {};
+  if(!data[toDia][eq]) data[toDia][eq] = {};
+  const destino = data[toDia][eq];
+
+  if(modo === 'todo'){
+    ZONAS.forEach(z=>{ destino[z] = JSON.parse(JSON.stringify(origenData[z]||[])); });
+  } else if(modo === 'campo'){
+    destino.campo = JSON.parse(JSON.stringify(origenData.campo||[]));
+  } else if(modo === 'inferiores'){
+    ['lesionados','otros','promovidos_1er','extra'].forEach(z=>{
+      destino[z] = JSON.parse(JSON.stringify(origenData[z]||[]));
+    });
+    // Evitar que un jugador quede duplicado dentro del MISMO equipo (en Disponibles Y
+    // en un cuadro inferior a la vez)
+    if(!destino.disponibles) destino.disponibles = [];
+    const copiados = new Set(['lesionados','otros','promovidos_1er','extra'].flatMap(z=>origenData[z]||[]));
+    destino.disponibles = destino.disponibles.filter(n=>!copiados.has(n));
+  }
+
+  // Posiciones de campo (si se copió el campo)
+  if(modo === 'todo' || modo === 'campo'){
+    (origenData.campo||[]).forEach(n=>{
+      const kOrigen = fromDia+'|'+eq+'|'+n;
+      const p = posOrigenSemana?.[kOrigen];
+      if(p) pos[toDia+'|'+eq+'|'+n] = [...p];
+    });
+  }
+
+  // Promociones (promInfo) — solo si se copió la columna de promoción
+  if(modo === 'todo' || modo === 'inferiores'){
+    const infoOrigen = promInfoOrigenSemana?.[fromDia]?.[eq] || {};
+    if(Object.keys(infoOrigen).length){
+      if(!promInfo[toDia]) promInfo[toDia] = {};
+      if(!promInfo[toDia][eq]) promInfo[toDia][eq] = {};
+      Object.keys(infoOrigen).forEach(nombre=>{
+        promInfo[toDia][eq][nombre] = infoOrigen[nombre];
+        const destinos = Array.isArray(infoOrigen[nombre]) ? infoOrigen[nombre] : [infoOrigen[nombre]];
+        destinos.forEach(destEq=>{
+          if(destEq === '1ER EQUIPO') return; // no tiene 'disponibles' normal
+          if(!data[toDia][destEq]) return;
+          if(!data[toDia][destEq].disponibles) data[toDia][destEq].disponibles = [];
+          if(!data[toDia][destEq].disponibles.includes(nombre)){
+            data[toDia][destEq].disponibles.push(nombre);
+          }
+        });
+      });
+    }
+  }
+}
+function copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, from, to, eqs, modo){
+  eqs.forEach(eq=>copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, from, to, eq, modo));
+}
+async function ejecutarCopia(){
   const eqs=[..._copyEqs];
   if(!eqs.length){toast('Selecciona al menos un equipo');return;}
+  if(!_copyDiaOrigen){toast('⚠️ Selecciona un día origen');return;}
+
+  // Determinar de dónde se LEE el origen: la semana en vivo (la que se ve ahora) o
+  // una semana distinta pedida por calendario (se lee, nunca se sustituye la actual).
+  let datosOrigenSemana = data, posOrigenSemana = pos, promInfoOrigenSemana = promInfo;
+  if(_copyOrigenSemanaLunes){
+    const lunesKey = _copyOrigenSemanaLunes.getFullYear()+'-'+String(_copyOrigenSemanaLunes.getMonth()+1).padStart(2,'0')+'-'+String(_copyOrigenSemanaLunes.getDate()).padStart(2,'0');
+    toast('📅 Cargando semana origen…');
+    const foto = await obtenerFotoSemanaSoloLectura(lunesKey);
+    if(!foto){ toast('❌ No se pudo cargar esa semana'); return; }
+    datosOrigenSemana = foto.data; posOrigenSemana = foto.pos; promInfoOrigenSemana = foto.promInfo;
+  }
+
   if(_copyTipo==='semana'){
     if(!_copySemanaDestLunes){ toast('⚠️ Selecciona una semana destino'); return; }
-    // Calcular fechas de la semana destino y copiar día a día
     const fechasDest = calcFechasSemana(_copySemanaDestLunes);
-    // Verificar que no es la misma semana
     if(fechasDest['LUNES'] === FECHAS['LUNES']){ toast('⚠️ La semana destino es la misma que la actual'); return; }
-    // Necesitamos que los datos de esa semana existan — usamos los nombres de días como claves
-    DIAS.forEach((d, i)=>{
-      // Copiar el día actual a cada día de la semana destino
-      // Como data usa nombres de días (LUNES, MARTES…) no fechas, copiamos entre mismos días
-      copyDiaBase(_copyDiaOrigen||dia, d, eqs);
+    DIAS.forEach((d)=>{
+      copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo);
     });
-    const fechas = calcFechasSemana(_copySemanaDestLunes);
-    toast('Copiado a semana ' + fechas['LUNES'] + ' – ' + fechas['DOMINGO']);
+    toast('Copiado a semana ' + fechasDest['LUNES'] + ' – ' + fechasDest['DOMINGO']);
   } else {
     if(!_copyDiasDest.size){toast('Selecciona al menos un día');return;}
     if(_copyDiaSemanaLunes){
-      // Copiar a días de otra semana: guardar en data con clave semana_dia
       const fechasDest = calcFechasSemana(_copyDiaSemanaLunes);
       const esMismaSemana = fechasDest['LUNES'] === FECHAS['LUNES'];
       if(esMismaSemana){
-        _copyDiasDest.forEach(d=>copyDiaBase(_copyDiaOrigen||dia,d,eqs));
+        _copyDiasDest.forEach(d=>copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo));
       } else {
-        // Guardar datos de semana destino en localStorage con clave propia
-        const lunesKey = _copyDiaSemanaLunes.toISOString().slice(0,10);
-        const storeKey = 'campograma_semana_'+lunesKey;
-        let semanaDest = {};
-        _copyDiasDest.forEach(d=>{
-          if(!semanaDest[d]) semanaDest[d]={};
-          eqs.forEach(eq=>{
-            semanaDest[d][eq] = JSON.parse(JSON.stringify(data[_copyDiaOrigen||dia][eq]));
-          });
-        });
-        // localStorage desactivado
-        toast('Copiado a semana '+ fechasDest['LUNES']+' – '+fechasDest['DOMINGO']);
-        cerrarCopiarModal(); autoGuardar(); return;
+        // Copiar a una semana DISTINTA a la actual: de momento no soportado (el
+        // guardado de esa semana no está conectado a Firebase desde aquí). Avisar en
+        // vez de fingir que se ha hecho algo.
+        toast('⚠️ Copiar a una semana distinta a la actual no está disponible todavía');
+        return;
       }
     } else {
-      _copyDiasDest.forEach(d=>copyDiaBase(_copyDiaOrigen||dia,d,eqs));
+      _copyDiasDest.forEach(d=>copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo));
     }
     toast('Copiado a '+ [..._copyDiasDest].map(d=>d.slice(0,3)).join(', '));
   }
-  autoGuardar(); renderDias();
+  autoGuardar(); renderDias(); renderCards();
   cerrarCopiarModal();
 }
 // Alias para compatibilidad
 function copyDia(from,to){
-  copyDiaBase(from,to,EQUIPOS);
+  copyDiaBase(data, pos, promInfo, from, to, EQUIPOS, 'todo');
   toast('Copiado '+from+' → '+to);
-  autoGuardar(); renderDias();
+  autoGuardar(); renderDias(); renderCards();
 }
 // ══════════════════════════════════════════════════
 // RIVAL Y CALENDARIO DE PARTIDOS
