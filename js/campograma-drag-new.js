@@ -95,12 +95,12 @@ function dispararDobleTap(nombre, eq, zona, diaP){
     const onQuitarAqui = ()=> quitarUnDestino(nombre, eqPropio, eq, diaP);
     const onCambiar = ()=>{
       abrirPromoDestModal(nombre, eqPropio, (destino)=>{
-        doblarJugador(nombre, eqPropio, destino, diaP, 'cambiar');
+        doblarJugador(nombre, eqPropio, destino, diaP, 'cambiar', _zonaPromoParaDestino(eqPropio, destino));
       });
     };
     const onTriplicar = ()=>{
       abrirPromoDestModal(nombre, eqPropio, (destino)=>{
-        doblarJugador(nombre, eqPropio, destino, diaP, 'anadir');
+        doblarJugador(nombre, eqPropio, destino, diaP, 'anadir', _zonaPromoParaDestino(eqPropio, destino));
       });
     };
     showAlert(msg, onQuitarAqui, 'Volver a su equipo', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
@@ -113,12 +113,12 @@ function dispararDobleTap(nombre, eq, zona, diaP){
     const msg = `${nombre} ya está doblado en ${listaDestinos}. ¿Qué quieres hacer?`;
     const onTriplicar = ()=>{
       abrirPromoDestModal(nombre, eqPropio, (destino)=>{
-        doblarJugador(nombre, eqPropio, destino, diaP, 'anadir');
+        doblarJugador(nombre, eqPropio, destino, diaP, 'anadir', _zonaPromoParaDestino(eqPropio, destino));
       });
     };
     const onCambiar = ()=>{
       abrirPromoDestModal(nombre, eqPropio, (destino)=>{
-        doblarJugador(nombre, eqPropio, destino, diaP, 'cambiar');
+        doblarJugador(nombre, eqPropio, destino, diaP, 'cambiar', _zonaPromoParaDestino(eqPropio, destino));
       });
     };
     const onEliminarTodo = ()=>{
@@ -150,7 +150,7 @@ function dispararDobleTap(nombre, eq, zona, diaP){
   };
   const onDuplicar = ()=>{
     abrirPromoDestModal(nombre, eqPropio, (destino)=>{
-      doblarJugador(nombre, eqPropio, destino, diaP);
+      doblarJugador(nombre, eqPropio, destino, diaP, undefined, _zonaPromoParaDestino(eqPropio, destino));
     });
   };
   const esMovil = window.matchMedia('(max-width: 640px)').matches;
