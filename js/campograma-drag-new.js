@@ -43,9 +43,12 @@ function devolverADisponibles(nombre, eq, zona, diaP){
       });
     }
   });
-  // 4. Quitar de promovidos_1er en su equipo propio
+  // 4. Quitar de promovidos_1er en su equipo propio (y de "extra" — donde vive
+  //    "Otros equipos" en Castilla, mismo mecanismo de promoción, otra columna)
   const prom = data[diaP][eqPropio]?.promovidos_1er;
   if(prom){ const pi = prom.indexOf(nombre); if(pi >= 0) prom.splice(pi, 1); }
+  const promExtra = data[diaP][eqPropio]?.extra;
+  if(promExtra){ const pei = promExtra.indexOf(nombre); if(pei >= 0) promExtra.splice(pei, 1); }
   if(promInfo[diaP]?.[eqPropio]) delete promInfo[diaP][eqPropio][nombre];
   // 5. Limpiar multiEq
   borrarMultiEq(diaP, nombre, eq);
@@ -465,6 +468,30 @@ function endChip(e){
       abrirPromoDestModal(_nombre, _eqPropio, (destino)=>{
         ejecutarPromocion(_nombre, _eqPropio, destino, _diaProm);
       });
+      return;
+    }
+    // ── Destino: "Otros equipos" de CASTILLA (columna "extra") → preguntar RMC o JA.
+    // Mismo patrón que promovidos_1er, pero con destinos restringidos y solo si el
+    // jugador es de la propia plantilla de Castilla (si no, no tiene sentido).
+    if(toZona==='extra' && toEq==='CASTILLA'){
+      const _nombreEx=drag.nombre, _fromEqEx=drag.eq, _fromZonaEx=drag.zona;
+      const _eqPropioEx = origen[_nombreEx] || _fromEqEx;
+      if(_eqPropioEx !== 'CASTILLA'){
+        drag=null;
+        toast('⚠️ Solo jugadores de la propia plantilla de Castilla pueden ir a "Otros equipos"');
+        return;
+      }
+      const _diaExtra = dia;
+      if(_fromZonaEx==='campo'){
+        delete pos[key(dia,_fromEqEx,_nombreEx)];
+        if(drag.pof) drag.pof.remove();
+      }
+      const srcArrEx = data[dia][_fromEqEx]?.[_fromZonaEx];
+      if(srcArrEx){ const iEx=srcArrEx.indexOf(_nombreEx); if(iEx>=0) srcArrEx.splice(iEx,1); }
+      drag=null;
+      abrirPromoDestModal(_nombreEx, _eqPropioEx, (destino)=>{
+        ejecutarPromocion(_nombreEx, _eqPropioEx, destino, _diaExtra, 'extra');
+      }, ['RMC','JUVENIL A']);
       return;
     }
     // ── Destino: cualquier otra zona
