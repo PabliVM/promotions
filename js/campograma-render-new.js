@@ -181,6 +181,16 @@ async function aplicarSemana(){
     document.getElementById('copy-modal-overlay').classList.add('open');
     return;
   }
+  if(_calModoCopia === 'origen'){
+    _copyOrigenSemanaLunes = new Date(_calLunesSel);
+    _copyDiaOrigen = null; // hay que elegir de nuevo un día concreto de la nueva semana
+    _calModoCopia = false;
+    document.getElementById('cal-overlay').classList.remove('open');
+    actualizarLblOrigenSemana();
+    renderCopyOrigenBtns();
+    document.getElementById('copy-modal-overlay').classList.add('open');
+    return;
+  }
   guardarFotoSemanaActual();
   FECHAS = calcFechasSemana(_calLunesSel);
   toast('📅 Cargando semana…');
