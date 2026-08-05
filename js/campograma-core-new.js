@@ -2133,6 +2133,7 @@ async function arrancarDesdeFirebase(){
       }
       if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
+      if(payload.notas       && typeof payload.notas==='object')       window._notasData = payload.notas;
       EQUIPOS.forEach(eq=>{
         if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
         if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIONADOS';
