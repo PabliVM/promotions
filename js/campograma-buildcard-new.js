@@ -386,6 +386,10 @@ function buildCard(eq){
   // como una promoción más: al meter un jugador ahí pregunta a qué equipo va
   // (RMC o JUVENIL A) — ver el nuevo bloque en endChip() de campograma-drag-new.js.
   if(extraZonas[eq]) colDefs.push({zona:'extra', cls:'col col-extra', cc:'c-azul', idx:3});
+  // 5ª columna, solo Castilla: una extra genérica más, igual que la que ya puede
+  // añadir cualquier equipo — se activa/nombra usando colNames[eq][4] como bandera
+  // (si existe, está activada), sin tocar el array global ZONAS.
+  if(eq==='CASTILLA' && colNames[eq][4] !== undefined) colDefs.push({zona:'extra2', cls:'col col-extra2', cc:'c-gris', idx:4});
   const numCols = colDefs.length;
   const cols=mk('div','cols-estado');
   cols.style.gridTemplateColumns = `repeat(${numCols},1fr)`;
@@ -396,7 +400,7 @@ function buildCard(eq){
     const lblWrap=mk('div','zona-lbl-wrap');
     const lbl=mk('input','zona-lbl-edit');
     lbl.type='text';
-    lbl.value = colNames[eq][idx] || (zona==='extra'?'OTROS EQUIPOS':zona.toUpperCase());
+    lbl.value = colNames[eq][idx] || (zona==='extra'?'OTRO EQUIPO':(zona==='extra2'?'EXTRA':zona.toUpperCase()));
     lbl.title='Pulsa para editar el nombre';
     lbl.onchange=()=>{
       if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
@@ -407,7 +411,7 @@ function buildCard(eq){
     lbl.onkeydown=(e)=>{ if(e.key==='Enter'||e.key==='Escape') lbl.blur(); e.stopPropagation(); };
     lblWrap.appendChild(lbl);
     // El botón de borrar la columna "extra" solo se ofrece si NO es la de Castilla —
-    // así no se puede eliminar "Otros equipos" por accidente.
+    // así no se puede eliminar "Otro equipo" por accidente.
     if(zona==='extra' && eq!=='CASTILLA'){
       const delBtn=mk('button','col-del-btn');
       delBtn.textContent='×'; delBtn.title='Eliminar columna extra';
@@ -427,12 +431,41 @@ function buildCard(eq){
       };
       lblWrap.appendChild(delBtn);
     }
+    // Borrar la 5ª columna (extra2) de Castilla — esta sí es libre de borrar, es la
+    // "extra" normal equivalente a la de cualquier otro equipo.
+    if(zona==='extra2'){
+      const delBtn2=mk('button','col-del-btn');
+      delBtn2.textContent='×'; delBtn2.title='Eliminar columna extra';
+      delBtn2.onclick=(e)=>{
+        e.stopPropagation();
+        if(!confirm('¿Eliminar esta columna? Los jugadores volverán a disponibles.')) return;
+        DIAS.forEach(d=>{
+          const extras = [...(data[d][eq].extra2||[])];
+          extras.forEach(n=>{
+            if(!data[d][eq].disponibles.includes(n)) data[d][eq].disponibles.push(n);
+          });
+          data[d][eq].extra2=[];
+        });
+        colNames[eq][4]=undefined;
+        autoGuardar();
+        render();
+      };
+      lblWrap.appendChild(delBtn2);
+    }
     if(idx===2 && !extraZonas[eq]){
       const addBtn=mk('button','col-add-btn');
       addBtn.textContent='+'; addBtn.title='Añadir 4ª columna';
       addBtn.onclick=(e)=>{ e.stopPropagation(); extraZonas[eq]=true;
         if(!colNames[eq][3]) colNames[eq][3]='EXTRA'; render(); };
       lblWrap.appendChild(addBtn);
+    }
+    // Botón para añadir la 5ª columna, solo en Castilla, junto a "Otro equipo" — le da
+    // la misma posibilidad de tener una extra genérica que ya tiene el resto de equipos.
+    if(idx===3 && zona==='extra' && eq==='CASTILLA' && colNames[eq][4]===undefined){
+      const addBtn2=mk('button','col-add-btn');
+      addBtn2.textContent='+'; addBtn2.title='Añadir columna extra';
+      addBtn2.onclick=(e)=>{ e.stopPropagation(); colNames[eq][4]='EXTRA'; autoGuardar(); render(); };
+      lblWrap.appendChild(addBtn2);
     }
     if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros'){
       const vaciarBtn = mk('button','col-vaciar-btn');
