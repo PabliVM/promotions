@@ -158,7 +158,7 @@ function resetCal(){
   if(!_calModoCopia) FECHAS = calcFechasSemana(new Date());
   renderCal();
 }
-function aplicarSemana(){
+async function aplicarSemana(){
   if(!_calLunesSel){ toast('Selecciona un día'); return; }
   if(_calModoCopia === 'semana'){
     _copySemanaDestLunes = new Date(_calLunesSel);
@@ -183,7 +183,13 @@ function aplicarSemana(){
   }
   guardarFotoSemanaActual();
   FECHAS = calcFechasSemana(_calLunesSel);
-  if(!cargarFotoSemana(_semanaKeyActual)) crearSemanaVacia();
+  toast('📅 Cargando semana…');
+  // cargarFotoSemana() es async (puede ir a buscar la semana archivada a Firebase si no
+  // está en caché) — hay que ESPERARLA de verdad antes de seguir, si no, se sigue
+  // pintando/guardando con los datos de la semana ANTERIOR mientras la carga real llega
+  // tarde de fondo, dando la sensación de que "todas las semanas son iguales".
+  const cargada = await cargarFotoSemana(_semanaKeyActual);
+  if(!cargada) crearSemanaVacia();
   EQUIPOS.forEach(eq=>{
     (plantillas[eq]||[]).forEach(nombre=>{
       DIAS.forEach(d=>{
