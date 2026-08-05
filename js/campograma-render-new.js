@@ -404,9 +404,6 @@ function buildListaView(eq, d){
       } else if(key === 'banquillo'){
         labelOut += ' (' + jugs.length + ')';
       }
-      if(key === 'promovidos_1er' && eq === 'CASTILLA'){
-        labelOut += ' A 1ER EQUIPO';
-      }
       texto += '\n*' + labelOut + ':*\n';
       const siglas = {'CASTILLA':'CAST','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA','1ER EQUIPO':'1ER'};
       let jugsOrdenados;
