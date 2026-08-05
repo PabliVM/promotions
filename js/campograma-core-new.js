@@ -1398,11 +1398,11 @@ function renderControl(){
 var _promoCallback = null;
 function abrirPromoDestModal(nombre, eqOrigen, callback, opcionesRestringidas){
   // opcionesRestringidas: array de nombres de equipo — si se pasa, se muestran SOLO
-  // esos (sin 1ER EQUIPO, sin el resto). Usado por "Otros equipos" de Castilla,
-  // que solo permite RMC o JUVENIL A. Sin este parámetro, comportamiento de siempre.
+  // esos. Usado por "Otro equipo" de Castilla al arrastrar directo a esa columna
+  // (solo RMC/JUVENIL A, sin 1ER EQUIPO). Para el resto de flujos (Duplicar, Cambiar,
+  // Triplicar), Castilla ahora también pregunta — entre sus 2 destinos posibles.
   if(!opcionesRestringidas && eqOrigen === 'CASTILLA'){
-    callback('1ER EQUIPO');
-    return;
+    opcionesRestringidas = ['1ER EQUIPO','RMC','JUVENIL A'];
   }
   _promoCallback = callback;
   document.getElementById('promo-dest-title').textContent = '¿A qué equipo va '+nombre+'?';
@@ -1412,7 +1412,7 @@ function abrirPromoDestModal(nombre, eqOrigen, callback, opcionesRestringidas){
   if(opcionesRestringidas){
     opcionesRestringidas.forEach(eq=>{
       const opt=mk('div','promo-dest-opt');
-      const color=EQ_DOT_COLORS[eq]||'#888';
+      const color = eq==='1ER EQUIPO' ? '#C8A800' : (EQ_DOT_COLORS[eq]||'#888');
       opt.innerHTML=`<span class="promo-dest-dot" style="background:${color};"></span>
         <span class="promo-dest-nombre">${eq}</span>`;
       opt.onclick=()=>{ cerrarPromoDestModal(); callback(eq); };
@@ -2351,6 +2351,12 @@ function limpiarUnDestino(diaP, destino, nombre){
       if(i>=0){ a.splice(i,1); if(z==='campo') delete pos[key(diaP,destino,nombre)]; }
     });
   }
+}
+// Decide en qué columna del equipo de ORIGEN se registra una promoción/duplicado,
+// según el destino elegido. Solo importa para Castilla (que tiene 2 columnas de
+// promoción distintas); para el resto de equipos siempre es "promovidos_1er".
+function _zonaPromoParaDestino(eqOrigen, destino){
+  return (eqOrigen === 'CASTILLA' && destino !== '1ER EQUIPO') ? 'extra' : 'promovidos_1er';
 }
 function doblarJugador(nombre, eqOrigen, destino, diaP, modo, zonaOrigenDestino){
   diaP = diaP || dia;
