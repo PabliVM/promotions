@@ -405,17 +405,20 @@ function buildCard(eq){
     const col=mk('div',cls+' dz');
     col.dataset.eq=eq; col.dataset.zona=zona; col.dataset.dia=dia;
     const lblWrap=mk('div','zona-lbl-wrap');
-    const lbl=mk('input','zona-lbl-edit');
-    lbl.type='text';
-    lbl.value = colNames[eq][idx] || (zona==='extra'?'OTRO EQUIPO':(zona==='extra2'?'EXTRA':zona.toUpperCase()));
+    const lbl=mk('div','zona-lbl-edit');
+    lbl.contentEditable = 'true';
+    lbl.spellcheck = false;
+    lbl.style.cssText = 'white-space:normal;overflow-wrap:break-word;word-break:break-word;line-height:1.15;outline:none;';
+    lbl.textContent = colNames[eq][idx] || (zona==='extra'?'OTRO EQUIPO':(zona==='extra2'?'EXTRA':zona.toUpperCase()));
     lbl.title='Pulsa para editar el nombre';
-    lbl.onchange=()=>{
+    lbl.addEventListener('blur', ()=>{
       if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
-      colNames[eq][idx]=lbl.value.trim().toUpperCase()||colNames[eq][idx];
-      lbl.value=colNames[eq][idx];
+      const val = lbl.textContent.trim().toUpperCase();
+      colNames[eq][idx]=val||colNames[eq][idx];
+      lbl.textContent=colNames[eq][idx];
       autoGuardar();
-    };
-    lbl.onkeydown=(e)=>{ if(e.key==='Enter'||e.key==='Escape') lbl.blur(); e.stopPropagation(); };
+    });
+    lbl.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); lbl.blur(); } else if(e.key==='Escape'){ lbl.blur(); } e.stopPropagation(); });
     lblWrap.appendChild(lbl);
     // El botón de borrar la columna "extra" solo se ofrece si NO es la de Castilla —
     // así no se puede eliminar "Otro equipo" por accidente.
@@ -508,14 +511,11 @@ function buildCard(eq){
     col.appendChild(lblWrap);
     const cw=mk('div','chips-wrap');
     d[zona].forEach(n=>{
-      let ccChip = cc;
-      // Duplicado en rojo: aplica igual a "Promocionados" y, para CASTILLA, también a
-      // "Otros equipos" (misma lógica de promoción, distinta columna de origen).
+      // El marcado de duplicado/triplicado (borde rojo/negro) lo pone chip() de forma
+      // uniforme en TODOS los sitios (campo, disponibles, cuadros...) según en cuántos
+      // equipos está realmente el jugador — no hace falta un color aparte aquí.
       const esZonaPromo = zona==='promovidos_1er' || (zona==='extra' && eq==='CASTILLA');
-      if(esZonaPromo && ZONAS_ACTIVAS.some(z=>z!==zona && (d[z]||[]).includes(n))){
-        ccChip = 'c-duplicado';
-      }
-      const c=chip(n,eq,zona,ccChip,'cz');
+      const c=chip(n,eq,zona,cc,'cz');
       if(esZonaPromo){
         const dests = getDestinos(dia, eq, n);
         const destLbl = dests.map(dest=> dest==='1ER EQUIPO' ? '1ER' : (eqsShort[dest]||dest)).join('+');
@@ -620,6 +620,11 @@ function eqsDeNombre(d, nombre){
   // presencia activa real — igual que promovidos_1er (que ni siquiera está en
   // ZONAS_ACTIVAS). Sin esta excepción, contaba como "en 2 equipos a la vez" y salía
   // con el aviso naranja de multi-equipo aunque no fuera un caso real de eso.
+  // Cada equipo cuenta si el jugador tiene una presencia REAL ahí (disponibles/campo/
+  // etc.) — nada de sumar "bonus" por tener destinos registrados en promInfo: el
+  // equipo destino de una promoción YA cuenta por sí solo en cuanto
+  // doblarJugador/ejecutarPromocion lo coloca en sus Disponibles, así que sumarlo
+  // aparte duplicaba el conteo y convertía dobles en triples por error.
   const eqs = EQUIPOS.filter(eq=>{
     const zonasChequear = (eq==='CASTILLA') ? ZONAS_ACTIVAS.filter(z=>z!=='extra') : ZONAS_ACTIVAS;
     return zonasChequear.some(z=>(data[d]?.[eq]?.[z]||[]).includes(nombre));
