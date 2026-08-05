@@ -365,7 +365,15 @@ function buildListaView(eq, d){
   const eqData = data[diaKey][eq] || {};
   const wrap = mk('div','card-lista-wrap');
 
-  const zonas = [
+  const zonas = eq === 'CASTILLA' ? [
+    { key:'campo',          label:'LISTADO DE JUGADORES',  color:'#2563eb' },
+    { key:'banquillo',      label:'BANQUILLO',     color:'#d97706' },
+    { key:'promovidos_1er', label: colNames[eq]?.[0]||'PROMOCIÓN 1ER EQ.', color:'#d97706' },
+    { key:'extra',          label: colNames[eq]?.[3]||'OTRO EQUIPO', color:'#7c3aed' },
+    { key:'lesionados',     label: colNames[eq]?.[1]||'LESIONADOS',    color:'#dc2626' },
+    { key:'otros',          label: colNames[eq]?.[2]||'OTROS',     color:'#6b7280' },
+    { key:'extra2',         label: colNames[eq]?.[4]||'EXTRA',     color:'#7c3aed' },
+  ] : [
     { key:'campo',          label:'LISTADO DE JUGADORES',  color:'#2563eb' },
     { key:'banquillo',      label:'BANQUILLO',     color:'#d97706' },
     { key:'promovidos_1er', label: colNames[eq]?.[0]||'PROMOCIONADOS', color:'#d97706' },
