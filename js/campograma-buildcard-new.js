@@ -376,20 +376,27 @@ function buildCard(eq){
   const promoInfo = promInfo[dia]?.[eq] || {};
   const esCas = eq==='CASTILLA';
   const eqsShort = {'CASTILLA':'CAS','RMC':'RMC','JUVENIL A':'JA','JUVENIL B':'JB','JUVENIL C':'JC','CADETE A':'CA'};
-  const colDefs = [
-    {zona:'promovidos_1er', cls:'col col-prom',  cc:'c-naranja', idx:0},
-    {zona:'lesionados',     cls:'col col-les',   cc:'c-rojo',    idx:1},
-    {zona:'otros',          cls:'col col-otros', cc:'c-gris',    idx:2},
-  ];
-  // La columna "extra" (4ª) es la misma infraestructura genérica de siempre. Para
-  // CASTILLA viene activada por defecto (extraZonas['CASTILLA']=true) y se comporta
-  // como una promoción más: al meter un jugador ahí pregunta a qué equipo va
-  // (RMC o JUVENIL A) — ver el nuevo bloque en endChip() de campograma-drag-new.js.
-  if(extraZonas[eq]) colDefs.push({zona:'extra', cls:'col col-extra', cc:'c-azul', idx:3});
-  // 5ª columna, solo Castilla: una extra genérica más, igual que la que ya puede
-  // añadir cualquier equipo — se activa/nombra usando colNames[eq][4] como bandera
-  // (si existe, está activada), sin tocar el array global ZONAS.
-  if(eq==='CASTILLA' && colNames[eq][4] !== undefined) colDefs.push({zona:'extra2', cls:'col col-extra2', cc:'c-gris', idx:4});
+  let colDefs;
+  if(eq==='CASTILLA'){
+    // Orden pedido para Castilla: Promoción 1er Eq. → Otro equipo → Lesionados → Otros → Extra.
+    // El idx de cada una (usado para leer/escribir colNames) NO cambia, solo el orden
+    // en que se pintan — así no hay que migrar nada de lo ya guardado.
+    colDefs = [
+      {zona:'promovidos_1er', cls:'col col-prom',  cc:'c-naranja', idx:0},
+    ];
+    if(extraZonas[eq]) colDefs.push({zona:'extra', cls:'col col-extra', cc:'c-azul', idx:3});
+    colDefs.push({zona:'lesionados', cls:'col col-les',   cc:'c-rojo',  idx:1});
+    colDefs.push({zona:'otros',      cls:'col col-otros', cc:'c-gris', idx:2});
+    if(colNames[eq][4] !== undefined) colDefs.push({zona:'extra2', cls:'col col-extra2', cc:'c-gris', idx:4});
+  } else {
+    colDefs = [
+      {zona:'promovidos_1er', cls:'col col-prom',  cc:'c-naranja', idx:0},
+      {zona:'lesionados',     cls:'col col-les',   cc:'c-rojo',    idx:1},
+      {zona:'otros',          cls:'col col-otros', cc:'c-gris',    idx:2},
+    ];
+    // La columna "extra" (4ª) es la misma infraestructura genérica de siempre.
+    if(extraZonas[eq]) colDefs.push({zona:'extra', cls:'col col-extra', cc:'c-azul', idx:3});
+  }
   const numCols = colDefs.length;
   const cols=mk('div','cols-estado');
   cols.style.gridTemplateColumns = `repeat(${numCols},1fr)`;
