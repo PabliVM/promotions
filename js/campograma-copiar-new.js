@@ -215,6 +215,38 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
     });
   }
 
+  // Reconstruir promociones a partir de quién es cada jugador de verdad — si tras
+  // copiar el campo hay algún jugador que NO es de este equipo (origen[nombre] apunta
+  // a otro), es que viene prestado/promocionado: se marca esa promoción en su equipo
+  // REAL para el día destino (si no estaba ya) y se le quita de Disponibles ahí, para
+  // que no quede como "doblado"/huérfano. Aplica también en modo "Solo el campo",
+  // donde antes no se tocaba nada de promociones.
+  if(modo === 'todo' || modo === 'campo'){
+    (destino.campo||[]).forEach(n=>{
+      const eqReal = origen[n];
+      if(!eqReal || eqReal === eq || eqReal === 'PRUEBA') return; // es de este equipo, o a prueba
+      if(!data[toDia][eqReal]) data[toDia][eqReal] = {};
+      ZONAS.forEach(z=>{ if(!data[toDia][eqReal][z]) data[toDia][eqReal][z] = []; });
+      if(!data[toDia][eqReal].promovidos_1er.includes(n)){
+        data[toDia][eqReal].promovidos_1er.push(n);
+      }
+      if(!promInfo[toDia]) promInfo[toDia] = {};
+      if(!promInfo[toDia][eqReal]) promInfo[toDia][eqReal] = {};
+      const yaTiene = promInfo[toDia][eqReal][n];
+      const yaTieneArr = yaTiene ? (Array.isArray(yaTiene) ? yaTiene : [yaTiene]) : [];
+      if(!yaTieneArr.includes(eq)){
+        const nuevaLista = [...yaTieneArr, eq];
+        promInfo[toDia][eqReal][n] = nuevaLista.length===1 ? nuevaLista[0] : nuevaLista;
+      }
+      // Quitar de Disponibles/Banquillo de su equipo real ese día, para no duplicar
+      ['disponibles','banquillo'].forEach(z=>{
+        const arr = data[toDia][eqReal][z];
+        const i = arr.indexOf(n);
+        if(i>=0) arr.splice(i,1);
+      });
+    });
+  }
+
   // Promociones (promInfo) — solo si se copió la columna de promoción
   if(modo === 'todo' || modo === 'inferiores'){
     const infoOrigen = promInfoOrigenSemana?.[fromDia]?.[eq] || {};
