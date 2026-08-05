@@ -434,6 +434,14 @@ function buildListaView(eq, d){
             else contenido += '  → ' + (siglas[destino]||destino);
           });
         }
+        // "Otros equipos" de Castilla (zona extra) funciona como una promoción más —
+        // mostrar la flecha al destino igual que en la columna de Promoción.
+        if(key === 'extra' && eq === 'CASTILLA'){
+          const destinos = getDestinos(diaKey, eq, n);
+          destinos.forEach(destino=>{
+            contenido += '  → ' + (siglas[destino]||destino);
+          });
+        }
         // El "_" de cursiva debe ir PEGADO al texto real (sin espacios dentro), si no
         // WhatsApp no lo interpreta como cursiva — por eso el prefijo "  - " se queda
         // FUERA de los guiones bajos.
