@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════
 var _filtroDiasActivos = window.matchMedia('(max-width: 640px)').matches ? new Set([dia]) : new Set(DIAS);
 var _filtroEqsActivos = new Set(EQUIPOS);
-var _incluirPrimerEquipo = false; // botón "1ER EQ" en filtros de vista semana — apagado por defecto
+var _incluirPrimerEquipo = false;
 
 function renderFiltrosSemana(){
   const diasRow = document.getElementById('filtro-dias-row');
@@ -21,10 +21,8 @@ function renderFiltrosSemana(){
     btn.onclick=()=>{
       const esMovil = window.matchMedia('(max-width: 640px)').matches;
       if(esMovil){
-        // Móvil: selección única — solo el día pulsado queda activo
         _filtroDiasActivos = new Set([d]);
       } else {
-        // Escritorio: multi-selección normal (acumulativa)
         if(_filtroDiasActivos.has(d)) _filtroDiasActivos.delete(d);
         else _filtroDiasActivos.add(d);
       }
@@ -36,7 +34,6 @@ function renderFiltrosSemana(){
   });
 
   eqsRow.innerHTML='';
-  // Botón extra: incluir Primer Equipo como card más (apagado por defecto) — va PRIMERO
   const btnPrimer = mk('button','filtro-eq-btn'+(_incluirPrimerEquipo?' activo':''));
   btnPrimer.textContent = '1ER EQ';
   btnPrimer.title = 'Mostrar Primer Equipo como equipo más';
@@ -72,7 +69,6 @@ function renderCardsSemana(grid){
   const table = document.createElement('table');
   table.className = 'semana-table';
 
-  // SIN thead — el día/fecha va en el header de cada card
   const tbody = document.createElement('tbody');
 
   if(_incluirPrimerEquipo){
@@ -137,7 +133,6 @@ function renderCardsSemana(grid){
       const card = buildCard(eq);
       dia = diaOrig;
 
-      // Sustituir el card-hdr-name con: EQUIPO (negrita) + DIA DD/MM/AA (debajo, normal)
       const nm = card.querySelector('.card-hdr-name');
       if(nm){
         const nombreHtml = nm.innerHTML;
@@ -176,7 +171,6 @@ function buildCard(eq){
   const d=data[dia][eq];
   const card=mk('div','card');
   card.dataset.eqCard=eq;
-  // Header
   const hdr=mk('div','card-hdr');
   const nm=mk('div','card-hdr-name');
   nm.id='count-'+eq.replace(/ /g,'_');
@@ -184,8 +178,7 @@ function buildCard(eq){
   nm.innerHTML = (EQ_LABEL[eq]||eq) + (countTxt ? `<span style="margin-left:8px;font-size:12px;color:#9ca3af;font-weight:700;">${countTxt}</span>` : '');
   hdr.appendChild(nm);
   const right=mk('div','card-hdr-right');
-  // Botón descanso
-  const _diaModo = dia; // capturar el día de ESTA card en el closure
+  const _diaModo = dia;
   const descBtn=mk('button','modo-btn'+(esDescanso(eq,_diaModo)?' descanso':''));
   descBtn.textContent='💤 DESCANSA';
   descBtn.title='Marcar día de descanso';
@@ -195,7 +188,6 @@ function buildCard(eq){
   modoB.textContent=esPartido(eq,_diaModo)?'⚽ PARTIDO':'🏋️ ENTRENO';
   modoB.onclick=(e)=>{e.stopPropagation();togglePartido(eq,_diaModo);};
   right.appendChild(modoB);
-  // Botón YL — solo Juvenil A: activa/desactiva modo Youth League en disponibles
   if(eq==='JUVENIL A'){
     const _esPartidoJA = esPartido('JUVENIL A');
     const _diaUYL = dia;
@@ -208,21 +200,18 @@ function buildCard(eq){
     uylBtn.onclick=(e)=>{e.stopPropagation();toggleUYL(_diaUYL);};
     right.appendChild(uylBtn);
   }
-  // Botón resetear equipo
   const resetBtn=mk('button','reset-btn');
   resetBtn.innerHTML='↺';
   resetBtn.title='Resetear equipo';
   const _diaReset = dia;
   resetBtn.onclick=(e)=>{ e.stopPropagation(); abrirResetModal(eq, _diaReset); };
   right.appendChild(resetBtn);
-  // Botón reordenar campo sin solapes
   const alinearBtn=mk('button','snap-btn');
   alinearBtn.innerHTML='⊞';
   alinearBtn.title='Reordenar el campo sin solapes';
   const _diaAlinear = dia;
   alinearBtn.onclick=(e)=>{ e.stopPropagation(); autoAlinear(eq, _diaAlinear); };
   right.appendChild(alinearBtn);
-  // Botón copiar este equipo de un día a otro
   const copiarDiaBtn=mk('button','snap-btn');
   copiarDiaBtn.innerHTML='⧉';
   copiarDiaBtn.title='Copiar este equipo a otro día';
@@ -245,7 +234,6 @@ function buildCard(eq){
     }
   };
   right.appendChild(listaBtn);
-  // Botón vista lista individual
   const listaBtn2=mk('button','snap-btn');
   listaBtn2.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
   listaBtn2.title='Vista lista';
@@ -264,7 +252,6 @@ function buildCard(eq){
   right.appendChild(camBtn);
   hdr.appendChild(right);
   card.appendChild(hdr);
-  // Banner partido: selector tipo + rival
   if(esPartido(eq)){
     const _diaRival = dia;
     const banner=mk('div','partido-banner');
@@ -277,8 +264,7 @@ function buildCard(eq){
         oninput="guardarRival('${eq}',this.value,'${_diaRival}')"
         onclick="event.stopPropagation()">`;
     card.appendChild(banner);
-    // Selector tipo de partido — dinámico desde tiposConfig
-    const _diaTipo = dia; // capturar día de ESTA card
+    const _diaTipo = dia;
     const tipoSel=mk('div','tipo-partido-sel');
     const tipos = tiposConfig[eq] || TIPOS_BASE;
     const tipoActual = tipoPartido[_diaTipo]?.[eq] || tipos[0]?.k || 'liga';
@@ -300,7 +286,6 @@ function buildCard(eq){
       };
       tipoSel.appendChild(btn);
     });
-    // Botón ✏️ editar tipos de este equipo
     const editBtn=mk('button','tipo-btn');
     editBtn.textContent='⚙️';
     editBtn.title='Configurar tipos de partido';
@@ -309,7 +294,6 @@ function buildCard(eq){
     tipoSel.appendChild(editBtn);
     card.appendChild(tipoSel);
   }
-  // Campo
   const cWrap=mk('div','campo-wrap dz');
   cWrap.dataset.eq=eq; cWrap.dataset.zona='campo'; cWrap.dataset.dia=dia;
   cWrap.innerHTML=`
@@ -335,7 +319,6 @@ function buildCard(eq){
     pof.appendChild(chip(nombre,eq,'campo','c-verde','cf'));
     pw.appendChild(pof);
   });
-  // Overlay DESCANSA
   if(esDescanso(eq)){
     const overlay=mk('div','campo-descanso-overlay');
     const txt=mk('div','campo-descanso-txt');
@@ -346,7 +329,6 @@ function buildCard(eq){
   } else {
     card.classList.remove('en-descanso');
   }
-  // Vista lista: reemplazar campo por listado de jugadores
   if(esVistaLista(eq, dia)){
     const lista = buildListaView(eq, dia);
     card.appendChild(lista);
@@ -354,7 +336,6 @@ function buildCard(eq){
     card.appendChild(cWrap);
   }
   if(!esVistaLista(eq, dia)){
-  // Banquillo (solo en modo partido, justo debajo del campo)
   if(esPartido(eq)){
     const zBanq=mk('div','zona-banquillo dz');
     zBanq.dataset.eq=eq; zBanq.dataset.zona='banquillo'; zBanq.dataset.dia=dia;
@@ -366,7 +347,6 @@ function buildCard(eq){
     zBanq.appendChild(buildAddInput(eq,'banquillo'));
     card.appendChild(zBanq);
   }
-  // Disponibles
   const zDisp=mk('div','zona-disponibles dz');
   zDisp.dataset.eq=eq; zDisp.dataset.zona='disponibles'; zDisp.dataset.dia=dia;
   const lblD=mk('div','zona-lbl');
@@ -383,8 +363,6 @@ function buildCard(eq){
   } else {
     lblD.textContent='DISPONIBLES '+countTxtD;
   }
-  // Disponibles propios del equipo (ya incluye a los extras de Youth League promocionados
-  // de verdad al activar YL), ordenados según Plantillas
   const ordenPlant = plantillas[eq] || [];
   const dispOrdenados = [...d.disponibles].sort((a,b)=>{
     const ia = ordenPlant.indexOf(a), ib = ordenPlant.indexOf(b);
@@ -394,9 +372,6 @@ function buildCard(eq){
   zDisp.appendChild(cwD);
   zDisp.appendChild(buildAddInput(eq,'disponibles'));
   card.appendChild(zDisp);
-  // Columnas estado
-  if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
-  // Columnas estado
   if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
   const promoInfo = promInfo[dia]?.[eq] || {};
   const esCas = eq==='CASTILLA';
@@ -406,7 +381,11 @@ function buildCard(eq){
     {zona:'lesionados',     cls:'col col-les',   cc:'c-rojo',    idx:1},
     {zona:'otros',          cls:'col col-otros', cc:'c-gris',    idx:2},
   ];
-  if(extraZonas[eq]) colDefs.push({zona:'extra', cls:'col col-extra', cc:'c-gris', idx:3});
+  // La columna "extra" (4ª) es la misma infraestructura genérica de siempre. Para
+  // CASTILLA viene activada por defecto (extraZonas['CASTILLA']=true) y se comporta
+  // como una promoción más: al meter un jugador ahí pregunta a qué equipo va
+  // (RMC o JUVENIL A) — ver el nuevo bloque en endChip() de campograma-drag-new.js.
+  if(extraZonas[eq]) colDefs.push({zona:'extra', cls:'col col-extra', cc:'c-azul', idx:3});
   const numCols = colDefs.length;
   const cols=mk('div','cols-estado');
   cols.style.gridTemplateColumns = `repeat(${numCols},1fr)`;
@@ -414,11 +393,10 @@ function buildCard(eq){
     if(!d[zona]) d[zona]=[];
     const col=mk('div',cls+' dz');
     col.dataset.eq=eq; col.dataset.zona=zona; col.dataset.dia=dia;
-    // Label
     const lblWrap=mk('div','zona-lbl-wrap');
     const lbl=mk('input','zona-lbl-edit');
     lbl.type='text';
-    lbl.value = colNames[eq][idx] || (zona==='extra'?'EXTRA':zona.toUpperCase());
+    lbl.value = colNames[eq][idx] || (zona==='extra'?'OTROS EQUIPOS':zona.toUpperCase());
     lbl.title='Pulsa para editar el nombre';
     lbl.onchange=()=>{
       if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
@@ -428,13 +406,14 @@ function buildCard(eq){
     };
     lbl.onkeydown=(e)=>{ if(e.key==='Enter'||e.key==='Escape') lbl.blur(); e.stopPropagation(); };
     lblWrap.appendChild(lbl);
-    if(zona==='extra'){
+    // El botón de borrar la columna "extra" solo se ofrece si NO es la de Castilla —
+    // así no se puede eliminar "Otros equipos" por accidente.
+    if(zona==='extra' && eq!=='CASTILLA'){
       const delBtn=mk('button','col-del-btn');
       delBtn.textContent='×'; delBtn.title='Eliminar columna extra';
       delBtn.onclick=(e)=>{
         e.stopPropagation();
         if(!confirm('¿Eliminar esta columna? Los jugadores volverán a disponibles.')) return;
-        // Devolver jugadores de la zona extra a disponibles
         DIAS.forEach(d=>{
           const extras = [...(data[d][eq].extra||[])];
           extras.forEach(n=>{
@@ -455,9 +434,6 @@ function buildCard(eq){
         if(!colNames[eq][3]) colNames[eq][3]='EXTRA'; render(); };
       lblWrap.appendChild(addBtn);
     }
-    // Botón "vaciar esta columna" (solo el día actual) — devuelve a todos a Disponibles
-    // de su equipo. Si es Promocionados, además deshace la promoción de verdad (los
-    // quita también del equipo destino), no solo de esta columna visual.
     if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros'){
       const vaciarBtn = mk('button','col-vaciar-btn');
       vaciarBtn.textContent = '✕';
@@ -471,7 +447,6 @@ function buildCard(eq){
           ()=>{
             nombres.forEach(nombre=>{
               if(zona==='promovidos_1er'){
-                // Deshacer la promoción de verdad: quitar también del equipo destino
                 const destinos = getDestinos(dia, eq, nombre);
                 destinos.forEach(destino=>limpiarUnDestino(dia, destino, nombre));
                 if(promInfo[dia]?.[eq]) delete promInfo[dia][eq][nombre];
@@ -493,14 +468,15 @@ function buildCard(eq){
     col.appendChild(lblWrap);
     const cw=mk('div','chips-wrap');
     d[zona].forEach(n=>{
-      // Si sigue activo en otra zona de su equipo, es duplicado → clase dedicada roja
       let ccChip = cc;
-      if(zona==='promovidos_1er' && ZONAS_ACTIVAS.some(z=>z!=='promovidos_1er' && (d[z]||[]).includes(n))){
+      // Duplicado en rojo: aplica igual a "Promocionados" y, para CASTILLA, también a
+      // "Otros equipos" (misma lógica de promoción, distinta columna de origen).
+      const esZonaPromo = zona==='promovidos_1er' || (zona==='extra' && eq==='CASTILLA');
+      if(esZonaPromo && ZONAS_ACTIVAS.some(z=>z!=='promovidos_1er' && (d[z]||[]).includes(n))){
         ccChip = 'c-duplicado';
       }
       const c=chip(n,eq,zona,ccChip,'cz');
-      // Promoción: mostrar destino(s) en el chip
-      if(zona==='promovidos_1er'){
+      if(esZonaPromo){
         const dests = getDestinos(dia, eq, n);
         const destLbl = dests.map(dest=> dest==='1ER EQUIPO' ? '1ER' : (eqsShort[dest]||dest)).join('+');
         if(destLbl){
@@ -519,13 +495,11 @@ function buildCard(eq){
   card.appendChild(cols);
   }
 
-  // Bloque de notas debajo de las columnas
   const notasKey = eq + '_' + dia + '_notas';
   const notasWrap = mk('div', 'card-notas-wrap');
   const notasTA = mk('textarea', 'card-notas-input');
   notasTA.placeholder = '📝 Notas del día...';
   notasTA.rows = 2;
-  // Cargar notas guardadas
   if(!window._notasData) window._notasData = {};
   notasTA.value = window._notasData[notasKey] || '';
   notasTA.oninput = () => {
@@ -538,22 +512,18 @@ function buildCard(eq){
 
   return card;
 }
-// Formatea nombre en 2 líneas para chips de campo (cf)
-// Nombre propio arriba, apellido(s) abajo, mismo ancho
 function chipHTML(nombre, isCampo){
-  return nombre; // texto plano siempre
+  return nombre;
 }
 function chip(nombre,eq,zona,color,type){
-  // Usar el equipo de origen HISTÓRICO de este día concreto (si existe) — nunca el
-  // equipo actual del jugador, que puede haber cambiado desde entonces.
   const eqO=historicoJugador[dia]?.[nombre]?.equipoOrigen || origen[nombre];
   const prueba   = eqO === 'PRUEBA';
   const prestado = !prueba && eqO && eqO!==eq;
   let cf;
-  if(zona === 'promovidos_1er'){
-    // La columna "Promocionados" es SIEMPRE del equipo propio (el jugador que aparece
-    // aquí pertenece a este equipo, esté donde esté promocionado) — nunca se pinta con
-    // el color de otro equipo, sea el destino o el que sea.
+  // La zona de promoción SIEMPRE se pinta con el color del equipo propio: aplica a
+  // "Promocionados" en cualquier equipo, y a "Otros equipos" solo en CASTILLA.
+  const esZonaPromo = zona === 'promovidos_1er' || (zona === 'extra' && eq === 'CASTILLA');
+  if(esZonaPromo){
     cf = color;
   } else {
     cf = prueba ? 'c-prueba' : (prestado ? (EQ_COLORS[eqO]||'c-prestado') : color);
@@ -566,7 +536,6 @@ function chip(nombre,eq,zona,color,type){
   const c=mk('div',`chip ${cf} ${claseMulti} ${type}${esPort?' chip-portero':''}`);
   c.innerHTML=chipHTML(nombre, isCampo);
   c.dataset.eq=eq; c.dataset.zona=zona; c.dataset.nombre=nombre; c.dataset.dia=dia;
-  // Tooltip: último movimiento registrado
   const _mv = movimientos[dia]?.[eq]?.[nombre];
   if(_mv){
     const _d = new Date(_mv.ts);
@@ -581,26 +550,21 @@ function chip(nombre,eq,zona,color,type){
   return c;
 }
 function mk(tag,cls=''){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
-// ── Auto-promoción: mover jugador al equipo destino y registrar en origen
 function autoPromocionar(nombre, eqOrigen, eqDestino){
   if(!eqOrigen || eqOrigen===eqDestino || eqOrigen==='PRUEBA') return;
-  // Quitar de todas las zonas activas del equipo origen
   ZONAS_ACTIVAS.forEach(z=>{
     const arr = data[dia][eqOrigen]?.[z] || [];
     const i = arr.indexOf(nombre);
     if(i>=0) arr.splice(i,1);
   });
-  // Añadir a promovidos_1er del equipo origen
   if(!data[dia][eqOrigen].promovidos_1er) data[dia][eqOrigen].promovidos_1er=[];
   if(!data[dia][eqOrigen].promovidos_1er.includes(nombre)){
     data[dia][eqOrigen].promovidos_1er.push(nombre);
   }
-  // Registrar en promInfo
   if(!promInfo[dia]) promInfo[dia]={};
   if(!promInfo[dia][eqOrigen]) promInfo[dia][eqOrigen]={};
   promInfo[dia][eqOrigen][nombre] = eqDestino;
 }
-// ── Multi-equipo helpers
 function registrarMultiEq(d, nombre, eq){
   if(!multiEq[d]) multiEq[d]={};
   if(!multiEq[d][nombre]) multiEq[d][nombre]=[];
@@ -611,46 +575,34 @@ function borrarMultiEq(d, nombre, eq){
   multiEq[d][nombre] = multiEq[d][nombre].filter(e=>e!==eq);
   if(multiEq[d][nombre].length<=1) delete multiEq[d][nombre];
 }
-// Zonas que cuentan como "presencia activa" en un equipo (excluye promovidos_1er)
 function eqsDeNombre(d, nombre){
-  // Equipos donde el jugador tiene presencia ACTIVA hoy (no como promovido)
   const eqs = EQUIPOS.filter(eq=>
     ZONAS_ACTIVAS.some(z=>(data[d]?.[eq]?.[z]||[]).includes(nombre))
   );
-  // El Primer Equipo no es un "equipo" normal (no tiene data[d][eq]), así que se
-  // comprueba aparte: en el campo (primerEquipoJugadores) o duplicado pendiente
-  // de colocar (destino = 1ER EQUIPO en promInfo de cualquier equipo).
   const enCampo1er = (primerEquipoJugadores[d]||[]).includes(nombre);
   const enDispo1er = EQUIPOS.some(eq => getDestinos(d, eq, nombre).includes('1ER EQUIPO'));
   if(enCampo1er || enDispo1er) eqs.push('1ER EQUIPO');
   return eqs;
 }
 function esMulti(nombre){
-  return eqsDeNombre(dia, nombre).length; // nº de equipos donde está activo (0,1,2,3...)
+  return eqsDeNombre(dia, nombre).length;
 }
-// ── Resetear equipo: todos los jugadores del equipo a disponibles ──
 function resetearEquipo(eq, diaP){
   diaP = diaP || dia;
-  // Jugadores propios del equipo (origen === eq)
   const propios = Object.keys(origen).filter(n => origen[n] === eq);
-  // 1. Limpiar todas las zonas del equipo ese día
   ZONAS_ACTIVAS.forEach(z => {
     if(data[diaP][eq]?.[z]) data[diaP][eq][z] = [];
   });
   if(data[diaP][eq]?.promovidos_1er) data[diaP][eq].promovidos_1er = [];
   if(data[diaP][eq]?.banquillo)      data[diaP][eq].banquillo      = [];
-  // 2. Limpiar posiciones de campo de jugadores propios
   propios.forEach(n => delete pos[key(diaP, eq, n)]);
-  // 3. Limpiar promInfo del equipo
   if(promInfo[diaP]?.[eq]) promInfo[diaP][eq] = {};
-  // 4. Limpiar multiEq de jugadores propios
   propios.forEach(n => {
     if(multiEq[diaP]?.[n]){
       multiEq[diaP][n] = multiEq[diaP][n].filter(e => e !== eq);
       if(multiEq[diaP][n].length <= 1) delete multiEq[diaP][n];
     }
   });
-  // 5. Quitar jugadores propios de otros equipos donde estuvieran prestados
   EQUIPOS.forEach(otroEq => {
     if(otroEq === eq) return;
     ZONAS_ACTIVAS.forEach(z => {
@@ -664,14 +616,12 @@ function resetearEquipo(eq, diaP){
         }
       });
     });
-    // Limpiar promovidos en otros equipos
     const prom = data[diaP][otroEq]?.promovidos_1er;
     if(prom) propios.forEach(n => {
       const i = prom.indexOf(n); if(i >= 0) prom.splice(i, 1);
     });
     if(promInfo[diaP]?.[otroEq]) propios.forEach(n => delete promInfo[diaP][otroEq][n]);
   });
-  // 6. Todos los jugadores propios → disponibles de su equipo
   data[diaP][eq].disponibles = [...propios];
   autoGuardar();
   render();
