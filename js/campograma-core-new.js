@@ -135,8 +135,11 @@ var calendarioPartidos = {};
 function initPromInfo(){ DIAS.forEach(d=>{ promInfo[d]={}; EQUIPOS.forEach(eq=>{ promInfo[d][eq]={}; }); }); }
 initPromInfo();
 EQUIPOS.forEach(eq=> colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS']);
+colNames['CASTILLA'][0] = 'PROMOCIÓN A 1ER EQ.';
+colNames['CASTILLA'][3] = 'OTROS EQUIPOS';
 var extraZonas = {};
 EQUIPOS.forEach(eq=> extraZonas[eq]=false);
+extraZonas['CASTILLA'] = true; // "Otros equipos" viene activada de fábrica en Castilla
 var drag = null;
 var dOff = {x:0,y:0};
 var key    = (d,e,n) => d+'|'+e+'|'+n;
@@ -1393,8 +1396,11 @@ function renderControl(){
 // MODAL DESTINO PROMOCIÓN
 // ══════════════════════════════════════════════════
 var _promoCallback = null;
-function abrirPromoDestModal(nombre, eqOrigen, callback){
-  if(eqOrigen === 'CASTILLA'){
+function abrirPromoDestModal(nombre, eqOrigen, callback, opcionesRestringidas){
+  // opcionesRestringidas: array de nombres de equipo — si se pasa, se muestran SOLO
+  // esos (sin 1ER EQUIPO, sin el resto). Usado por "Otros equipos" de Castilla,
+  // que solo permite RMC o JUVENIL A. Sin este parámetro, comportamiento de siempre.
+  if(!opcionesRestringidas && eqOrigen === 'CASTILLA'){
     callback('1ER EQUIPO');
     return;
   }
@@ -1403,6 +1409,18 @@ function abrirPromoDestModal(nombre, eqOrigen, callback){
   document.getElementById('promo-dest-sub').textContent = 'Equipo de origen: '+eqOrigen;
   const opts = document.getElementById('promo-dest-opts');
   opts.innerHTML='';
+  if(opcionesRestringidas){
+    opcionesRestringidas.forEach(eq=>{
+      const opt=mk('div','promo-dest-opt');
+      const color=EQ_DOT_COLORS[eq]||'#888';
+      opt.innerHTML=`<span class="promo-dest-dot" style="background:${color};"></span>
+        <span class="promo-dest-nombre">${eq}</span>`;
+      opt.onclick=()=>{ cerrarPromoDestModal(); callback(eq); };
+      opts.appendChild(opt);
+    });
+    document.getElementById('promo-dest-overlay').classList.add('open');
+    return;
+  }
   const opt1er = mk('div','promo-dest-opt promo-dest-1er');
   opt1er.innerHTML=`<span class="promo-dest-dot" style="background:#C8A800;"></span>
     <span class="promo-dest-nombre">1ER EQUIPO</span>`;
@@ -1423,11 +1441,16 @@ function cerrarPromoDestModal(){
   document.getElementById('promo-dest-overlay').classList.remove('open');
   _promoCallback=null;
 }
-function ejecutarPromocion(nombre, eqOrigen, destino, diaP){
+function ejecutarPromocion(nombre, eqOrigen, destino, diaP, zonaOrigenDestino){
   diaP = diaP || dia;
-  if(!data[diaP][eqOrigen].promovidos_1er) data[diaP][eqOrigen].promovidos_1er=[];
-  if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
-    data[diaP][eqOrigen].promovidos_1er.push(nombre);
+  // zonaOrigenDestino: en qué columna del equipo de ORIGEN se registra el jugador.
+  // Por defecto "promovidos_1er" (Promocionados / Promoción a 1er Eq.). Para "Otros
+  // equipos" de Castilla se pasa "extra" en su lugar — todo lo demás (promInfo,
+  // duplicado en destino, histórico) funciona exactamente igual.
+  zonaOrigenDestino = zonaOrigenDestino || 'promovidos_1er';
+  if(!data[diaP][eqOrigen][zonaOrigenDestino]) data[diaP][eqOrigen][zonaOrigenDestino]=[];
+  if(!data[diaP][eqOrigen][zonaOrigenDestino].includes(nombre)){
+    data[diaP][eqOrigen][zonaOrigenDestino].push(nombre);
   }
   if(!promInfo[diaP]) promInfo[diaP]={};
   if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
@@ -1838,7 +1861,7 @@ function generarFotoLista(eq){
     secciones.push({ label: '🔄 BANQUILLO', items: banquillo, color: '#f59e0b' });
   }
   if(proms.length){
-    secciones.push({ label: esCas ? '1ER EQUIPO' : (colN[0]||'PROMOCIONADOS'), items: proms, color: '#a78bfa', destinos: promoInfoEq });
+    secciones.push({ label: colN[0]||'PROMOCIONADOS', items: proms, color: '#a78bfa', destinos: promoInfoEq });
   }
   if(lesion.length){
     secciones.push({ label: colN[1]||'LESIONADOS', items: lesion, color: '#f87171' });
@@ -1850,7 +1873,10 @@ function generarFotoLista(eq){
     const extra = d.extra || [];
     const extraNombre = colN[3] || 'EXTRA';
     if(extra.length){
-      secciones.push({ label: extraNombre, items: extra, color: '#38bdf8' });
+      // Para Castilla, "Otros equipos" funciona como una promoción más — se le pasan
+      // los destinos guardados en promInfo para que salga la flecha, igual que en
+      // la columna de Promoción a 1er Eq.
+      secciones.push({ label: extraNombre, items: extra, color: '#38bdf8', destinos: eq==='CASTILLA' ? promoInfoEq : undefined });
     }
   }
   const HEADER_H = 90;
@@ -2113,6 +2139,12 @@ async function arrancarDesdeFirebase(){
         if(colNames[eq][0]==='PROMOCIÓN') colNames[eq][0]='PROMOCIONADOS';
         if(colNames[eq][1]==='LESIÓN')    colNames[eq][1]='LESIONADOS';
       });
+      // Migración: en cuentas ya existentes, renombrar la columna de Castilla y
+      // activar/nombrar "Otros equipos" — solo si sigue con el nombre genérico por
+      // defecto (si el usuario ya la personalizó a mano, se respeta lo que puso).
+      if(colNames['CASTILLA'][0]==='PROMOCIONADOS') colNames['CASTILLA'][0]='PROMOCIÓN A 1ER EQ.';
+      if(!extraZonas['CASTILLA']) extraZonas['CASTILLA'] = true;
+      if(!colNames['CASTILLA'][3]) colNames['CASTILLA'][3] = 'OTROS EQUIPOS';
       for(const d of DIAS) for(const e of EQUIPOS){
         if(!data[d])    data[d]={};
         if(!data[d][e]) data[d][e]={};
@@ -2134,7 +2166,7 @@ async function arrancarDesdeFirebase(){
           if(!infoEq) return;
           Object.keys(infoEq).forEach(nombre=>{
             const sigueEnPlantilla = (plantillas[eqOrigen]||[]).includes(nombre);
-            const sigueEnColumnaPromo = (data[d]?.[eqOrigen]?.promovidos_1er||[]).includes(nombre);
+            const sigueEnColumnaPromo = (data[d]?.[eqOrigen]?.promovidos_1er||[]).includes(nombre) || (data[d]?.[eqOrigen]?.extra||[]).includes(nombre);
             if(!sigueEnPlantilla || !sigueEnColumnaPromo) delete infoEq[nombre];
           });
         });
@@ -2320,9 +2352,10 @@ function limpiarUnDestino(diaP, destino, nombre){
     });
   }
 }
-function doblarJugador(nombre, eqOrigen, destino, diaP, modo){
+function doblarJugador(nombre, eqOrigen, destino, diaP, modo, zonaOrigenDestino){
   diaP = diaP || dia;
   modo = modo || 'cambiar';
+  zonaOrigenDestino = zonaOrigenDestino || 'promovidos_1er';
   if(!promInfo[diaP]) promInfo[diaP]={};
   if(!promInfo[diaP][eqOrigen]) promInfo[diaP][eqOrigen]={};
   const previos = getDestinos(diaP, eqOrigen, nombre);
@@ -2336,9 +2369,9 @@ function doblarJugador(nombre, eqOrigen, destino, diaP, modo){
       data[diaP][destino].disponibles.push(nombre);
     }
   }
-  if(!data[diaP][eqOrigen].promovidos_1er) data[diaP][eqOrigen].promovidos_1er=[];
-  if(!data[diaP][eqOrigen].promovidos_1er.includes(nombre)){
-    data[diaP][eqOrigen].promovidos_1er.push(nombre);
+  if(!data[diaP][eqOrigen][zonaOrigenDestino]) data[diaP][eqOrigen][zonaOrigenDestino]=[];
+  if(!data[diaP][eqOrigen][zonaOrigenDestino].includes(nombre)){
+    data[diaP][eqOrigen][zonaOrigenDestino].push(nombre);
   }
   const nuevaLista = modo==='cambiar' ? [destino] : [...new Set([...previos, destino])];
   promInfo[diaP][eqOrigen][nombre] = nuevaLista.length===1 ? nuevaLista[0] : nuevaLista;
@@ -2352,6 +2385,8 @@ function eliminarTodosLosDuplicados(nombre, eqOrigen, diaP){
   previos.forEach(d=>limpiarUnDestino(diaP, d, nombre));
   const prom = data[diaP][eqOrigen]?.promovidos_1er;
   if(prom){ const i=prom.indexOf(nombre); if(i>=0) prom.splice(i,1); }
+  const promExtra = data[diaP][eqOrigen]?.extra;
+  if(promExtra){ const ie=promExtra.indexOf(nombre); if(ie>=0) promExtra.splice(ie,1); }
   if(promInfo[diaP]?.[eqOrigen]) delete promInfo[diaP][eqOrigen][nombre];
   autoGuardar();
   render();
@@ -2367,6 +2402,8 @@ function quitarUnDestino(nombre, eqOrigen, destino, diaP){
   } else {
     const prom = data[diaP][eqOrigen]?.promovidos_1er;
     if(prom){ const i=prom.indexOf(nombre); if(i>=0) prom.splice(i,1); }
+    const promExtra = data[diaP][eqOrigen]?.extra;
+    if(promExtra){ const ie=promExtra.indexOf(nombre); if(ie>=0) promExtra.splice(ie,1); }
     if(promInfo[diaP]?.[eqOrigen]) delete promInfo[diaP][eqOrigen][nombre];
     toast('✕ '+nombre+' quitado de '+destino);
   }
