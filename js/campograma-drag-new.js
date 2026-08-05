@@ -108,24 +108,47 @@ function dispararDobleTap(nombre, eq, zona, diaP){
   }
 
   if(destinosActuales.length > 0){
-    // Ya está duplicado en 1+ sitios: Triplicar (añadir otro) / Cambiar (sustituir todos) / Eliminar (quitar todos)
-    const listaDestinos = destinosActuales.map(d=>d==='1ER EQUIPO'?'Primer Equipo':d).join(' y ');
-    const msg = `${nombre} ya está doblado en ${listaDestinos}. ¿Qué quieres hacer?`;
-    const onTriplicar = ()=>{
-      abrirPromoDestModal(nombre, eqPropio, (destino)=>{
-        doblarJugador(nombre, eqPropio, destino, diaP, 'anadir', _zonaPromoParaDestino(eqPropio, destino));
-      });
-    };
-    const onCambiar = ()=>{
-      abrirPromoDestModal(nombre, eqPropio, (destino)=>{
-        doblarJugador(nombre, eqPropio, destino, diaP, 'cambiar', _zonaPromoParaDestino(eqPropio, destino));
-      });
-    };
-    const onEliminarTodo = ()=>{
-      eliminarTodosLosDuplicados(nombre, eqPropio, diaP);
-    };
-    showAlert(msg, onEliminarTodo, 'Volver a su equipo', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
-    return;
+    // ¿Sigue el jugador presente de verdad en su equipo de origen (además de tener un
+    // destino)? Si es así, hay 2+ apariciones reales → duplicado, la siguiente acción
+    // es Triplicar. Si NO sigue ahí (se promocionó y se fue, un único sitio real),
+    // esto es una simple promoción, no un duplicado — la siguiente acción es Duplicar.
+    const zonasChequearOrigen = (eqPropio==='CASTILLA') ? ZONAS_ACTIVAS.filter(z=>z!=='extra') : ZONAS_ACTIVAS;
+    const sigueEnOrigen = zonasChequearOrigen.some(z=>(data[diaP]?.[eqPropio]?.[z]||[]).includes(nombre));
+    if(sigueEnOrigen){
+      // Duplicado de verdad: Triplicar (añadir otro) / Cambiar (sustituir todos) / Eliminar (quitar todos)
+      const listaDestinos = destinosActuales.map(d=>d==='1ER EQUIPO'?'Primer Equipo':d).join(' y ');
+      const msg = `${nombre} ya está doblado en ${listaDestinos}. ¿Qué quieres hacer?`;
+      const onTriplicar = ()=>{
+        abrirPromoDestModal(nombre, eqPropio, (destino)=>{
+          doblarJugador(nombre, eqPropio, destino, diaP, 'anadir', _zonaPromoParaDestino(eqPropio, destino));
+        });
+      };
+      const onCambiar = ()=>{
+        abrirPromoDestModal(nombre, eqPropio, (destino)=>{
+          doblarJugador(nombre, eqPropio, destino, diaP, 'cambiar', _zonaPromoParaDestino(eqPropio, destino));
+        });
+      };
+      const onEliminarTodo = ()=>{
+        eliminarTodosLosDuplicados(nombre, eqPropio, diaP);
+      };
+      showAlert(msg, onEliminarTodo, 'Volver a su equipo', onCambiar, 'Cambiar', onTriplicar, 'Triplicar');
+      return;
+    } else {
+      // Solo promocionado (una única aparición real, en el/los destino(s)): la
+      // siguiente acción es Duplicar (crear la primera aparición extra de verdad)
+      const listaDestinos = destinosActuales.map(d=>d==='1ER EQUIPO'?'Primer Equipo':d).join(' y ');
+      const msg = `${nombre} está promocionado a ${listaDestinos}. ¿Qué quieres hacer?`;
+      const onDuplicar = ()=>{
+        abrirPromoDestModal(nombre, eqPropio, (destino)=>{
+          doblarJugador(nombre, eqPropio, destino, diaP, 'anadir', _zonaPromoParaDestino(eqPropio, destino));
+        });
+      };
+      const onEliminarTodo = ()=>{
+        eliminarTodosLosDuplicados(nombre, eqPropio, diaP);
+      };
+      showAlert(msg, onEliminarTodo, 'Volver a su equipo', onDuplicar, 'Duplicar');
+      return;
+    }
   }
 
   // ── Mensaje (caso normal, sin duplicado activo) ──
