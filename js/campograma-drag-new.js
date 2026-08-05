@@ -465,9 +465,16 @@ function endChip(e){
       // El equipo origen para la promoción es siempre el equipo propio del jugador
       const _eqPropio = origen[_nombre] || _fromEq;
       drag=null;
-      abrirPromoDestModal(_nombre, _eqPropio, (destino)=>{
-        ejecutarPromocion(_nombre, _eqPropio, destino, _diaProm);
-      });
+      if(_eqPropio === 'CASTILLA'){
+        // Al soltar directo en "Promoción 1er equipo" el destino ya está implícito
+        // por la propia columna — nunca se pregunta (para elegir RMC/JUVENIL A está
+        // la columna "Otro equipo", justo al lado).
+        ejecutarPromocion(_nombre, _eqPropio, '1ER EQUIPO', _diaProm);
+      } else {
+        abrirPromoDestModal(_nombre, _eqPropio, (destino)=>{
+          ejecutarPromocion(_nombre, _eqPropio, destino, _diaProm);
+        });
+      }
       return;
     }
     // ── Destino: "Otros equipos" de CASTILLA (columna "extra") → preguntar RMC o JA.
