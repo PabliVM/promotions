@@ -2420,6 +2420,15 @@ function quitarUnDestino(nombre, eqOrigen, destino, diaP){
     const promExtra = data[diaP][eqOrigen]?.extra;
     if(promExtra){ const ie=promExtra.indexOf(nombre); if(ie>=0) promExtra.splice(ie,1); }
     if(promInfo[diaP]?.[eqOrigen]) delete promInfo[diaP][eqOrigen][nombre];
+    // Sin destinos ya, y si era una promoción simple (no seguía activo en su propio
+    // equipo), hay que devolverlo a Disponibles de su equipo — si no, se queda sin
+    // sitio visible hasta la próxima recarga (que es cuando la sincronización
+    // automática lo rescataba, de ahí que hiciera falta refrescar).
+    const sigueActivo = ZONAS_ACTIVAS.some(z=>z!=='disponibles' && (data[diaP][eqOrigen]?.[z]||[]).includes(nombre));
+    if(!sigueActivo){
+      const disp = data[diaP][eqOrigen]?.disponibles;
+      if(disp && !disp.includes(nombre)) disp.push(nombre);
+    }
     toast('✕ '+nombre+' quitado de '+destino);
   }
   autoGuardar();
