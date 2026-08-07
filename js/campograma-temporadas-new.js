@@ -2,6 +2,60 @@
 // ══════════════════════════════════════════════════
 // PERSISTENCIA — localStorage
 // ══════════════════════════════════════════════════
+// Aviso de emergencia reforzado: exige escribir la palabra CONFIRMAR (no un solo
+// clic) antes de poder saltarse el freno y guardar datos que parecen incompletos.
+// Esto es justo lo que faltaba: un clic de más con las prisas ya sobrescribió datos
+// buenos una vez — escribir la palabra entera obliga a pararse a pensarlo.
+function abrirConfirmarConTexto(msg, onConfirmar){
+  const overlay = mk('div','');
+  overlay.id = 'confirmar-texto-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);';
+  const box = mk('div','');
+  box.style.cssText = 'width:100%;max-width:420px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.3);';
+  const hdr = mk('div','');
+  hdr.style.cssText = 'background:#dc2626;padding:16px 18px;';
+  hdr.innerHTML = `<div style="font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:800;color:#fff;">⚠️ Confirmación necesaria</div>`;
+  const body = mk('div','');
+  body.style.cssText = 'padding:18px;';
+  const p = mk('div','');
+  p.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:13px;color:#1a1d23;line-height:1.5;margin-bottom:14px;';
+  p.textContent = msg;
+  body.appendChild(p);
+  const p2 = mk('div','');
+  p2.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:12px;color:#5a6170;margin-bottom:8px;';
+  p2.innerHTML = 'Escribe <strong>CONFIRMAR</strong> para guardar de todas formas:';
+  body.appendChild(p2);
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.autocomplete = 'off';
+  inp.style.cssText = 'width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #dfe1e6;font-family:\'Segoe UI\',sans-serif;font-size:14px;color:#1a1d23;margin-bottom:16px;box-sizing:border-box;text-transform:uppercase;';
+  body.appendChild(inp);
+  const btnRow = mk('div','');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancelar (no guardar)';
+  cancelBtn.style.cssText = 'flex:1;padding:11px;border-radius:10px;border:1px solid #dfe1e6;background:transparent;color:#5a6170;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  const okBtn = document.createElement('button');
+  okBtn.textContent = 'Guardar igualmente';
+  okBtn.disabled = true;
+  okBtn.style.cssText = 'flex:1;padding:11px;border-radius:10px;border:none;background:#d1d5db;color:#fff;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:not-allowed;';
+  btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
+  body.appendChild(btnRow);
+  box.appendChild(hdr); box.appendChild(body);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  function cerrar(){ overlay.remove(); }
+  inp.addEventListener('input', ()=>{
+    const ok = inp.value.trim().toUpperCase() === 'CONFIRMAR';
+    okBtn.disabled = !ok;
+    okBtn.style.background = ok ? '#dc2626' : '#d1d5db';
+    okBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+  });
+  cancelBtn.onclick = cerrar;
+  overlay.onclick = (e)=>{ if(e.target===overlay) cerrar(); };
+  okBtn.onclick = ()=>{ if(okBtn.disabled) return; cerrar(); onConfirmar(); };
+  inp.focus();
+}
 // ── Helpers de timestamp ──
 function fmtTS(d){
   const dd=String(d.getDate()).padStart(2,'0');
@@ -51,15 +105,14 @@ function autoGuardar(){
         if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
         if(!window._frenoYaAvisado){
           window._frenoYaAvisado = true;
-          showAlert(
-            '⚠️ Se han detectado MUCHOS MENOS jugadores de golpe en las plantillas. Esto puede indicar un fallo — el guardado automático se ha PARADO para no sobreescribir datos buenos. ¿Guardar de todas formas?',
+          abrirConfirmarConTexto(
+            'Se han detectado MUCHOS MENOS jugadores de golpe en las plantillas. Esto puede indicar un fallo — el guardado automático se ha PARADO para no sobreescribir datos buenos.',
             ()=>{
               window._frenoYaAvisado = false;
               fijarTotalJugadoresConocido(); // aceptar el nuevo estado como bueno
               window._saltarFrenoGuardado = true; // el reintento SÍ debe guardar de verdad
               autoGuardar(); // reintentar ya sin freno
-            },
-            'Guardar igualmente'
+            }
           );
         }
         return;
@@ -75,15 +128,14 @@ function autoGuardar(){
           if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
           if(!window._frenoYaAvisado){
             window._frenoYaAvisado = true;
-            showAlert(
-              '⚠️ El servidor tiene bastantes MÁS jugadores ('+chk.total+') que los que esta pestaña va a guardar ('+totalASalvar+'). Puede que tengas otra pestaña/dispositivo con datos más completos. El guardado se ha PARADO para no pisarlos. ¿Guardar de todas formas?',
+            abrirConfirmarConTexto(
+              'El servidor tiene bastantes MÁS jugadores ('+chk.total+') que los que esta pestaña va a guardar ('+totalASalvar+'). Puede que tengas otra pestaña/dispositivo con datos más completos. El guardado se ha PARADO para no pisarlos.',
               ()=>{
                 window._frenoYaAvisado = false;
                 fijarTotalJugadoresConocido();
                 window._saltarFrenoGuardado = true; // el reintento SÍ debe guardar de verdad
                 autoGuardar();
-              },
-              'Guardar igualmente'
+              }
             );
           }
           return;
