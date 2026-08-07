@@ -350,8 +350,8 @@
     <h3>☁️ BACK UP</h3>
     <div class="fb-seccion-titulo" style="margin-top:4px;">1. Guardar</div>
     <div id="fb-nueva-row">
-      <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)">
-      <button class="fb-btn cargar" onclick="fbGuardarActual()">💾 Guardar</button>
+      <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)" oninput="actualizarBotonGuardarFb()">
+      <button id="fb-guardar-btn" class="fb-btn cargar" onclick="fbGuardarActual()" disabled>💾 Guardar</button>
     </div>
 
     <div class="fb-seccion">
