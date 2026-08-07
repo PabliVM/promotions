@@ -348,23 +348,23 @@
 <div id="fb-overlay">
   <div id="fb-box">
     <h3>☁️ BACK UP</h3>
-    <div class="fb-seccion-titulo" style="margin-top:4px;">Desde la nube</div>
-    <div id="fb-lista"><div class="fb-empty">Cargando...</div></div>
+    <div class="fb-seccion-titulo" style="margin-top:4px;">1. Guardar</div>
     <div id="fb-nueva-row">
       <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)">
       <button class="fb-btn cargar" onclick="fbGuardarActual()">💾 Guardar</button>
     </div>
-    <div id="fb-backups-lista"><div class="fb-empty">Cargando...</div></div>
 
     <div class="fb-seccion">
-      <div class="fb-seccion-titulo">Desde un documento</div>
+      <div class="fb-seccion-titulo">2. Cargar</div>
       <div class="fb-seccion-btns">
-        <button class="fb-btn fb-btn-secundario" onclick="importarDatos()" title="Restaura desde un archivo .json descargado antes">📤 Restaurar de archivo</button>
+        <button class="fb-btn fb-btn-secundario" id="fb-nube-toggle-btn" onclick="toggleFbLista()">☁️ Desde la nube ▾</button>
+        <button class="fb-btn fb-btn-secundario" onclick="importarDatos()" title="Restaura desde un archivo .json descargado antes">📤 Desde archivo</button>
       </div>
+      <div id="fb-lista" style="display:none;margin-top:8px;"><div class="fb-empty">Cargando...</div></div>
     </div>
 
     <div class="fb-seccion">
-      <div class="fb-seccion-titulo">📅 DESCARGAR</div>
+      <div class="fb-seccion-titulo">3. Descargar</div>
       <div class="fb-seccion-btns">
         <button class="fb-btn fb-btn-secundario" onclick="exportarDatos()" title="Descarga un archivo con todo, para guardar en tu ordenador">💾 .json</button>
         <button class="fb-btn fb-btn-secundario" onclick="exportarPDF()" title="PDF legible con todas las plantillas">📄 PDF</button>
@@ -372,7 +372,7 @@
     </div>
 
     <div class="fb-seccion">
-      <div class="fb-seccion-titulo">🔧 MANTENIMIENTO</div>
+      <div class="fb-seccion-titulo">4. Mantenimiento</div>
       <div class="fb-seccion-btns">
         <button class="fb-btn fb-btn-peligro" onclick="limpiarCamposResidualesConfirmar()" title="Borra campos antiguos sin uso (data_por_eq/prominfo_por_eq)">🧹 Limpiar campos residuales</button>
       </div>
