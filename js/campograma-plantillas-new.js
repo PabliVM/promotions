@@ -48,7 +48,6 @@ function closePlant(){
 function renderPlantTabs(){
   const wrap = document.getElementById('plant-eq-tabs');
   wrap.innerHTML = '';
-  // Pestaña Primer Equipo primero (antes que Castilla/cantera)
   const jj1er = plantillas['1ER EQUIPO'] || [];
   const btn1er = mk('button','plant-eq-tab'+('1ER EQUIPO'===plantEqActivo?' active':''));
   btn1er.textContent = '1ER EQUIPO (' + jj1er.length + ')';
@@ -63,7 +62,6 @@ function renderPlantTabs(){
     btn.onclick = ()=>{ plantEqActivo=eq; renderPlantTabs(); renderPlantBody(); actualizarPlantInput(); };
     wrap.appendChild(btn);
   });
-  // Pestaña especial JA Youth
   const uylLista = getPlantillaUYL();
   const uylPor = uylLista.filter(n => porteros.includes(n)).length;
   const uylNorm = uylLista.length - uylPor;
@@ -89,15 +87,18 @@ function renderPlantBody(){
   }
   if(plantEqActivo === 'JA_YOUTH'){
     document.getElementById('plant-eq-title').textContent = 'JA Youth League';
-    // Inicializar con JA si está vacía
-    if(listaUYL.length === 0){
+    // Inicializar con JA si está vacía — SOLO si Firebase ya terminó de cargar la
+    // sesión real (window._fbSesionActiva). Si esto se dispara ANTES (justo tras
+    // refrescar la página, con la lista vacía transitoriamente mientras llegan los
+    // datos guardados), sobrescribía y guardaba una lista sin los extras de otros
+    // equipos, perdiéndolos de verdad.
+    if(listaUYL.length === 0 && window._fbSesionActiva){
       listaUYL = Object.keys(origen).filter(n=>origen[n]==='JUVENIL A').sort();
       autoGuardar();
     }
     const _uylNumPor = listaUYL.filter(n => porteros.includes(n)).length;
     const _uylNumNorm = listaUYL.length - _uylNumPor;
     document.getElementById('plant-count').textContent = (_uylNumPor > 0 ? _uylNumNorm + '+' + _uylNumPor : listaUYL.length) + ' jugadores';
-    // Botón para re-sincronizar con JA actual
     const syncBtn = mk('button','');
     syncBtn.textContent = '↺ Sincronizar con JA actual';
     syncBtn.style.cssText = 'margin:0 0 10px;padding:6px 12px;border-radius:8px;border:1px solid rgba(96,180,255,.3);background:rgba(96,180,255,.08);color:#60b4ff;font-size:12px;cursor:pointer;font-family:"Barlow Condensed",sans-serif;font-weight:700;';
@@ -112,13 +113,11 @@ function renderPlantBody(){
       else toast('✓ Ya estaba sincronizado con JA');
     };
     list.appendChild(syncBtn);
-    // Lista de jugadores Youth
     listaUYL.forEach((nombre, i)=>{
       const eqO = origen[nombre] || 'JA';
       const row = mk('div','plant-row');
       row.draggable = true;
       row.dataset.nombre = nombre;
-      // Drag para reordenar (reordena listaUYL)
       row.ondragstart = (e) => {
         e.dataTransfer.setData('text/plain', nombre);
         e.dataTransfer.effectAllowed = 'move';
@@ -147,7 +146,6 @@ function renderPlantBody(){
       const dragHandle = mk('span','plant-drag-handle'); dragHandle.textContent = '⠿';
       const nm  = mk('span','plant-name');
       nm.innerHTML = nombre + (eqO !== 'JUVENIL A' ? '<span class="plant-uyl-origin" style="color:#60b4ff">'+eqO+'</span>' : '');
-      // Indicador de portero AUTOMÁTICO (de solo lectura) — se reconoce solo, sin tocar nada aquí
       const porTag = mk('span','plant-portero-tag');
       porTag.textContent = 'POR';
       porTag.style.display = porteros.includes(nombre) ? '' : 'none';
@@ -163,23 +161,15 @@ function renderPlantBody(){
     });
     return;
   }
-  // ── Vista normal de equipo ──
   const jugadores = plantillas[plantEqActivo] || [];
   document.getElementById('plant-eq-title').textContent = plantEqActivo;
   const _numPor = jugadores.filter(n => porteros.includes(n)).length;
   const _numNorm = jugadores.length - _numPor;
   document.getElementById('plant-count').textContent = (_numPor > 0 ? _numNorm + '+' + _numPor : jugadores.length) + ' jugadores';
-  // Botón único y siempre visible: quita TODAS las promociones activas de este equipo
-  // de golpe, en todos los días — más simple y fiable que un botón por jugador.
-  // Botón oculto por defecto (la función queda disponible por si hace falta en el
-  // futuro para arreglar algún fallo, pero no se muestra en el uso normal)
-  // const hayPromoActiva = ...; if(hayPromoActiva){ ...crear y mostrar el botón... }
   jugadores.forEach((nombre, i)=>{
     const row = mk('div','plant-row');
     row.draggable = true;
     row.dataset.nombre = nombre;
-
-    // Drag para reordenar
     row.ondragstart = (e) => {
       e.dataTransfer.setData('text/plain', nombre);
       e.dataTransfer.effectAllowed = 'move';
@@ -205,12 +195,9 @@ function renderPlantBody(){
         }
       }
     };
-
     const dragHandle = mk('span','plant-drag-handle'); dragHandle.textContent = '⠿';
     const num = mk('span','plant-num'); num.textContent = (i+1);
     const nm  = mk('span','plant-name'); nm.textContent = nombre;
-
-    // Botón editar nombre
     const editBtn = mk('button','plant-edit-btn'); editBtn.innerHTML = '✏️';
     editBtn.title = 'Editar nombre';
     editBtn.onclick = () => {
@@ -241,8 +228,6 @@ function renderPlantBody(){
         if(ev.key === 'Escape'){ input.onblur = null; renderPlantBody(); }
       };
     };
-
-    // Checkbox portero
     const porLabel = mk('label','plant-portero-chk');
     const porInput = mk('input','');
     porInput.type = 'checkbox';
@@ -256,19 +241,15 @@ function renderPlantBody(){
         if(idx>=0) porteros.splice(idx,1);
       }
       autoGuardar();
-      // Escritura directa e independiente: no se pisa aunque otra persona guarde algo a la vez
       if(typeof window.fbTogglePortero === 'function') window.fbTogglePortero(nombre, porInput.checked);
     };
     const porTxt = document.createElement('span');
     porTxt.textContent = 'POR';
     porLabel.appendChild(porInput);
     porLabel.appendChild(porTxt);
-
     const del = mk('button','plant-del'); del.textContent = '×';
     del.title = 'Eliminar '+nombre;
     del.onclick = ()=> plantEliminar(nombre);
-
-    // Selector cambiar de equipo
     const eqSel = mk('select','plant-eq-sel');
     eqSel.title = 'Cambiar de equipo';
     EQUIPOS.concat(['1ER EQUIPO']).forEach(eqOpt=>{
@@ -284,11 +265,8 @@ function renderPlantBody(){
       const eqViejo = plantEqActivo;
       abrirDiaAplicaModal(nombre, eqViejo, nuevoEq, (diaIdx)=>{
         plantCambiarEquipo(nombre, nuevoEq, diaIdx);
-      }, ()=>{ eqSel.value = eqViejo; }); // si cancela, el desplegable vuelve al equipo actual
+      }, ()=>{ eqSel.value = eqViejo; });
     };
-
-    // Botón "Quitar promoción" — solo visible si tiene alguna promoción activa en
-    // algún día, para poder deshacerla de golpe sin ir a buscarla al campograma
     const tienePromo = DIAS.some(d => getDestinos(d, plantEqActivo, nombre).length > 0);
     let quitarPromoBtn = null;
     if(tienePromo){
@@ -297,7 +275,6 @@ function renderPlantBody(){
       quitarPromoBtn.title = 'Quitar la promoción (sigue en '+plantEqActivo+', solo se le quita el destino)';
       quitarPromoBtn.onclick = ()=> quitarPromocionCompleta(nombre, plantEqActivo);
     }
-
     row.appendChild(dragHandle); row.appendChild(num); row.appendChild(nm);
     row.appendChild(editBtn); row.appendChild(porLabel); row.appendChild(eqSel);
     if(quitarPromoBtn) row.appendChild(quitarPromoBtn);
@@ -305,9 +282,6 @@ function renderPlantBody(){
     list.appendChild(row);
   });
 }
-// Quita la promoción de un jugador en TODOS los días de golpe (sin borrar al jugador,
-// sigue en su plantilla) — evita tener que ir día por día en el campograma.
-// Quita TODAS las promociones activas de un equipo, en todos los días, de golpe.
 function quitarTodasLasPromociones(eqPropio){
   let totalJugadores = 0, totalDias = 0;
   (plantillas[eqPropio]||[]).forEach(nombre=>{
@@ -355,12 +329,8 @@ function plantCambiarEquipo(nombre, nuevoEq, diaAplicaIdx){
   if(!plantillas[nuevoEq]) plantillas[nuevoEq] = [];
   if(!plantillas[nuevoEq].includes(nombre)) plantillas[nuevoEq].push(nombre);
   origen[nombre] = nuevoEq;
-  // A PARTIR DE AQUÍ: todo lo que sigue solo toca el día elegido EN ADELANTE (por defecto,
-  // hoy). Los días ANTERIORES a ese no se tocan para nada — se quedan exactamente como
-  // estaban (equipo viejo, promociones de entonces, todo).
   const idxHoy = (typeof diaAplicaIdx === 'number') ? diaAplicaIdx : diaHoyIdx();
   const diasFuturos = DIAS.filter((d,i)=>i>=idxHoy);
-  // Limpiar cualquier duplicado archivado bajo el equipo ANTIGUO (solo hoy en adelante)
   diasFuturos.forEach(d=>{
     if(promInfo[d]?.[plantEqActivo]?.[nombre]){
       const destinos = getDestinos(d, plantEqActivo, nombre);
@@ -368,7 +338,6 @@ function plantCambiarEquipo(nombre, nuevoEq, diaAplicaIdx){
       delete promInfo[d][plantEqActivo][nombre];
     }
   });
-  // Quitar cualquier rastro del jugador en el equipo ANTERIOR (solo hoy en adelante)
   if(plantEqActivo !== '1ER EQUIPO'){
     diasFuturos.forEach(d=>{
       ZONAS.forEach(z=>{
@@ -379,7 +348,6 @@ function plantCambiarEquipo(nombre, nuevoEq, diaAplicaIdx){
       });
     });
   }
-  // Si entra en un equipo de cantera, que aparezca en Disponibles (solo hoy en adelante)
   if(nuevoEq !== '1ER EQUIPO'){
     diasFuturos.forEach(d=>{
       if(!data[d][nuevoEq].disponibles.includes(nombre) &&
@@ -388,7 +356,6 @@ function plantCambiarEquipo(nombre, nuevoEq, diaAplicaIdx){
       }
     });
   }
-  // Si sale del Primer Equipo, quitarlo también de su campo (solo hoy en adelante)
   if(plantEqActivo === '1ER EQUIPO'){
     diasFuturos.forEach(d=>{
       if(primerEquipoJugadores[d]){
@@ -397,14 +364,12 @@ function plantCambiarEquipo(nombre, nuevoEq, diaAplicaIdx){
       }
     });
   }
-  // Corregir el histórico de HOY EN ADELANTE con el equipo nuevo (el cambio se hace
-  // efectivo desde hoy). Los días YA PASADOS se quedan tal cual estaban — inmutables.
   diasFuturos.forEach(d=>{
-    if(historicoJugador[d]) delete historicoJugador[d][nombre]; // se recreará con el equipo nuevo
+    if(historicoJugador[d]) delete historicoJugador[d][nombre];
   });
   DIAS.forEach(d=>asegurarHistoricoJugador(d));
   renderPlantBody();
-  render(); // refrescar también el campograma de fondo, no solo el modal (ya guarda internamente)
+  render();
   toast('✓ '+nombre+' movido a '+(EQ_LABEL[nuevoEq]||nuevoEq));
 }
 function _normalizarNombre(s){
@@ -412,10 +377,10 @@ function _normalizarNombre(s){
 }
 function buscarPosiblesDuplicados(nombre){
   const nombreNorm = _normalizarNombre(nombre);
-  const palabras = nombreNorm.split(/\s+/).filter(w=>w.length>=3); // ignorar iniciales sueltas
+  const palabras = nombreNorm.split(/\s+/).filter(w=>w.length>=3);
   const encontrados = [];
   Object.keys(origen).forEach(existente=>{
-    if(existente === nombre) return; // el mismo exacto se avisa aparte
+    if(existente === nombre) return;
     const existenteNorm = _normalizarNombre(existente);
     if(existenteNorm === nombreNorm){ encontrados.push(existente); return; }
     const palabrasExistente = existenteNorm.split(/\s+/).filter(w=>w.length>=3);
@@ -428,7 +393,6 @@ function plantAñadir(){
   const input = document.getElementById('plant-add-input');
   const nombre = input.value.trim().toUpperCase();
   if(!nombre){ input.focus(); return; }
-  // ── JA Youth: añadir cualquier jugador ──
   if(plantEqActivo === 'JA_YOUTH'){
     if(listaUYL.includes(nombre)){
       toast('⚠️ '+nombre+' ya está en JA Youth');
@@ -446,19 +410,15 @@ function plantAñadir(){
     toast('✅ '+nombre+' añadido a JA Youth');
     return;
   }
-  // ── Equipo normal ──
   if(!plantillas[plantEqActivo]) plantillas[plantEqActivo]=[];
   if(plantillas[plantEqActivo].includes(nombre)){
     toast('⚠️ '+nombre+' ya está en '+plantEqActivo);
     return;
   }
-  // Avisar si hay nombres iguales o parecidos en OTRO equipo (posible duplicado)
   const parecidos = buscarPosiblesDuplicados(nombre);
   const nombreNorm = _normalizarNombre(nombre);
   const exactoEnOtroEquipo = parecidos.find(n=>_normalizarNombre(n)===nombreNorm);
   if(exactoEnOtroEquipo){
-    // Coincidencia EXACTA con otro equipo: esto crearía un jugador duplicado en 2
-    // plantillas a la vez — pedir confirmación explícita en vez de un simple toast.
     showAlert(
       '⚠️ "'+nombre+'" ya existe en '+(origen[exactoEnOtroEquipo]||'otro equipo')+'. Si continúas, quedará en LAS DOS plantillas a la vez. ¿Seguro que quieres añadirlo también aquí?',
       ()=>_plantAñadirConfirmado(nombre),
@@ -472,14 +432,6 @@ function plantAñadir(){
     toast('⚠️ Revisa: nombre parecido a '+lista);
   }
 }
-// Igual que plantAñadir(), pero preguntando desde qué día de la semana debe aparecer
-// disponible el jugador (en vez de en toda la semana por defecto).
-// ══════════════════════════════════════════════════
-// IMPORTAR TABLA — pegar lista de jugadores (desde Excel/Sheets o a mano) y añadirlos
-// todos de golpe a sus plantillas. Formato por línea: "NOMBRE" solo (usa el equipo
-// elegido en el desplegable) o "NOMBRE, EQUIPO" / "NOMBRE [tab] EQUIPO" (equipo propio
-// por línea, ignorando el desplegable para esa línea).
-// ══════════════════════════════════════════════════
 function abrirImportarTablaModal(){
   const overlay = mk('div','');
   overlay.style.cssText = 'position:fixed;inset:0;z-index:10410;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;backdrop-filter:blur(4px);';
@@ -490,12 +442,10 @@ function abrirImportarTablaModal(){
   hdr.innerHTML = `<div style="font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:800;color:#fff;">📋 Importar jugadores desde tabla</div>`;
   const body = mk('div','');
   body.style.cssText = 'padding:18px;';
-
   const sub = mk('div','');
   sub.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:12px;color:#5a6170;margin-bottom:12px;line-height:1.5;';
   sub.innerHTML = 'Pega aquí, una línea por jugador. Puedes escribir solo el nombre (se usa el equipo de abajo), o "Nombre, Equipo" / "Nombre" + TAB + "Equipo" (copiado directo de Excel/Sheets, cada línea con su propio equipo).';
   body.appendChild(sub);
-
   const eqLbl = mk('div','');
   eqLbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;';
   eqLbl.textContent = 'Equipo por defecto (si una línea no trae equipo)';
@@ -509,7 +459,6 @@ function abrirImportarTablaModal(){
     sel.appendChild(opt);
   });
   body.appendChild(sel);
-
   const textLbl = mk('div','');
   textLbl.style.cssText = 'font-family:\'Segoe UI\',sans-serif;font-size:11px;font-weight:700;color:#5a6170;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;';
   textLbl.textContent = 'Lista de jugadores';
@@ -518,7 +467,6 @@ function abrirImportarTablaModal(){
   textarea.placeholder = 'ÁLVARO LEZCANO\nÁNGEL CARVAJAL, RMC\nMANEX REZOLA\tJUVENIL A\n...';
   textarea.style.cssText = 'width:100%;min-height:180px;padding:10px 12px;border-radius:10px;border:1.5px solid #dfe1e6;font-family:\'Segoe UI\',monospace;font-size:13px;color:#1a1d23;margin-bottom:14px;box-sizing:border-box;resize:vertical;';
   body.appendChild(textarea);
-
   const btnRow = mk('div','');
   btnRow.style.cssText = 'display:flex;gap:8px;';
   const cancelBtn = document.createElement('button');
@@ -529,7 +477,6 @@ function abrirImportarTablaModal(){
   okBtn.style.cssText = 'flex:1;padding:10px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-family:\'Segoe UI\',sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
   btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
   body.appendChild(btnRow);
-
   box.appendChild(hdr); box.appendChild(body);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
@@ -543,7 +490,6 @@ function abrirImportarTablaModal(){
     importarTablaJugadores(texto, eqDefecto);
   };
 }
-// Nombres válidos de equipo aceptados en la columna "Equipo" (con alias frecuentes)
 const _ALIAS_EQUIPO = {
   'CASTILLA':'CASTILLA', 'CAS':'CASTILLA',
   'RMC':'RMC', 'REAL MADRID C':'RMC',
@@ -633,8 +579,6 @@ function _plantAñadirConfirmado(nombre, idxDesde){
   plantillas[plantEqActivo].sort((a,b)=>a.localeCompare(b,'es'));
   origen[nombre] = plantEqActivo;
   if(plantEqActivo !== '1ER EQUIPO'){
-    // En TODOS los días de la semana activa por defecto — o solo desde el día elegido
-    // (idxDesde) si se ha usado "Añadir desde fecha".
     DIAS.forEach((d,i)=>{
       if(typeof idxDesde === 'number' && i < idxDesde) return;
       if(!(data[d][plantEqActivo].disponibles||[]).includes(nombre) &&
@@ -661,33 +605,23 @@ function plantEliminar(nombre){
     'Borrar desde hoy'
   );
 }
-// alcance: 'todo' (también el histórico de días pasados) | 'desdeHoy' (solo hoy en
-// adelante, el pasado se queda tal cual estaba — no se reescribe)
 function _ejecutarBorradoJugador(nombre, alcance){
   if(!plantillas[plantEqActivo]) return;
-  // Copia de seguridad JUSTO ANTES de borrar (sobre todo relevante si es 'todo' —
-  // borrado definitivo con histórico incluido) — un paso atrás siempre disponible.
   if(typeof window.fbGuardarBackupPreAccion === 'function'){
     window.fbGuardarBackupPreAccion(buildPayload(false), 'Antes de borrar a '+nombre+' ('+alcance+')');
   }
   const idx = plantillas[plantEqActivo].indexOf(nombre);
   if(idx>=0) plantillas[plantEqActivo].splice(idx,1);
-  // Corregir 'origen': si apuntaba a este equipo, buscar si el jugador SIGUE en otra
-  // plantilla (estaba metido en 2 a la vez, un caso raro pero posible) y apuntar ahí;
-  // si no está en ninguna otra, limpiar origen del todo.
   if(origen[nombre]===plantEqActivo || !EQUIPOS.some(e=>(plantillas[e]||[]).includes(nombre) && origen[nombre]===e)){
     const otroEqConEl = EQUIPOS.find(e=>e!==plantEqActivo && (plantillas[e]||[]).includes(nombre));
     if(otroEqConEl) origen[nombre] = otroEqConEl;
     else delete origen[nombre];
   }
-  // Quitar de porteros si lo era (local y Firebase) — es un rasgo global, no por día
   const pIdx = porteros.indexOf(nombre);
   if(pIdx >= 0){
     porteros.splice(pIdx,1);
     if(typeof window.fbTogglePortero === 'function') window.fbTogglePortero(nombre, false);
   }
-  // Qué días tocar: TODOS si es borrado total, o solo de HOY en adelante si se
-  // mantiene el histórico pasado intacto
   const diasATocar = alcance === 'todo' ? DIAS : DIAS.filter((d,i)=>i>=diaHoyIdx());
   if(plantEqActivo !== '1ER EQUIPO'){
     diasATocar.forEach(d=>{
@@ -695,9 +629,6 @@ function _ejecutarBorradoJugador(nombre, alcance){
         const i=(data[d][plantEqActivo][z]||[]).indexOf(nombre);
         if(i>=0) data[d][plantEqActivo][z].splice(i,1);
       });
-      // El registro de "a dónde estaba promocionado" (promInfo) es aparte del array
-      // visual de promovidos_1er — si no se borra aquí también, queda un rastro
-      // fantasma que hace pensar que sigue promocionado de verdad aunque ya no exista.
       if(promInfo[d]?.[plantEqActivo]) delete promInfo[d][plantEqActivo][nombre];
     });
   } else {
@@ -708,7 +639,6 @@ function _ejecutarBorradoJugador(nombre, alcance){
       }
     });
   }
-  // Limpiar también cualquier rastro en OTROS equipos (si estaba prestado/duplicado ahí)
   EQUIPOS.forEach(otroEq=>{
     if(otroEq === plantEqActivo) return;
     diasATocar.forEach(d=>{
@@ -729,13 +659,8 @@ function _ejecutarBorradoJugador(nombre, alcance){
       }
     });
   }
-  // Histórico: solo se borra si el alcance es 'todo' — si es 'desdeHoy', el histórico
-  // de días pasados se queda exactamente como estaba (no se reescribe el pasado)
   if(alcance === 'todo'){
     DIAS.forEach(d=>{ if(historicoJugador[d]) delete historicoJugador[d][nombre]; });
-    // Además, quitarlo de TODAS las semanas ya archivadas (semanas anteriores cerradas)
-    // — si no, "borrar todo" no sería realmente definitivo: seguiría en Firebase dentro
-    // de esas fotos antiguas.
     if(typeof _semanasGuardadas === 'object' && _semanasGuardadas){
       Object.keys(_semanasGuardadas).forEach(weekKey=>{
         const foto = _semanasGuardadas[weekKey];
@@ -774,20 +699,16 @@ function _ejecutarBorradoJugador(nombre, alcance){
   }
   renderPlantTabs();
   renderPlantBody();
-  window._saltarFrenoGuardado = true; // borrado explícito de un jugador concreto: acción voluntaria
+  window._saltarFrenoGuardado = true;
   render();
   toast(alcance==='todo'
     ? '🗑️ '+nombre+' eliminado por completo (incluido el histórico)'
     : '🗑️ '+nombre+' eliminado desde hoy (histórico anterior intacto)');
 }
-// Borra TODOS los jugadores de TODOS los equipos (plantillas, orígenes, posiciones,
-// promociones, campo, etc.) para empezar de cero. Acción irreversible — pide confirmación.
 function borrarTodosLosJugadores(){
   showAlert(
     '⚠️ Esto borrará TODOS los jugadores de TODOS los equipos (plantillas, campo, promociones, todo) de forma irreversible. ¿Seguro que quieres empezar de cero?',
     ()=>{
-      // Copia de seguridad JUSTO ANTES de vaciar — por si acaso, un paso atrás siempre
-      // disponible además del backup diario normal.
       if(typeof window.fbGuardarBackupPreAccion === 'function'){
         window.fbGuardarBackupPreAccion(buildPayload(false), 'Antes de Borrar todo');
       }
@@ -803,8 +724,6 @@ function borrarTodosLosJugadores(){
       multiEq = {};
       movimientos = {};
       data = JSON.parse(JSON.stringify(RAW));
-      // Este vaciado es INTENCIONAL y ya se ha confirmado arriba — saltarse el freno de
-      // emergencia (que si no, bloquearía el guardado al ver "muchos menos jugadores de golpe")
       window._saltarFrenoGuardado = true;
       autoGuardar();
       if(typeof fijarTotalJugadoresConocido === 'function') fijarTotalJugadoresConocido();
@@ -816,7 +735,6 @@ function borrarTodosLosJugadores(){
     'Borrar todo'
   );
 }
-// ── JA Youth: añadir por selector de equipo → jugador (en vez de buscador de texto) ──
 function renderUYLEqSel(){
   const sel = document.getElementById('plant-uyl-eq-sel');
   sel.innerHTML = '';
