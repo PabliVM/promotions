@@ -347,24 +347,32 @@
 <!-- Panel sesiones Firebase -->
 <div id="fb-overlay">
   <div id="fb-box">
-    <h3>☁️ SESIONES GUARDADAS</h3>
+    <h3>☁️ BACK UP</h3>
+    <div class="fb-seccion-titulo" style="margin-top:4px;">Desde la nube</div>
     <div id="fb-lista"><div class="fb-empty">Cargando...</div></div>
     <div id="fb-nueva-row">
       <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)">
       <button class="fb-btn cargar" onclick="fbGuardarActual()">💾 Guardar</button>
     </div>
+    <div id="fb-backups-lista"><div class="fb-empty">Cargando...</div></div>
 
     <div class="fb-seccion">
-      <div class="fb-seccion-titulo">Copia en tu ordenador</div>
+      <div class="fb-seccion-titulo">Desde un documento</div>
       <div class="fb-seccion-btns">
-        <button class="fb-btn fb-btn-secundario" onclick="exportarDatos()" title="Descarga un archivo con todo, para guardar en tu ordenador">📥 Descargar (.json)</button>
-        <button class="fb-btn fb-btn-secundario" onclick="exportarPDF()" title="PDF legible con todas las plantillas">📄 Descargar PDF</button>
-        <button class="fb-btn fb-btn-secundario" onclick="importarDatos()" title="Restaura desde un archivo descargado antes">📤 Restaurar de archivo</button>
+        <button class="fb-btn fb-btn-secundario" onclick="importarDatos()" title="Restaura desde un archivo .json descargado antes">📤 Restaurar de archivo</button>
       </div>
     </div>
 
     <div class="fb-seccion">
-      <div class="fb-seccion-titulo">Mantenimiento</div>
+      <div class="fb-seccion-titulo">📅 DESCARGAR</div>
+      <div class="fb-seccion-btns">
+        <button class="fb-btn fb-btn-secundario" onclick="exportarDatos()" title="Descarga un archivo con todo, para guardar en tu ordenador">💾 .json</button>
+        <button class="fb-btn fb-btn-secundario" onclick="exportarPDF()" title="PDF legible con todas las plantillas">📄 PDF</button>
+      </div>
+    </div>
+
+    <div class="fb-seccion">
+      <div class="fb-seccion-titulo">🔧 MANTENIMIENTO</div>
       <div class="fb-seccion-btns">
         <button class="fb-btn fb-btn-peligro" onclick="limpiarCamposResidualesConfirmar()" title="Borra campos antiguos sin uso (data_por_eq/prominfo_por_eq)">🧹 Limpiar campos residuales</button>
       </div>
@@ -408,12 +416,20 @@
     <!-- Equipos -->
     <div class="copy-section-lbl">Equipos</div>
     <div id="copy-eq-checks"></div>
-    <div class="copy-section-lbl" style="margin-top:14px;">Qué copiar</div> <div id="copy-modo-btns" style="display:flex;gap:6px;margin-bottom:6px;"></div>
+
+    <!-- Qué copiar (modo) -->
+    <div class="copy-section-lbl" style="margin-top:14px;">Qué copiar</div>
+    <div id="copy-modo-btns" style="display:flex;gap:6px;margin-bottom:6px;"></div>
 
     <!-- Día ORIGEN -->
     <div class="copy-section-lbl" style="margin-top:14px;">Día origen</div>
     <div id="copy-origen-btns" class="copy-dias-row"></div>
-    <div id="copy-origen-semana-lbl" style="display:none;font-size:11px;color:#2563eb;margin:4px 0 6px;font-family:'Segoe UI',sans-serif;"></div> <div style="margin-top:4px;margin-bottom:4px;"> <button onclick="abrirCalCopiaOrigen()" style="font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;cursor:pointer;"> 📅 Otra semana </button> </div>
+    <div id="copy-origen-semana-lbl" style="display:none;font-size:11px;color:#2563eb;margin:4px 0 6px;font-family:'Segoe UI',sans-serif;"></div>
+    <div style="margin-top:4px;margin-bottom:4px;">
+      <button onclick="abrirCalCopiaOrigen()" style="font-family:'Segoe UI',sans-serif;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1.5px solid #dfe1e6;background:#fff;color:#5a6170;cursor:pointer;">
+        📅 Otra semana
+      </button>
+    </div>
 
     <!-- Día(s) DESTINO -->
     <div class="copy-section-lbl" style="margin-top:14px;">Día(s) destino</div>
