@@ -765,10 +765,25 @@ function abrirFbPanel(){
   if(actLbl) actLbl.textContent = _fbSesionActiva ? '🔄 Sync: '+_fbSesionActiva : 'Sin sesión activa';
   const inp = document.getElementById('fb-nueva-inp');
   if(inp){
+    // Vacío a propósito: hay que escribir un nombre siempre, no se autorrellena para
+    // evitar guardar sin querer con el nombre por defecto sin fijarse.
+    inp.value = '';
     const hoy = new Date();
-    inp.value = 'Backup ' + String(hoy.getDate()).padStart(2,'0') + '/' + String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear() + ' ' + String(hoy.getHours()).padStart(2,'0') + ':' + String(hoy.getMinutes()).padStart(2,'0');
+    inp.placeholder = 'Ej: Backup ' + String(hoy.getDate()).padStart(2,'0') + '/' + String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear();
   }
+  actualizarBotonGuardarFb();
   renderFbLista();
+}
+// El botón "Guardar" está deshabilitado hasta que hay texto real en el nombre —
+// obliga a escribir siempre, no solo un aviso que se puede pasar por alto.
+function actualizarBotonGuardarFb(){
+  const inp = document.getElementById('fb-nueva-inp');
+  const btn = document.getElementById('fb-guardar-btn');
+  if(!inp || !btn) return;
+  const hayNombre = inp.value.trim().length > 0;
+  btn.disabled = !hayNombre;
+  btn.style.opacity = hayNombre ? '1' : '.5';
+  btn.style.cursor = hayNombre ? 'pointer' : 'not-allowed';
 }
 function cerrarFbPanel(){
   document.getElementById('fb-overlay').classList.remove('open');
@@ -2092,7 +2107,17 @@ function closeAlert(){
   extra2Btn.onclick=null;
 }
 var tT=null;
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),2200);}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  // Por encima de CUALQUIER panel/modal abierto (que suelen usar backdrop-filter:
+  // blur) — si no, el toast queda detrás del cristal difuminado y se ve borroso.
+  t.style.zIndex = '999999';
+  t.style.position = 'fixed';
+  t.classList.add('show');
+  clearTimeout(tT);
+  tT=setTimeout(()=>t.classList.remove('show'),2200);
+}
 function toggleDarkMaestro(){
   const activo = document.body.classList.toggle('dark');
   try{ localStorage.setItem('rm_dark', activo ? '1' : '0'); }catch(e){}
