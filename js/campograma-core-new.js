@@ -225,6 +225,10 @@ function hacerBackupDiarioSiHaceFalta(){
       if(res && res.ok){
         localStorage.setItem('rm_ultimo_backup', hoy);
         console.log('💾 Copia de seguridad diaria guardada:', hoy);
+        // Además de guardar en Firebase, descargar automáticamente una copia local en
+        // JSON — así siempre hay un archivo tuyo, sin depender de acordarte de pulsar
+        // ningún botón. Se hace máximo una vez al día, igual que el backup de Firebase.
+        try{ exportarDatos(); }catch(e){ console.warn('Descarga automática diaria falló:', e); }
       }
     });
   }catch(e){ console.warn('Error en backup diario:', e); }
@@ -766,9 +770,58 @@ function abrirFbPanel(){
     inp.value = 'Backup ' + String(hoy.getDate()).padStart(2,'0') + '/' + String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear() + ' ' + String(hoy.getHours()).padStart(2,'0') + ':' + String(hoy.getMinutes()).padStart(2,'0');
   }
   renderFbLista();
+  renderBackupsLista();
 }
 function cerrarFbPanel(){
   document.getElementById('fb-overlay').classList.remove('open');
+}
+// ── Backups automáticos (diarios + pre-acción) — listar y restaurar sin consola ──
+async function renderBackupsLista(){
+  const cont = document.getElementById('fb-backups-lista');
+  if(!cont) return; // panel viejo sin este bloque en el HTML todavía
+  if(typeof window.fbListarBackups !== 'function'){ cont.innerHTML = ''; return; }
+  cont.innerHTML = '<div class="fb-empty">Cargando...</div>';
+  const res = await window.fbListarBackups();
+  if(!res || !res.ok){
+    cont.innerHTML = '<div class="fb-empty">No se pudieron listar los backups</div>';
+    return;
+  }
+  const ids = res.data || [];
+  if(!ids.length){
+    cont.innerHTML = '<div class="fb-empty">Sin backups todavía</div>';
+    return;
+  }
+  cont.innerHTML = '';
+  ids.forEach(id=>{
+    const esFecha = /^\d{4}-\d{2}-\d{2}$/.test(id);
+    const etiqueta = esFecha ? id : (id.startsWith('pre_accion_') ? '📌 Antes de una acción' : id);
+    const row = document.createElement('div');
+    row.className = 'fb-sesion-row';
+    const safeId = id.replace(/'/g, "\\'");
+    row.innerHTML = `
+      <span class="fb-sesion-nombre" title="${id}">${etiqueta}</span>
+      <span class="fb-sesion-ts"></span>
+      <button class="fb-btn cargar" onclick="fbRestaurarBackupUI('${safeId}')">⬇️ Restaurar</button>`;
+    cont.appendChild(row);
+  });
+}
+// Restaura un backup como sesión "principal" — pide confirmación explícita primero,
+// igual que la restauración de un archivo .json, porque sobrescribe lo que haya ahora.
+async function fbRestaurarBackupUI(id){
+  if(!confirm('¿Restaurar el backup "'+id+'"? Se sobrescribirá TODO lo que tengas ahora en la sesión principal. Se recomienda descargar antes una copia (botón "📥 Descargar") por si acaso.')){ return; }
+  toast('☁️ Restaurando backup...');
+  const res = await window.fbCargarBackup(id);
+  if(!res || !res.ok){
+    toast('❌ No se pudo cargar ese backup: ' + (res && res.message || ''));
+    return;
+  }
+  const guardado = await window.fbGuardarSesion('principal', res.data);
+  if(!guardado || !guardado.ok){
+    toast('❌ Se leyó el backup pero no se pudo guardar como sesión principal');
+    return;
+  }
+  toast('✅ Backup restaurado — recarga la página para verlo');
+  cerrarFbPanel();
 }
 async function renderFbLista(){
   const lista = document.getElementById('fb-lista');
