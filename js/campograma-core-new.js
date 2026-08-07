@@ -861,8 +861,8 @@ async function fbGuardarActual(){
     inp.value = '';
     await limpiarSesionesAntiguas(); // mantener solo los 5 últimos backups
     renderFbLista();
-    exportarDatos();
-    setTimeout(()=>exportarPDF(), 400);
+    exportarDatos(nombre);
+    setTimeout(()=>exportarPDF(nombre), 400);
   } else {
     toast('❌ Firebase: ' + (res.message || 'error al guardar'));
   }
@@ -1660,7 +1660,7 @@ function renderMultiEqBar(){
   };
   bar.appendChild(btnFoto);
 }
-function exportarPDF(){
+function exportarPDF(nombrePersonalizado){
   try{
     if(typeof window.jspdf === 'undefined'){ toast('❌ No se pudo cargar el generador de PDF'); return; }
     const { jsPDF } = window.jspdf;
@@ -1713,11 +1713,14 @@ function exportarPDF(){
       y += 3;
     });
     const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g,'-');
-    doc.save('campograma_plantillas_'+fecha+'.pdf');
+    const base = nombrePersonalizado
+      ? nombrePersonalizado.trim().replace(/[\\/:*?"<>|]/g,'_')
+      : 'campograma_plantillas_'+fecha;
+    doc.save(base+'.pdf');
     toast('✅ PDF descargado');
   }catch(e){ toast('❌ Error al generar PDF: '+e.message); console.error(e); }
 }
-function exportarDatos(){
+function exportarDatos(nombrePersonalizado){
   try{
     const payload = {
       ...buildPayload(false),
@@ -1729,8 +1732,13 @@ function exportarDatos(){
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g,'-');
+    // Nombre de archivo: el que se escribió al guardar (si viene), si no la fecha de
+    // siempre — se limpian caracteres que no valen en un nombre de archivo (: / \ etc.)
+    const base = nombrePersonalizado
+      ? nombrePersonalizado.trim().replace(/[\\/:*?"<>|]/g,'_')
+      : 'campograma_backup_'+fecha;
     a.href = url;
-    a.download = 'campograma_backup_'+fecha+'.json';
+    a.download = base+'.json';
     a.click();
     URL.revokeObjectURL(url);
     toast('✅ Copia de seguridad completa descargada');
