@@ -862,7 +862,7 @@ async function fbGuardarActual(){
     await limpiarSesionesAntiguas(); // mantener solo los 5 últimos backups
     renderFbLista();
     exportarDatos();
-    exportarPDF();
+    setTimeout(()=>exportarPDF(), 400);
   } else {
     toast('❌ Firebase: ' + (res.message || 'error al guardar'));
   }
