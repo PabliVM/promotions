@@ -303,13 +303,30 @@ function toggleUYL(diaParam){
   if(modoUYL[d]){
     // Al activar: los EXTRAS (de otros equipos) se promocionan DE VERDAD a JUVENIL A
     // para ese día — aparecen en Disponibles de JA, desaparecen de Disponibles de su
-    // equipo real, y salen en Promocionados de su equipo con destino JUVENIL A. Esto
-    // NO toca listaUYL (la lista base de quién es Youth League no cambia).
+    // equipo real, y salen en la columna de promoción de su equipo con destino
+    // JUVENIL A. Esto NO toca listaUYL (la lista base de quién es Youth League no cambia).
     getPlantillaUYL().forEach(nombre=>{
       const eqPropio = origen[nombre];
       if(!eqPropio || eqPropio === 'JUVENIL A' || eqPropio === 'PRUEBA') return;
       const yaPromovido = getDestinos(d, eqPropio, nombre).includes('JUVENIL A');
-      if(!yaPromovido) ejecutarPromocion(nombre, eqPropio, 'JUVENIL A', d);
+      if(yaPromovido) return;
+      // Quitar PRIMERO de las zonas activas de su equipo real (disponibles/campo/
+      // banquillo/lesionados/otros/extra) — si no, se queda "por triplicado": sigue
+      // ahí Y aparece también en JA a la vez. Antes esto no se hacía.
+      ZONAS_ACTIVAS.forEach(z=>{
+        const arr = data[d][eqPropio]?.[z];
+        if(!arr) return;
+        const i = arr.indexOf(nombre);
+        if(i>=0){ arr.splice(i,1); if(z==='campo') delete pos[key(d,eqPropio,nombre)]; }
+      });
+      // En Castilla, según el destino, va a "Promoción 1er Eq." o a "Otro equipo"
+      // (zona extra) — mismo criterio que usa el resto de la app. Antes esto tampoco
+      // se aplicaba aquí, por eso salía siempre en "Promoción 1er Eq." aunque fuera
+      // a JUVENIL A.
+      const zonaOrigenDestino = (typeof _zonaPromoParaDestino === 'function')
+        ? _zonaPromoParaDestino(eqPropio, 'JUVENIL A')
+        : 'promovidos_1er';
+      ejecutarPromocion(nombre, eqPropio, 'JUVENIL A', d, zonaOrigenDestino);
     });
   }
   autoGuardar();
