@@ -328,6 +328,18 @@ function toggleUYL(diaParam){
         : 'promovidos_1er';
       ejecutarPromocion(nombre, eqPropio, 'JUVENIL A', d, zonaOrigenDestino);
     });
+  } else {
+    // Al desactivar: deshacer las promociones que hizo la activación — vuelven a
+    // Disponibles de su equipo real. Solo se deshace el destino "JUVENIL A" — si
+    // alguien tenía OTRO destino a la vez (doblado en dos sitios), ese se respeta.
+    getPlantillaUYL().forEach(nombre=>{
+      const eqPropio = origen[nombre];
+      if(!eqPropio || eqPropio === 'JUVENIL A' || eqPropio === 'PRUEBA') return;
+      const destinos = getDestinos(d, eqPropio, nombre);
+      if(destinos.includes('JUVENIL A')){
+        quitarUnDestino(nombre, eqPropio, 'JUVENIL A', d);
+      }
+    });
   }
   autoGuardar();
   renderCards();
