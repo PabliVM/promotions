@@ -842,10 +842,45 @@ async function renderFbLista(){
     row.innerHTML = `
       <span class="fb-sesion-nombre" title="${s._nombre || s.id || ''}">${s._nombre || s.id || ''}</span>
       <span class="fb-sesion-ts">${fecha}</span>
-      <button class="fb-btn cargar" onclick="fbCargar('${safeNombre}')">⬇️ Cargar</button>
+      <button class="fb-btn cargar" onclick="fbCargar('${safeNombre}')" title="Cargar este backup en la app">⬆️ Cargar</button>
+      <button class="fb-btn fb-btn-secundario" onclick="fbDescargarBackup('${safeNombre}')" title="Descargar el .json y el PDF de este backup, sin cargarlo">⬇️</button>
       <button class="fb-btn borrar" onclick="fbBorrar('${safeNombre}', this)">🗑️</button>`;
     lista.appendChild(row);
   });
+}
+// Descarga el .json y el PDF de un backup guardado en la nube SIN cargarlo en la
+// app — para el caso de "me guardé esto pero no descargué el archivo en su momento,
+// quiero volver a descargarlo ahora". No toca la sesión activa para nada.
+async function fbDescargarBackup(nombre){
+  if(!window._fbReady){ toast('⏳ Firebase no conectado'); return; }
+  toast('☁️ Preparando descarga de "'+nombre+'"...');
+  const res = await window.fbCargarSesion(nombre);
+  if(!res || !res.ok){
+    toast('❌ No se pudo leer ese backup: '+(res && res.message || ''));
+    return;
+  }
+  const payload = res.data || {};
+  descargarJSONDesdePayload(payload, nombre);
+  setTimeout(()=>exportarPDF(nombre, payload), 400);
+}
+// Descarga cualquier payload (en vivo o leído de un backup guardado) como .json
+function descargarJSONDesdePayload(payload, nombreArchivo){
+  try{
+    const full = { ...payload, exportadoEl: new Date().toISOString(), version: 'rm_cantera_v3_completo' };
+    const json = JSON.stringify(full, null, 2);
+    const blob = new Blob([json], {type:'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g,'-');
+    const base = nombreArchivo
+      ? nombreArchivo.trim().replace(/[\\/:*?"<>|]/g,'_')
+      : 'campograma_backup_'+fecha;
+    a.href = url;
+    a.download = base+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ Copia de seguridad descargada');
+  }catch(e){ toast('❌ Error al exportar: '+e.message); }
 }
 async function fbGuardarActual(){
   if(!window._fbReady){ toast('⏳ Firebase no conectado'); return; }
@@ -1660,10 +1695,15 @@ function renderMultiEqBar(){
   };
   bar.appendChild(btnFoto);
 }
-function exportarPDF(nombrePersonalizado){
+function exportarPDF(nombrePersonalizado, payloadOverride){
   try{
     if(typeof window.jspdf === 'undefined'){ toast('❌ No se pudo cargar el generador de PDF'); return; }
     const { jsPDF } = window.jspdf;
+    // Si viene un payload (backup leído de la nube), usar SUS plantillas/porteros en
+    // vez de los de la app en vivo — para poder descargar el PDF de un backup antiguo
+    // sin tener que cargarlo primero.
+    const plantillasUsar = payloadOverride ? (payloadOverride.plantillas || {}) : plantillas;
+    const porterosUsar = payloadOverride ? (payloadOverride.porteros || []) : porteros;
     const doc = new jsPDF({ unit:'mm', format:'a4' });
     const margenIzq = 16;
     let y = 20;
@@ -1680,7 +1720,7 @@ function exportarPDF(nombrePersonalizado){
     y += 10;
     const equiposOrden = ['1ER EQUIPO', ...EQUIPOS];
     equiposOrden.forEach(eq=>{
-      const jugs = (plantillas[eq]||[]).slice().sort((a,b)=>a.localeCompare(b,'es'));
+      const jugs = (plantillasUsar[eq]||[]).slice().sort((a,b)=>a.localeCompare(b,'es'));
       if(y > 270){ doc.addPage(); y = 20; }
       doc.setFillColor(37,99,235);
       doc.rect(margenIzq, y-4.5, anchoUtil, 7, 'F');
@@ -1700,7 +1740,7 @@ function exportarPDF(nombrePersonalizado){
         const colAncho = anchoUtil/2;
         jugs.forEach((nombre,i)=>{
           if(y > 285){ doc.addPage(); y = 20; }
-          const esPor = porteros.includes(nombre);
+          const esPor = porterosUsar.includes(nombre);
           const col = i % 2;
           const fila = Math.floor(i/2);
           const x = margenIzq + 3 + col*colAncho;
@@ -1721,28 +1761,7 @@ function exportarPDF(nombrePersonalizado){
   }catch(e){ toast('❌ Error al generar PDF: '+e.message); console.error(e); }
 }
 function exportarDatos(nombrePersonalizado){
-  try{
-    const payload = {
-      ...buildPayload(false),
-      exportadoEl: new Date().toISOString(),
-      version: 'rm_cantera_v3_completo'
-    };
-    const json = JSON.stringify(payload, null, 2);
-    const blob = new Blob([json], {type:'application/json'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g,'-');
-    // Nombre de archivo: el que se escribió al guardar (si viene), si no la fecha de
-    // siempre — se limpian caracteres que no valen en un nombre de archivo (: / \ etc.)
-    const base = nombrePersonalizado
-      ? nombrePersonalizado.trim().replace(/[\\/:*?"<>|]/g,'_')
-      : 'campograma_backup_'+fecha;
-    a.href = url;
-    a.download = base+'.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast('✅ Copia de seguridad completa descargada');
-  }catch(e){ toast('❌ Error al exportar: '+e.message); }
+  descargarJSONDesdePayload(buildPayload(false), nombrePersonalizado);
 }
 function importarDatos(){
   document.getElementById('import-file').value = '';
