@@ -843,7 +843,7 @@ async function renderFbLista(){
       <span class="fb-sesion-nombre" title="${s._nombre || s.id || ''}">${s._nombre || s.id || ''}</span>
       <span class="fb-sesion-ts">${fecha}</span>
       <button class="fb-btn cargar" onclick="fbCargar('${safeNombre}')" title="Cargar este backup en la app">⬆️ Cargar</button>
-      <button class="fb-btn fb-btn-secundario" onclick="fbDescargarBackup('${safeNombre}')" title="Descargar el .json y el PDF de este backup, sin cargarlo">⬇️</button>
+      <button class="fb-btn cargar" onclick="fbDescargarBackup('${safeNombre}')" title="Descargar el .json y el PDF de este backup, sin cargarlo">⬇️ Descargar</button>
       <button class="fb-btn borrar" onclick="fbBorrar('${safeNombre}', this)">🗑️</button>`;
     lista.appendChild(row);
   });
