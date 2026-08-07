@@ -348,10 +348,12 @@
 <div id="fb-overlay">
   <div id="fb-box">
     <h3>☁️ BACK UP</h3>
-    <div class="fb-seccion-titulo" style="margin-top:4px;">1. Guardar</div>
-    <div id="fb-nueva-row">
-      <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)" oninput="actualizarBotonGuardarFb()">
-      <button id="fb-guardar-btn" class="fb-btn cargar" onclick="fbGuardarActual()" disabled>💾 Guardar</button>
+    <div class="fb-seccion">
+      <div class="fb-seccion-titulo">1. Guardar</div>
+      <div id="fb-nueva-row">
+        <input id="fb-nueva-inp" type="text" placeholder="Nombre de la sesión (ej: Semana 12)" oninput="actualizarBotonGuardarFb()">
+        <button id="fb-guardar-btn" class="fb-btn cargar" onclick="fbGuardarActual()" disabled>💾 Guardar</button>
+      </div>
     </div>
 
     <div class="fb-seccion">
@@ -364,15 +366,7 @@
     </div>
 
     <div class="fb-seccion">
-      <div class="fb-seccion-titulo">3. Descargar</div>
-      <div class="fb-seccion-btns">
-        <button class="fb-btn fb-btn-secundario" onclick="exportarDatos()" title="Descarga un archivo con todo, para guardar en tu ordenador">💾 .json</button>
-        <button class="fb-btn fb-btn-secundario" onclick="exportarPDF()" title="PDF legible con todas las plantillas">📄 PDF</button>
-      </div>
-    </div>
-
-    <div class="fb-seccion">
-      <div class="fb-seccion-titulo">4. Mantenimiento</div>
+      <div class="fb-seccion-titulo">3. Mantenimiento</div>
       <div class="fb-seccion-btns">
         <button class="fb-btn fb-btn-peligro" onclick="limpiarCamposResidualesConfirmar()" title="Borra campos antiguos sin uso (data_por_eq/prominfo_por_eq)">🧹 Limpiar campos residuales</button>
       </div>
