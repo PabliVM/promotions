@@ -219,15 +219,14 @@ function hacerBackupDiarioSiHaceFalta(){
     const hoy = new Date().toISOString().slice(0,10);
     const ultimo = localStorage.getItem('rm_ultimo_backup');
     if(ultimo === hoy) return;
-    if(typeof window.fbGuardarBackupDiario !== 'function') return;
     const payload = buildPayload(false);
-    window.fbGuardarBackupDiario(payload).then(res=>{
+    const nombreAuto = 'Auto ' + hoy;
+    window.fbGuardarSesion(nombreAuto, payload).then(async res=>{
       if(res && res.ok){
         localStorage.setItem('rm_ultimo_backup', hoy);
         console.log('💾 Copia de seguridad diaria guardada:', hoy);
-        // Además de guardar en Firebase, descargar automáticamente una copia local en
-        // JSON — así siempre hay un archivo tuyo, sin depender de acordarte de pulsar
-        // ningún botón. Se hace máximo una vez al día, igual que el backup de Firebase.
+        // Mismo pool que "Guardar" manual — máximo 5 en total, se borran los viejos
+        await limpiarSesionesAntiguas();
         try{ exportarDatos(); }catch(e){ console.warn('Descarga automática diaria falló:', e); }
       }
     });
@@ -770,58 +769,36 @@ function abrirFbPanel(){
     inp.value = 'Backup ' + String(hoy.getDate()).padStart(2,'0') + '/' + String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear() + ' ' + String(hoy.getHours()).padStart(2,'0') + ':' + String(hoy.getMinutes()).padStart(2,'0');
   }
   renderFbLista();
-  renderBackupsLista();
 }
 function cerrarFbPanel(){
   document.getElementById('fb-overlay').classList.remove('open');
 }
-// ── Backups automáticos (diarios + pre-acción) — listar y restaurar sin consola ──
-async function renderBackupsLista(){
-  const cont = document.getElementById('fb-backups-lista');
-  if(!cont) return; // panel viejo sin este bloque en el HTML todavía
-  if(typeof window.fbListarBackups !== 'function'){ cont.innerHTML = ''; return; }
-  cont.innerHTML = '<div class="fb-empty">Cargando...</div>';
-  const res = await window.fbListarBackups();
-  if(!res || !res.ok){
-    cont.innerHTML = '<div class="fb-empty">No se pudieron listar los backups</div>';
-    return;
-  }
-  const ids = res.data || [];
-  if(!ids.length){
-    cont.innerHTML = '<div class="fb-empty">Sin backups todavía</div>';
-    return;
-  }
-  cont.innerHTML = '';
-  ids.forEach(id=>{
-    const esFecha = /^\d{4}-\d{2}-\d{2}$/.test(id);
-    const etiqueta = esFecha ? id : (id.startsWith('pre_accion_') ? '📌 Antes de una acción' : id);
-    const row = document.createElement('div');
-    row.className = 'fb-sesion-row';
-    const safeId = id.replace(/'/g, "\\'");
-    row.innerHTML = `
-      <span class="fb-sesion-nombre" title="${id}">${etiqueta}</span>
-      <span class="fb-sesion-ts"></span>
-      <button class="fb-btn cargar" onclick="fbRestaurarBackupUI('${safeId}')">⬇️ Restaurar</button>`;
-    cont.appendChild(row);
-  });
+// Mostrar/ocultar el desplegable "Desde la nube" con los últimos backups (máx 5)
+function toggleFbLista(){
+  const lista = document.getElementById('fb-lista');
+  const btn = document.getElementById('fb-nube-toggle-btn');
+  if(!lista) return;
+  const abierto = lista.style.display !== 'none';
+  lista.style.display = abierto ? 'none' : 'block';
+  if(btn) btn.textContent = (abierto ? '☁️ Desde la nube ▾' : '☁️ Desde la nube ▴');
+  if(!abierto) renderFbLista();
 }
-// Restaura un backup como sesión "principal" — pide confirmación explícita primero,
-// igual que la restauración de un archivo .json, porque sobrescribe lo que haya ahora.
-async function fbRestaurarBackupUI(id){
-  if(!confirm('¿Restaurar el backup "'+id+'"? Se sobrescribirá TODO lo que tengas ahora en la sesión principal. Se recomienda descargar antes una copia (botón "📥 Descargar") por si acaso.')){ return; }
-  toast('☁️ Restaurando backup...');
-  const res = await window.fbCargarBackup(id);
-  if(!res || !res.ok){
-    toast('❌ No se pudo cargar ese backup: ' + (res && res.message || ''));
-    return;
-  }
-  const guardado = await window.fbGuardarSesion('principal', res.data);
-  if(!guardado || !guardado.ok){
-    toast('❌ Se leyó el backup pero no se pudo guardar como sesión principal');
-    return;
-  }
-  toast('✅ Backup restaurado — recarga la página para verlo');
-  cerrarFbPanel();
+// Mantiene como máximo 5 backups en la nube (automáticos + manuales mezclados,
+// ordenados por fecha) — borra los más antiguos que sobren. Nunca toca "principal"
+// (esa es la sesión en vivo, no un backup).
+async function limpiarSesionesAntiguas(maxGuardados){
+  maxGuardados = maxGuardados || 5;
+  try{
+    const res = await window.fbListarSesiones();
+    if(!res || !res.ok) return;
+    const sesiones = (Array.isArray(res.data) ? res.data : [])
+      .filter(s => (s._nombre || s.id) !== 'principal');
+    sesiones.sort((a,b)=> (b._ts?.seconds||0) - (a._ts?.seconds||0));
+    const sobran = sesiones.slice(maxGuardados);
+    for(const s of sobran){
+      await window.fbEliminarSesion(s._nombre || s.id);
+    }
+  }catch(e){ console.warn('limpiarSesionesAntiguas error:', e); }
 }
 async function renderFbLista(){
   const lista = document.getElementById('fb-lista');
@@ -832,14 +809,15 @@ async function renderFbLista(){
     toast('❌ Firebase: ' + (res.message || 'no se pudieron listar las sesiones'));
     return;
   }
-  const sesiones = Array.isArray(res.data) ? res.data : [];
+  const sesiones = (Array.isArray(res.data) ? res.data : [])
+    .filter(s => (s._nombre || s.id) !== 'principal');
   if(!sesiones.length){
-    lista.innerHTML = '<div class="fb-empty">No hay sesiones guardadas</div>';
+    lista.innerHTML = '<div class="fb-empty">No hay backups todavía</div>';
     return;
   }
   sesiones.sort((a,b)=> (b._ts?.seconds||0) - (a._ts?.seconds||0));
   lista.innerHTML = '';
-  sesiones.forEach(s=>{
+  sesiones.slice(0,5).forEach(s=>{
     const row = document.createElement('div');
     row.className = 'fb-sesion-row';
     const fecha = s._ts?.seconds
@@ -866,6 +844,7 @@ async function fbGuardarActual(){
     _fbSesionActiva = nombre;
     toast('✅ Guardado en la nube: '+nombre);
     inp.value = '';
+    await limpiarSesionesAntiguas(); // mantener solo los 5 últimos backups
     renderFbLista();
     exportarDatos();
     exportarPDF();
