@@ -167,6 +167,10 @@ function intentarGuardarConReintentos(sesion, payload, miVersion, intento){
       console.log('✓ Auto-sync Firebase:', sesion);
       if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
       ocultarAvisoGuardadoFallido();
+      // Actualizar la referencia de "último estado bueno conocido" — así el freno solo
+      // salta ante una CAÍDA BRUSCA respecto al guardado anterior, no se acumula si vas
+      // vaciando el campo poco a poco a lo largo del día (eso es normal).
+      if(typeof fijarTotalJugadoresConocido === 'function') fijarTotalJugadoresConocido();
       return;
     }
     console.warn('Auto-sync Firebase error (intento '+(intento+1)+'):', res && res.message);
