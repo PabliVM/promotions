@@ -103,10 +103,16 @@ function autoGuardar(){
       // ── FRENO DE EMERGENCIA (memoria local de esta pestaña) ──
       if(!_saltarFreno && typeof hayQueFrenarGuardado === 'function' && hayQueFrenarGuardado()){
         if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+        // Copia de seguridad automática JUSTO en el momento en que se detecta la caída
+        // — así queda guardado el "último estado antes de la sospecha" aparte, tanto si
+        // luego confirmas como si no. No sustituye al aviso, es una red extra.
+        if(typeof window.fbGuardarBackupPreAccion === 'function'){
+          window.fbGuardarBackupPreAccion(buildPayload(false), 'Antes de una caída brusca detectada por el freno');
+        }
         if(!window._frenoYaAvisado){
           window._frenoYaAvisado = true;
           abrirConfirmarConTexto(
-            'Se han detectado MUCHOS MENOS jugadores de golpe en las plantillas. Esto puede indicar un fallo — el guardado automático se ha PARADO para no sobreescribir datos buenos.',
+            'Se han detectado MUCHOS MENOS jugadores (o el campo vacío de golpe). Esto puede indicar un fallo — el guardado automático se ha PARADO para no sobreescribir datos buenos. Se ha guardado una copia de seguridad del estado justo antes de esto, por si acaso.',
             ()=>{
               window._frenoYaAvisado = false;
               fijarTotalJugadoresConocido(); // aceptar el nuevo estado como bueno
@@ -126,6 +132,9 @@ function autoGuardar(){
         const chk = await window.fbContarJugadoresServidor();
         if(chk && chk.ok && chk.total > 5 && totalASalvar < chk.total * 0.5){
           if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+          if(typeof window.fbGuardarBackupPreAccion === 'function'){
+            window.fbGuardarBackupPreAccion(buildPayload(false), 'Antes de un posible choque con otra pestaña/dispositivo');
+          }
           if(!window._frenoYaAvisado){
             window._frenoYaAvisado = true;
             abrirConfirmarConTexto(
