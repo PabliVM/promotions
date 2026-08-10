@@ -990,6 +990,14 @@ async function fbCargar(nombre){
     renderMultiEqBar();
     cerrarFbPanel();
     toast('✅ Sesión "'+nombre+'" cargada');
+    // Cargar una copia guardada es una acción DELIBERADA y ya confirmada (el confirm()
+    // de arriba) — el freno de emergencia no debe bloquear este guardado ni aunque la
+    // copia cargada tenga menos jugadores/campo que el estado roto que había antes.
+    // Además, hay que fijar la nueva referencia de "bueno conocido" con los datos
+    // recién cargados, si no el PRÓXIMO guardado normal se compararía contra el estado
+    // antiguo (roto) y podría dispararse el freno sin sentido.
+    window._saltarFrenoGuardado = true;
+    if(typeof fijarTotalJugadoresConocido === 'function') fijarTotalJugadoresConocido();
     autoGuardar();
   }catch(e){
     console.error('fbCargar render error:', e);
