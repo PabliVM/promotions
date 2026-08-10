@@ -94,6 +94,13 @@ window._hayGuardadoPendiente = false; // true desde que hay un cambio local hast
 function autoGuardar(){
   _guardadoVersion++;
   window._hayGuardadoPendiente = true;
+  // Cualquier edición actualiza la "foto" de la semana que se está viendo AHORA MISMO
+  // (con los datos en vivo, no una foto vieja) y la marca como "sucia" para que se
+  // archive de verdad en su propio documento de Firebase. Antes esto solo pasaba al
+  // cambiar de semana con el calendario; si editabas una semana PASADA sin volver a
+  // cambiar de semana, el cambio se guardaba en "principal" pero nunca se archivaba
+  // en el sitio real de esa semana — y se perdía al recargar.
+  if(typeof guardarFotoSemanaActual === 'function') guardarFotoSemanaActual();
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer=setTimeout(async ()=>{
     const miVersion = _guardadoVersion; // versión en el momento de EMPEZAR a guardar esto
