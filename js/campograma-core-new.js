@@ -233,13 +233,25 @@ function hacerBackupDiarioSiHaceFalta(){
   }catch(e){ console.warn('Error en backup diario:', e); }
 }
 var _ultimoTotalJugadoresConocido = null;
+var _ultimoTotalCampoConocido = null;
 function fijarTotalJugadoresConocido(){
   _ultimoTotalJugadoresConocido = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
+  _ultimoTotalCampoConocido = EQUIPOS.reduce((acc,eq)=>acc+(data[dia]?.[eq]?.campo||[]).length, 0);
 }
 function hayQueFrenarGuardado(){
-  if(_ultimoTotalJugadoresConocido === null || _ultimoTotalJugadoresConocido < 5) return false;
-  const totalActual = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
-  return totalActual < _ultimoTotalJugadoresConocido * 0.5;
+  if(_ultimoTotalJugadoresConocido !== null && _ultimoTotalJugadoresConocido >= 5){
+    const totalActual = EQUIPOS.reduce((acc,eq)=>acc+(plantillas[eq]||[]).length, 0);
+    if(totalActual < _ultimoTotalJugadoresConocido * 0.5) return true;
+  }
+  // Freno específico para el campo: si había varios jugadores colocados y de golpe
+  // no queda NADIE en ningún equipo, parar y avisar — esto es justo lo que pasó una
+  // vez: el campo se vació sin que nadie se diera cuenta, y esa foto vacía se terminó
+  // guardando y archivando como si fuera buena, perdiendo la colocación real.
+  if(_ultimoTotalCampoConocido !== null && _ultimoTotalCampoConocido >= 3){
+    const totalCampoActual = EQUIPOS.reduce((acc,eq)=>acc+(data[dia]?.[eq]?.campo||[]).length, 0);
+    if(totalCampoActual === 0) return true;
+  }
+  return false;
 }
 function diaHoyIdx(){
   const d = new Date().getDay();
@@ -842,8 +854,8 @@ async function renderFbLista(){
     row.innerHTML = `
       <span class="fb-sesion-nombre" title="${s._nombre || s.id || ''}">${s._nombre || s.id || ''}</span>
       <span class="fb-sesion-ts">${fecha}</span>
-      <button class="fb-btn cargar" onclick="fbCargar('${safeNombre}')" title="Cargar este backup en la app">⬆️ Cargar</button>
-      <button class="fb-btn cargar" onclick="fbDescargarBackup('${safeNombre}')" title="Descargar el .json y el PDF de este backup, sin cargarlo">⬇️ Descargar</button>
+      <button class="fb-btn cargar" style="padding:4px 12px;font-size:11px;" onclick="fbCargar('${safeNombre}')" title="Cargar este backup en la app">⬆️ Cargar</button>
+      <button class="fb-btn cargar" style="padding:4px 12px;font-size:11px;" onclick="fbDescargarBackup('${safeNombre}')" title="Descargar el .json y el PDF de este backup, sin cargarlo">⬇️ Descargar</button>
       <button class="fb-btn borrar" onclick="fbBorrar('${safeNombre}', this)">🗑️</button>`;
     lista.appendChild(row);
   });
