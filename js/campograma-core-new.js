@@ -142,8 +142,15 @@ EQUIPOS.forEach(eq=> extraZonas[eq]=false);
 extraZonas['CASTILLA'] = true; // "Otros equipos" viene activada de fábrica en Castilla
 var drag = null;
 var dOff = {x:0,y:0};
-var key    = (d,e,n) => d+'|'+e+'|'+n;
-var getPos = (d,e,n,i) => pos[key(d,e,n)] || POS_DEF[i%POS_DEF.length] || [50,50];
+// Clave de posición: usa la FECHA REAL del día (no solo "LUNES"/"MARTES") — así es
+// imposible que dos semanas distintas compartan la misma posición guardada, pase lo
+// que pase con el resto del sistema de "fotos" por semana (robusto por construcción,
+// no solo porque el resto del código se comporte bien).
+var key    = (d,e,n) => (window.FECHAS_COMPLETAS?.[d] || d)+'|'+e+'|'+n;
+// Formato antiguo (solo nombre de día, sin fecha) — SOLO para leer posiciones que ya
+// estaban guardadas antes de este cambio, así no se pierden.
+var _keyViejo = (d,e,n) => d+'|'+e+'|'+n;
+var getPos = (d,e,n,i) => pos[key(d,e,n)] || pos[_keyViejo(d,e,n)] || POS_DEF[i%POS_DEF.length] || [50,50];
 var savePos= (d,e,n,t,l) => pos[key(d,e,n)] = [clamp(t,0,100), clamp(l,0,100)];
 function esPortero(eq,nombre,i){
   const [t,l]=getPos(dia,eq,nombre,i);
