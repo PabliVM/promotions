@@ -300,6 +300,9 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
   const enOtraZona = new Set();
   ZONAS.forEach(z=>{ if(z!=='disponibles') (destino[z]||[]).forEach(n=>enOtraZona.add(n)); });
   destino.disponibles = destino.disponibles.filter(n=>!enOtraZona.has(n));
+  if(eq==='CASTILLA' && toDia){
+    console.log('[diag-copia] tras limpieza CASTILLA/'+toDia+' → disponibles:', JSON.stringify(destino.disponibles), '| campo:', JSON.stringify(destino.campo));
+  }
 
   // Posiciones de campo (si se copió el campo) — se usa la clave robusta (fecha real,
   // no solo nombre de día) tanto para leer el origen como para escribir el destino,
