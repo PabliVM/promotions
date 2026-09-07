@@ -116,9 +116,21 @@ function actualizarLblSemana(){
   }
 }
 // Abrir calendario en modo copia de semana (destino, semana completa)
+// Lunes de la semana a la que pertenece una fecha cualquiera — para tener siempre un
+// día preseleccionado por defecto al abrir el calendario (si no, si el usuario no
+// clica activamente un día, _calLunesSel se quedaba en null y "confirmar" no hacía
+// nada, sin ningún aviso de que faltaba elegir).
+function _lunesDeSemana(fecha){
+  const d = new Date(fecha);
+  const dow = d.getDay();
+  const diff = dow===0 ? -6 : 1-dow;
+  d.setDate(d.getDate()+diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
 function abrirCalCopia(){
   _calModoCopia = 'semana';
-  _calLunesSel = _copySemanaDestLunes ? new Date(_copySemanaDestLunes) : null;
+  _calLunesSel = _copySemanaDestLunes ? new Date(_copySemanaDestLunes) : _lunesDeSemana(new Date());
   _calFecha = _copySemanaDestLunes ? new Date(_copySemanaDestLunes) : new Date();
   renderCal();
   document.getElementById('cal-overlay').classList.add('open');
@@ -126,7 +138,7 @@ function abrirCalCopia(){
 // Abrir calendario en modo copia de día (destino, día concreto de otra semana)
 function abrirCalCopiaDir(){
   _calModoCopia = 'dia';
-  _calLunesSel = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : null;
+  _calLunesSel = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : _lunesDeSemana(new Date());
   _calFecha = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : new Date();
   renderCal();
   document.getElementById('cal-overlay').classList.add('open');
@@ -134,7 +146,7 @@ function abrirCalCopiaDir(){
 // Abrir calendario en modo ORIGEN — elegir de qué semana pasada/futura viene el día a copiar
 function abrirCalCopiaOrigen(){
   _calModoCopia = 'origen';
-  _calLunesSel = _copyOrigenSemanaLunes ? new Date(_copyOrigenSemanaLunes) : null;
+  _calLunesSel = _copyOrigenSemanaLunes ? new Date(_copyOrigenSemanaLunes) : _lunesDeSemana(new Date());
   _calFecha = _copyOrigenSemanaLunes ? new Date(_copyOrigenSemanaLunes) : new Date();
   renderCal();
   document.getElementById('cal-overlay').classList.add('open');
