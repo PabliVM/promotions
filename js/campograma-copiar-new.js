@@ -138,6 +138,7 @@ function abrirCalCopia(){
 // Abrir calendario en modo copia de día (destino, día concreto de otra semana)
 function abrirCalCopiaDir(){
   _calModoCopia = 'dia';
+  console.log('[diag-abrirCalCopiaDir] justo después de fijarlo:', _calModoCopia);
   _calLunesSel = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : _lunesDeSemana(new Date());
   _calFecha = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : new Date();
   renderCal();
