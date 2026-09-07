@@ -178,18 +178,44 @@ async function obtenerFotoSemanaSoloLectura(lunesKey){
   }
   return null;
 }
+// Igual que obtenerFotoSemanaSoloLectura, pero si esa semana no existe todavía en
+// ningún sitio, crea una estructura nueva vacía (con las plantillas actuales en
+// Disponibles) — sin tocar la sesión en vivo. Se usa para poder copiar A una semana
+// destino distinta a la activa aunque esa semana nunca se haya abierto antes.
+async function obtenerOCrearFotoSemana(lunesKey){
+  const existente = await obtenerFotoSemanaSoloLectura(lunesKey);
+  if(existente) return existente;
+  const dataVacia = JSON.parse(JSON.stringify(RAW));
+  EQUIPOS.forEach(eq=>{
+    (plantillas[eq]||[]).forEach(nombre=>{
+      DIAS.forEach(d=>{
+        if(!dataVacia[d][eq].disponibles.includes(nombre)) dataVacia[d][eq].disponibles.push(nombre);
+      });
+    });
+  });
+  return {
+    data: dataVacia, pos: {}, promInfo: {}, multiEq: {}, modoPartido: {}, modoDescanso: {},
+    tipoPartido: {}, primerEquipoJugadores: {}, notas: {}, origen: JSON.parse(JSON.stringify(origen)),
+    historicoJugador: {}
+  };
+}
 // Copia un equipo de un día concreto (de la semana ORIGEN indicada) a un día concreto
-// (de la semana actual, que es donde vive 'data' en vivo). Respeta el modo elegido
-// (todo/campo/inferiores) y, si el jugador copiado está promocionado a otro equipo,
-// copia también esa promoción (promInfo) y lo añade a Disponibles del equipo destino
-// de la promoción — igual que hace el sistema normal al promocionar, para que no
-// aparezca como "huérfano"/doblado.
-function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, fromDia, toDia, eq, modo){
+// (de la semana DESTINO indicada — por defecto la semana activa en vivo, pero puede
+// ser cualquier otra pasando datosDestinoSemana/posDestinoSemana/promInfoDestinoSemana).
+// Respeta el modo elegido (todo/campo/inferiores) y, si el jugador copiado está
+// promocionado a otro equipo, copia también esa promoción (promInfo) y lo añade a
+// Disponibles del equipo destino de la promoción — igual que hace el sistema normal
+// al promocionar, para que no aparezca como "huérfano"/doblado.
+function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, fromDia, toDia, eq, modo, datosDestinoSemana, posDestinoSemana, promInfoDestinoSemana){
+  // Por defecto, el destino es la sesión EN VIVO (comportamiento de siempre)
+  const dDestino = datosDestinoSemana || data;
+  const pDestino = posDestinoSemana || pos;
+  const piDestino = promInfoDestinoSemana || promInfo;
   const origenData = datosOrigenSemana?.[fromDia]?.[eq];
   if(!origenData) return;
-  if(!data[toDia]) data[toDia] = {};
-  if(!data[toDia][eq]) data[toDia][eq] = {};
-  const destino = data[toDia][eq];
+  if(!dDestino[toDia]) dDestino[toDia] = {};
+  if(!dDestino[toDia][eq]) dDestino[toDia][eq] = {};
+  const destino = dDestino[toDia][eq];
 
   if(modo === 'todo'){
     ZONAS.forEach(z=>{ destino[z] = JSON.parse(JSON.stringify(origenData[z]||[])); });
@@ -210,15 +236,16 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
   // no solo nombre de día) tanto para leer el origen como para escribir el destino,
   // igual que hace savePos()/getPos() en el resto de la app. La fecha del ORIGEN se
   // calcula sobre la semana de origen real (que puede ser otra semana distinta a la
-  // actual, si se copió con "📅 Otra semana"), y la del DESTINO sobre la semana activa.
+  // actual, si se copió con "📅 Otra semana"), y la del DESTINO sobre la semana a la
+  // que se está copiando de verdad (puede ser distinta a la activa también).
   if(modo === 'todo' || modo === 'campo'){
     const fechaOrigen = fechaCompletaDeDia(fromDia, _copyOrigenSemanaLunes);
-    const fechaDestino = fechaCompletaDeDia(toDia); // siempre semana activa (destino)
+    const fechaDestino = fechaCompletaDeDia(toDia, _copyDestinoSemanaLunesActual);
     (origenData.campo||[]).forEach(n=>{
       const kOrigenNuevo = (fechaOrigen||fromDia)+'|'+eq+'|'+n;
       const kOrigenViejo = fromDia+'|'+eq+'|'+n; // compatibilidad con datos ya guardados
       const p = posOrigenSemana?.[kOrigenNuevo] || posOrigenSemana?.[kOrigenViejo];
-      if(p) pos[(fechaDestino||toDia)+'|'+eq+'|'+n] = [...p];
+      if(p) pDestino[(fechaDestino||toDia)+'|'+eq+'|'+n] = [...p];
     });
   }
 
@@ -232,25 +259,25 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
     (destino.campo||[]).forEach(n=>{
       const eqReal = origen[n];
       if(!eqReal || eqReal === eq || eqReal === 'PRUEBA') return; // es de este equipo, o a prueba
-      if(!data[toDia][eqReal]) data[toDia][eqReal] = {};
-      ZONAS.forEach(z=>{ if(!data[toDia][eqReal][z]) data[toDia][eqReal][z] = []; });
+      if(!dDestino[toDia][eqReal]) dDestino[toDia][eqReal] = {};
+      ZONAS.forEach(z=>{ if(!dDestino[toDia][eqReal][z]) dDestino[toDia][eqReal][z] = []; });
       // En Castilla, según el destino, la promoción va a "Promoción 1er Eq." o a
       // "Otro equipo" (zona extra) — mismo criterio que usa el resto de la app.
       const zonaOrigenDestino = (typeof _zonaPromoParaDestino === 'function') ? _zonaPromoParaDestino(eqReal, eq) : 'promovidos_1er';
-      if(!data[toDia][eqReal][zonaOrigenDestino].includes(n)){
-        data[toDia][eqReal][zonaOrigenDestino].push(n);
+      if(!dDestino[toDia][eqReal][zonaOrigenDestino].includes(n)){
+        dDestino[toDia][eqReal][zonaOrigenDestino].push(n);
       }
-      if(!promInfo[toDia]) promInfo[toDia] = {};
-      if(!promInfo[toDia][eqReal]) promInfo[toDia][eqReal] = {};
-      const yaTiene = promInfo[toDia][eqReal][n];
+      if(!piDestino[toDia]) piDestino[toDia] = {};
+      if(!piDestino[toDia][eqReal]) piDestino[toDia][eqReal] = {};
+      const yaTiene = piDestino[toDia][eqReal][n];
       const yaTieneArr = yaTiene ? (Array.isArray(yaTiene) ? yaTiene : [yaTiene]) : [];
       if(!yaTieneArr.includes(eq)){
         const nuevaLista = [...yaTieneArr, eq];
-        promInfo[toDia][eqReal][n] = nuevaLista.length===1 ? nuevaLista[0] : nuevaLista;
+        piDestino[toDia][eqReal][n] = nuevaLista.length===1 ? nuevaLista[0] : nuevaLista;
       }
       // Quitar de Disponibles/Banquillo de su equipo real ese día, para no duplicar
       ['disponibles','banquillo'].forEach(z=>{
-        const arr = data[toDia][eqReal][z];
+        const arr = dDestino[toDia][eqReal][z];
         const i = arr.indexOf(n);
         if(i>=0) arr.splice(i,1);
       });
@@ -261,26 +288,29 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
   if(modo === 'todo' || modo === 'inferiores'){
     const infoOrigen = promInfoOrigenSemana?.[fromDia]?.[eq] || {};
     if(Object.keys(infoOrigen).length){
-      if(!promInfo[toDia]) promInfo[toDia] = {};
-      if(!promInfo[toDia][eq]) promInfo[toDia][eq] = {};
+      if(!piDestino[toDia]) piDestino[toDia] = {};
+      if(!piDestino[toDia][eq]) piDestino[toDia][eq] = {};
       Object.keys(infoOrigen).forEach(nombre=>{
-        promInfo[toDia][eq][nombre] = infoOrigen[nombre];
+        piDestino[toDia][eq][nombre] = infoOrigen[nombre];
         const destinos = Array.isArray(infoOrigen[nombre]) ? infoOrigen[nombre] : [infoOrigen[nombre]];
         destinos.forEach(destEq=>{
           if(destEq === '1ER EQUIPO') return; // no tiene 'disponibles' normal
-          if(!data[toDia][destEq]) return;
-          if(!data[toDia][destEq].disponibles) data[toDia][destEq].disponibles = [];
-          if(!data[toDia][destEq].disponibles.includes(nombre)){
-            data[toDia][destEq].disponibles.push(nombre);
+          if(!dDestino[toDia][destEq]) return;
+          if(!dDestino[toDia][destEq].disponibles) dDestino[toDia][destEq].disponibles = [];
+          if(!dDestino[toDia][destEq].disponibles.includes(nombre)){
+            dDestino[toDia][destEq].disponibles.push(nombre);
           }
         });
       });
     }
   }
 }
-function copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, from, to, eqs, modo){
-  eqs.forEach(eq=>copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, from, to, eq, modo));
+function copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, from, to, eqs, modo, datosDestinoSemana, posDestinoSemana, promInfoDestinoSemana){
+  eqs.forEach(eq=>copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, from, to, eq, modo, datosDestinoSemana, posDestinoSemana, promInfoDestinoSemana));
 }
+// Semana destino de la que se están calculando fechas ahora mismo en copyUnEquipo —
+// null cuando el destino es la semana activa en vivo. Se fija justo antes de copiar.
+var _copyDestinoSemanaLunesActual = null;
 async function ejecutarCopia(){
   const eqs=[..._copyEqs];
   if(!eqs.length){toast('Selecciona al menos un equipo');return;}
@@ -300,24 +330,36 @@ async function ejecutarCopia(){
   if(_copyTipo==='semana'){
     if(!_copySemanaDestLunes){ toast('⚠️ Selecciona una semana destino'); return; }
     const fechasDest = calcFechasSemana(_copySemanaDestLunes);
-    if(fechasDest['LUNES'] === FECHAS['LUNES']){ toast('⚠️ La semana destino es la misma que la actual'); return; }
+    const lunesDestKey = _copySemanaDestLunes.getFullYear()+'-'+String(_copySemanaDestLunes.getMonth()+1).padStart(2,'0')+'-'+String(_copySemanaDestLunes.getDate()).padStart(2,'0');
+    const esMismaSemana = fechasDest['LUNES'] === FECHAS['LUNES'];
+    if(esMismaSemana){ toast('⚠️ La semana destino es la misma que la actual'); return; }
+    toast('📅 Preparando semana destino…');
+    const fotoDest = await obtenerOCrearFotoSemana(lunesDestKey);
+    _copyDestinoSemanaLunesActual = _copySemanaDestLunes;
     DIAS.forEach((d)=>{
-      copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo);
+      copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo, fotoDest.data, fotoDest.pos, fotoDest.promInfo);
     });
+    _copyDestinoSemanaLunesActual = null;
+    await guardarFotoSemanaEnFirebase(lunesDestKey, fotoDest);
     toast('Copiado a semana ' + fechasDest['LUNES'] + ' – ' + fechasDest['DOMINGO']);
   } else {
     if(!_copyDiasDest.size){toast('Selecciona al menos un día');return;}
     if(_copyDiaSemanaLunes){
       const fechasDest = calcFechasSemana(_copyDiaSemanaLunes);
+      const lunesDestKey = _copyDiaSemanaLunes.getFullYear()+'-'+String(_copyDiaSemanaLunes.getMonth()+1).padStart(2,'0')+'-'+String(_copyDiaSemanaLunes.getDate()).padStart(2,'0');
       const esMismaSemana = fechasDest['LUNES'] === FECHAS['LUNES'];
       if(esMismaSemana){
         _copyDiasDest.forEach(d=>copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo));
       } else {
-        // Copiar a una semana DISTINTA a la actual: de momento no soportado (el
-        // guardado de esa semana no está conectado a Firebase desde aquí). Avisar en
-        // vez de fingir que se ha hecho algo.
-        toast('⚠️ Copiar a una semana distinta a la actual no está disponible todavía');
-        return;
+        // Copiar a una semana DISTINTA a la actual: se lee/crea esa semana, se copia
+        // en su propia estructura (sin tocar la sesión en vivo), y se guarda
+        // directamente en su documento de Firebase.
+        toast('📅 Preparando semana destino…');
+        const fotoDest = await obtenerOCrearFotoSemana(lunesDestKey);
+        _copyDestinoSemanaLunesActual = _copyDiaSemanaLunes;
+        _copyDiasDest.forEach(d=>copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo, fotoDest.data, fotoDest.pos, fotoDest.promInfo));
+        _copyDestinoSemanaLunesActual = null;
+        await guardarFotoSemanaEnFirebase(lunesDestKey, fotoDest);
       }
     } else {
       _copyDiasDest.forEach(d=>copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo));
@@ -326,6 +368,22 @@ async function ejecutarCopia(){
   }
   autoGuardar(); renderDias(); renderCards();
   cerrarCopiarModal();
+}
+// Guarda una foto de semana (posiblemente distinta a la activa) directamente en su
+// documento de Firebase, y actualiza también la caché local para que si se navega
+// ahí con el calendario en esta misma sesión, se vea ya actualizada sin re-pedirla.
+async function guardarFotoSemanaEnFirebase(lunesKey, foto){
+  _semanasGuardadas[lunesKey] = foto;
+  if(typeof window.fbGuardarSemanaArchivada === 'function'){
+    const res = await window.fbGuardarSemanaArchivada(lunesKey, foto);
+    if(!res || !res.ok){
+      toast('❌ Error al guardar en Firebase: '+(res && res.message || ''));
+      return;
+    }
+  }
+  // Si esta semana estaba marcada como pendiente de archivar por otro motivo, ya no
+  // hace falta — se acaba de guardar ahora mismo directamente.
+  if(window._semanasSucias) window._semanasSucias.delete(lunesKey);
 }
 // Alias para compatibilidad
 function copyDia(from,to){
