@@ -211,10 +211,7 @@ function renderCopyDias(){
   cont.innerHTML='';
   _copyDiasDest = new Set(); // reset selección al cambiar semana
   const fechasRef = _copyDiaSemanaLunes ? calcFechasSemanaSoloLectura(_copyDiaSemanaLunes) : FECHAS;
-  const esMismoLunes = !_copyDiaSemanaLunes || calcFechasSemanaSoloLectura(_copyDiaSemanaLunes)['LUNES'] === FECHAS['LUNES'];
   DIAS.forEach(d=>{
-    // Excluir el día actual solo si es la misma semana
-    if(esMismoLunes && d===dia) return;
     const btn=mk('button','copy-dia-btn');
     btn.textContent=d.slice(0,3)+' '+(fechasRef[d]||'');
     btn.onclick=()=>{
