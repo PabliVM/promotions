@@ -206,12 +206,19 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
     destino.disponibles = destino.disponibles.filter(n=>!copiados.has(n));
   }
 
-  // Posiciones de campo (si se copió el campo)
+  // Posiciones de campo (si se copió el campo) — se usa la clave robusta (fecha real,
+  // no solo nombre de día) tanto para leer el origen como para escribir el destino,
+  // igual que hace savePos()/getPos() en el resto de la app. La fecha del ORIGEN se
+  // calcula sobre la semana de origen real (que puede ser otra semana distinta a la
+  // actual, si se copió con "📅 Otra semana"), y la del DESTINO sobre la semana activa.
   if(modo === 'todo' || modo === 'campo'){
+    const fechaOrigen = fechaCompletaDeDia(fromDia, _copyOrigenSemanaLunes);
+    const fechaDestino = fechaCompletaDeDia(toDia); // siempre semana activa (destino)
     (origenData.campo||[]).forEach(n=>{
-      const kOrigen = fromDia+'|'+eq+'|'+n;
-      const p = posOrigenSemana?.[kOrigen];
-      if(p) pos[toDia+'|'+eq+'|'+n] = [...p];
+      const kOrigenNuevo = (fechaOrigen||fromDia)+'|'+eq+'|'+n;
+      const kOrigenViejo = fromDia+'|'+eq+'|'+n; // compatibilidad con datos ya guardados
+      const p = posOrigenSemana?.[kOrigenNuevo] || posOrigenSemana?.[kOrigenViejo];
+      if(p) pos[(fechaDestino||toDia)+'|'+eq+'|'+n] = [...p];
     });
   }
 
