@@ -159,6 +159,7 @@ function resetCal(){
   renderCal();
 }
 async function aplicarSemana(){
+  console.log('[diag-aplicarSemana] al entrar → modo:', _calModoCopia, '| lunesSel:', _calLunesSel);
   if(!_calLunesSel){ toast('Selecciona un día'); return; }
   if(_calModoCopia === 'semana'){
     _copySemanaDestLunes = new Date(_calLunesSel);
