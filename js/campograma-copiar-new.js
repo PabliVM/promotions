@@ -184,20 +184,29 @@ async function obtenerFotoSemanaSoloLectura(lunesKey){
 // destino distinta a la activa aunque esa semana nunca se haya abierto antes.
 async function obtenerOCrearFotoSemana(lunesKey){
   const existente = await obtenerFotoSemanaSoloLectura(lunesKey);
-  if(existente) return existente;
-  const dataVacia = JSON.parse(JSON.stringify(RAW));
-  EQUIPOS.forEach(eq=>{
-    (plantillas[eq]||[]).forEach(nombre=>{
-      DIAS.forEach(d=>{
-        if(!dataVacia[d][eq].disponibles.includes(nombre)) dataVacia[d][eq].disponibles.push(nombre);
-      });
-    });
-  });
-  return {
-    data: dataVacia, pos: {}, promInfo: {}, multiEq: {}, modoPartido: {}, modoDescanso: {},
+  const foto = existente || {
+    data: JSON.parse(JSON.stringify(RAW)), pos: {}, promInfo: {}, multiEq: {}, modoPartido: {}, modoDescanso: {},
     tipoPartido: {}, primerEquipoJugadores: {}, notas: {}, origen: JSON.parse(JSON.stringify(origen)),
     historicoJugador: {}
   };
+  // Blindaje: asegurar TODOS los días/equipos/zonas, tanto si la semana es nueva como
+  // si ya existía guardada (por si quedó incompleta de antes por cualquier motivo) —
+  // evita crashes más adelante al pintar esa semana.
+  for(const d of DIAS) for(const e of EQUIPOS){
+    if(!foto.data[d])    foto.data[d]={};
+    if(!foto.data[d][e]) foto.data[d][e]={};
+    for(const z of ZONAS) if(!foto.data[d][e][z]) foto.data[d][e][z]=[];
+  }
+  if(!existente){
+    EQUIPOS.forEach(eq=>{
+      (plantillas[eq]||[]).forEach(nombre=>{
+        DIAS.forEach(d=>{
+          if(!foto.data[d][eq].disponibles.includes(nombre)) foto.data[d][eq].disponibles.push(nombre);
+        });
+      });
+    });
+  }
+  return foto;
 }
 // Copia un equipo de un día concreto (de la semana ORIGEN indicada) a un día concreto
 // (de la semana DESTINO indicada — por defecto la semana activa en vivo, pero puede
