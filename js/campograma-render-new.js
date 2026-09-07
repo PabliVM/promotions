@@ -99,6 +99,8 @@ function abrirCal(){
 }
 var _calModoCopia = false;
 function cerrarCal(){
+  console.log('[diag-cerrarCal] llamada — modo actual:', _calModoCopia);
+  console.trace('[diag-cerrarCal] stack');
   document.getElementById('cal-overlay').classList.remove('open');
   if(_calModoCopia){
     _calModoCopia = false;
@@ -774,3 +776,4 @@ Object.defineProperty(window, '_calFecha', { get:()=>_calFecha, set:(v)=>{_calFe
 
 })();
 }
+
