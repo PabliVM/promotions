@@ -277,6 +277,17 @@ try {
         payloadSinSemanas.clavesSemanasArchivadas = claves;
       }
       const clean = _aplicarFechaAClaves(JSON.parse(JSON.stringify(payloadSinSemanas)));
+      // "too many index entries": Firestore indexa cada clave de un mapa. Con
+      // merge:true, campos como 'data'/'pos' se FUSIONAN con lo que ya había en vez de
+      // sustituirse — y como cada semana usada añade claves fechadas nuevas que nunca
+      // se borran, el documento crece para siempre hasta romper el límite de Firestore
+      // y bloquear TODOS los guardados (esto es justo lo que pasó).
+      // Arreglo: en vez de merge:true (fusión profunda de TODO), se usa mergeFields
+      // listando exactamente los campos que se envían — así cada uno de esos campos se
+      // SUSTITUYE por completo (sin arrastrar claves viejas), mientras que cualquier
+      // campo que NO se envía en este guardado (como 'porteros', que se escribe aparte
+      // con fbTogglePortero a propósito) se queda intacto, igual que con merge:true.
+      const camposAEnviar = Object.keys(clean).concat(['_nombre','_ts']);
       // Borrar PRIMERO el campo problemático (si sigue ahí de antes de este arreglo) —
       // si se deja para después, el propio guardado de abajo chocaría con el mismo
       // límite antes de llegar a poder quitarlo (merge:true no toca lo que no se envía,
@@ -297,7 +308,7 @@ try {
         ...clean,
         _nombre: nombre,
         _ts: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      }, { mergeFields: camposAEnviar });
       return { ok:true };
     }catch(e){
       console.error('fbGuardarSesion error:', e);
@@ -309,11 +320,15 @@ try {
   window.fbGuardarSemanaArchivada = async function(weekKey, snapshot){
     try{
       const clean = JSON.parse(JSON.stringify(snapshot));
+      // Misma protección que en fbGuardarSesion: sustituir por completo los campos
+      // enviados (data/pos incluidos) en vez de fusionarlos, para no acumular claves
+      // fechadas viejas sin límite en este documento tampoco.
+      const camposAEnviar = Object.keys(clean).concat(['_weekKey','_ts']);
       await db.collection('semanas').doc(weekKey).set({
         ...clean,
         _weekKey: weekKey,
         _ts: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      }, { mergeFields: camposAEnviar });
       return { ok:true };
     }catch(e){
       console.error('fbGuardarSemanaArchivada error:', e);
