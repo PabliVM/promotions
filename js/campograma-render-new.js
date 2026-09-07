@@ -82,7 +82,7 @@ function renderDias(){
 // CALENDARIO MINI
 // ══════════════════════════════════════════════════
 let _calFecha = new Date();
-let _calLunesSel = null;
+var _calLunesSel = null;
 const DIAS_DOW = ['L','M','X','J','V','S','D'];
 function abrirCal(){
   const partes = FECHAS['LUNES'] ? FECHAS['LUNES'].split('/') : null;
@@ -97,7 +97,7 @@ function abrirCal(){
   renderCal();
   document.getElementById('cal-overlay').classList.add('open');
 }
-let _calModoCopia = false;
+var _calModoCopia = false;
 function cerrarCal(){
   document.getElementById('cal-overlay').classList.remove('open');
   if(_calModoCopia){
@@ -770,7 +770,6 @@ window.sincronizarScrollBar = sincronizarScrollBar;
 window.igualarZonasSemana = igualarZonasSemana;
 window.EQ_LABEL = EQ_LABEL;
 Object.defineProperty(window, '_calFecha', { get:()=>_calFecha, set:(v)=>{_calFecha=v;}, configurable:true });
-Object.defineProperty(window, '_calLunesSel', { get:()=>_calLunesSel, set:(v)=>{_calLunesSel=v;}, configurable:true });
-Object.defineProperty(window, '_calModoCopia', { get:()=>_calModoCopia, set:(v)=>{_calModoCopia=v;}, configurable:true });
+
 })();
 }
