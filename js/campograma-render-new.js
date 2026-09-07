@@ -99,8 +99,6 @@ function abrirCal(){
 }
 var _calModoCopia = false;
 function cerrarCal(){
-  console.log('[diag-cerrarCal] llamada — modo actual:', _calModoCopia);
-  console.trace('[diag-cerrarCal] stack');
   document.getElementById('cal-overlay').classList.remove('open');
   if(_calModoCopia){
     _calModoCopia = false;
@@ -150,7 +148,6 @@ function renderCal(){
       const diff = dw===0 ? -6 : 1-dw;
       const lun = new Date(d2); lun.setDate(d2.getDate()+diff);
       _calLunesSel = lun;
-      console.log('[diag-clicDia] tras clicar día — modo:', _calModoCopia, '| lunesSel:', _calLunesSel);
       renderCal();
     };
     grid.appendChild(el);
@@ -162,7 +159,6 @@ function resetCal(){
   renderCal();
 }
 async function aplicarSemana(){
-  console.log('[diag-aplicarSemana] al entrar → modo:', _calModoCopia, '| lunesSel:', _calLunesSel);
   if(!_calLunesSel){ toast('Selecciona un día'); return; }
   if(_calModoCopia === 'semana'){
     _copySemanaDestLunes = new Date(_calLunesSel);
