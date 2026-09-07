@@ -86,16 +86,19 @@ function guardarFotoSemanaActual(){
   window._semanasSucias.add(_semanaKeyActual);
 }
 async function cargarFotoSemana(key){
-  let foto = _semanasGuardadas[key];
-  if(!foto){
-    if(typeof window.fbCargarSemanaArchivada === 'function'){
-      const res = await window.fbCargarSemanaArchivada(key);
-      if(res && res.ok && res.data){
-        foto = res.data;
-        _semanasGuardadas[key] = foto;
-      }
+  // Siempre se intenta traer la versión REAL de Firebase primero — una copia en
+  // memoria de una sesión/prueba anterior podía quedarse anticuada para siempre (por
+  // ejemplo, tras una copia a otra semana hecha más tarde), y antes se usaba esa copia
+  // vieja sin comprobar nada, tapando los datos buenos guardados de verdad.
+  let foto = null;
+  if(typeof window.fbCargarSemanaArchivada === 'function'){
+    const res = await window.fbCargarSemanaArchivada(key);
+    if(res && res.ok && res.data){
+      foto = res.data;
+      _semanasGuardadas[key] = foto; // refrescar la caché con lo real
     }
   }
+  if(!foto) foto = _semanasGuardadas[key]; // si Firebase falla, usar la caché como último recurso
   if(!foto) return false;
   data = foto.data; pos = foto.pos; promInfo = foto.promInfo; multiEq = foto.multiEq;
   modoPartido = foto.modoPartido; modoDescanso = foto.modoDescanso; tipoPartido = foto.tipoPartido;
