@@ -86,16 +86,15 @@ var _calLunesSel = null;
 const DIAS_DOW = ['L','M','X','J','V','S','D'];
 function abrirCal(){
   const partes = FECHAS['LUNES'] ? FECHAS['LUNES'].split('/') : null;
+  let valorActual = null;
   if(partes){
     const hoy = new Date();
-    _calFecha = new Date(hoy.getFullYear(), parseInt(partes[1])-1, parseInt(partes[0]));
-    _calLunesSel = new Date(_calFecha);
-  } else {
-    _calFecha = new Date();
-    _calLunesSel = null;
+    valorActual = new Date(hoy.getFullYear(), parseInt(partes[1])-1, parseInt(partes[0]));
   }
-  renderCal();
-  document.getElementById('cal-overlay').classList.add('open');
+  elegirFechaOtraSemana(valorActual, (fecha)=>{
+    _calLunesSel = fecha;
+    aplicarSemana();
+  });
 }
 var _calModoCopia = false;
 function cerrarCal(){
