@@ -387,9 +387,10 @@ function copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, f
 // null cuando el destino es la semana activa en vivo. Se fija justo antes de copiar.
 var _copyDestinoSemanaLunesActual = null;
 async function ejecutarCopia(){
+  console.log('[diag-copia] INICIO', {tipo:_copyTipo, origen:_copyDiaOrigen, destinos:[..._copyDiasDest], semanaDestinoDia:_copyDiaSemanaLunes, semanaDestinoSemana:_copySemanaDestLunes, eqs:[..._copyEqs], modo:_copyModo});
   const eqs=[..._copyEqs];
-  if(!eqs.length){toast('Selecciona al menos un equipo');return;}
-  if(!_copyDiaOrigen){toast('⚠️ Selecciona un día origen');return;}
+  if(!eqs.length){console.log('[diag-copia] SALIDA: sin equipos');toast('Selecciona al menos un equipo');return;}
+  if(!_copyDiaOrigen){console.log('[diag-copia] SALIDA: sin día origen');toast('⚠️ Selecciona un día origen');return;}
 
   // Determinar de dónde se LEE el origen: la semana en vivo (la que se ve ahora) o
   // una semana distinta pedida por calendario (se lee, nunca se sustituye la actual).
@@ -418,11 +419,12 @@ async function ejecutarCopia(){
     await guardarFotoSemanaEnFirebase(lunesDestKey, fotoDest);
     toast('Copiado a semana ' + fechasDest['LUNES'] + ' – ' + fechasDest['DOMINGO']);
   } else {
-    if(!_copyDiasDest.size){toast('Selecciona al menos un día');return;}
+    if(!_copyDiasDest.size){console.log('[diag-copia] SALIDA: sin días destino');toast('Selecciona al menos un día');return;}
     if(_copyDiaSemanaLunes){
       const fechasDest = calcFechasSemanaSoloLectura(_copyDiaSemanaLunes);
       const lunesDestKey = _copyDiaSemanaLunes.getFullYear()+'-'+String(_copyDiaSemanaLunes.getMonth()+1).padStart(2,'0')+'-'+String(_copyDiaSemanaLunes.getDate()).padStart(2,'0');
       const esMismaSemana = fechasDest['LUNES'] === FECHAS['LUNES'];
+      console.log('[diag-copia] rama día-otra-semana:', {lunesDestKey, esMismaSemana, fechasDestLunes:fechasDest['LUNES'], fechasActualLunes:FECHAS['LUNES']});
       if(esMismaSemana){
         _copyDiasDest.forEach(d=>copyDiaBase(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, _copyDiaOrigen, d, eqs, _copyModo));
       } else {
@@ -448,9 +450,11 @@ async function ejecutarCopia(){
 // documento de Firebase, y actualiza también la caché local para que si se navega
 // ahí con el calendario en esta misma sesión, se vea ya actualizada sin re-pedirla.
 async function guardarFotoSemanaEnFirebase(lunesKey, foto){
+  console.log('[diag-copia] guardarFotoSemanaEnFirebase → lunesKey:', lunesKey, '| typeof fbGuardarSemanaArchivada:', typeof window.fbGuardarSemanaArchivada);
   _semanasGuardadas[lunesKey] = foto;
   if(typeof window.fbGuardarSemanaArchivada === 'function'){
     const res = await window.fbGuardarSemanaArchivada(lunesKey, foto);
+    console.log('[diag-copia] resultado fbGuardarSemanaArchivada:', res);
     if(!res || !res.ok){
       toast('❌ Error al guardar en Firebase: '+(res && res.message || ''));
       return;
