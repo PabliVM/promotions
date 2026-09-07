@@ -319,14 +319,20 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
     });
   }
 
-  // Reconstruir promociones a partir de quién es cada jugador de verdad — si tras
-  // copiar el campo hay algún jugador que NO es de este equipo (origen[nombre] apunta
-  // a otro), es que viene prestado/promocionado: se marca esa promoción en su equipo
-  // REAL para el día destino (si no estaba ya) y se le quita de Disponibles ahí, para
-  // que no quede como "doblado"/huérfano. Aplica también en modo "Solo el campo",
-  // donde antes no se tocaba nada de promociones.
-  if(modo === 'todo' || modo === 'campo'){
-    (destino.campo||[]).forEach(n=>{
+  // Reconstruir promociones a partir de quién es cada jugador de verdad — si entre lo
+  // copiado (campo, lesionados, otros...) hay algún jugador que NO es de este equipo
+  // (origen[nombre] apunta a otro), es que viene prestado/promocionado: se marca esa
+  // promoción en su equipo REAL para el día destino (si no estaba ya) y se le quita de
+  // Disponibles ahí, para que no quede como "doblado"/huérfano en su equipo real.
+  // Antes esto solo miraba el campo — un jugador ajeno en lesionados/otros se quedaba
+  // sin marcar, y por eso reaparecía en Disponibles de su equipo real por error.
+  {
+    const zonasCopiadas = modo === 'todo' ? ZONAS
+                        : modo === 'campo' ? ['campo']
+                        : ['lesionados','otros','promovidos_1er','extra']; // 'inferiores'
+    const jugadoresAjenos = new Set();
+    zonasCopiadas.forEach(z=>{ (destino[z]||[]).forEach(n=>jugadoresAjenos.add(n)); });
+    jugadoresAjenos.forEach(n=>{
       const eqReal = origen[n];
       if(!eqReal || eqReal === eq || eqReal === 'PRUEBA') return; // es de este equipo, o a prueba
       if(!dDestino[toDia][eqReal]) dDestino[toDia][eqReal] = {};
