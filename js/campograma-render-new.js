@@ -200,6 +200,15 @@ async function aplicarSemana(){
   // tarde de fondo, dando la sensación de que "todas las semanas son iguales".
   const cargada = await cargarFotoSemana(_semanaKeyActual);
   if(!cargada) crearSemanaVacia();
+  // Blindaje: asegurar que TODOS los días/equipos/zonas existen antes de pintar nada
+  // — si la semana cargada (de caché o de Firebase) viniera incompleta por cualquier
+  // motivo, esto evita que renderDias()/renderCards() crasheen al leer un equipo que
+  // no existe para ese día, y deja la app usable en vez de colgada.
+  for(const d of DIAS) for(const e of EQUIPOS){
+    if(!data[d])    data[d]={};
+    if(!data[d][e]) data[d][e]={};
+    for(const z of ZONAS) if(!data[d][e][z]) data[d][e][z]=[];
+  }
   EQUIPOS.forEach(eq=>{
     (plantillas[eq]||[]).forEach(nombre=>{
       DIAS.forEach(d=>{
