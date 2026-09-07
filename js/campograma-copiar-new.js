@@ -226,14 +226,17 @@ function renderCopyDias(){
 // cargarFotoSemana() (en campograma-core-new.js), esta NO sustituye 'data'/'pos'/
 // 'promInfo' en vivo — solo los devuelve para leer de ahí, sin tocar lo que se ve ahora.
 async function obtenerFotoSemanaSoloLectura(lunesKey){
-  if(_semanasGuardadas[lunesKey]) return _semanasGuardadas[lunesKey];
+  // Igual que en cargarFotoSemana: siempre se intenta Firebase primero, no una copia
+  // en memoria que podría estar anticuada de una prueba/copia anterior en esta misma
+  // sesión.
   if(typeof window.fbCargarSemanaArchivada === 'function'){
     const res = await window.fbCargarSemanaArchivada(lunesKey);
     if(res && res.ok && res.data){
-      _semanasGuardadas[lunesKey] = res.data; // cachear para no volver a pedirla
+      _semanasGuardadas[lunesKey] = res.data; // refrescar la caché con lo real
       return res.data;
     }
   }
+  if(_semanasGuardadas[lunesKey]) return _semanasGuardadas[lunesKey]; // último recurso
   return null;
 }
 // Igual que obtenerFotoSemanaSoloLectura, pero si esa semana no existe todavía en
