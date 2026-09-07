@@ -128,29 +128,77 @@ function _lunesDeSemana(fecha){
   d.setHours(0,0,0,0);
   return d;
 }
+// Selector de fecha propio del modal de Copiar — completamente independiente del
+// calendario compartido de la app (el que usa "Semana" en la cabecera). No toca
+// _calModoCopia/_calLunesSel/aplicarSemana para nada, así no puede interferir con la
+// semana que tienes abierta ni sufrir efectos raros de estado compartido entre
+// archivos. Usa el selector de fecha nativo del navegador.
+function elegirFechaOtraSemana(valorActual, onElegir){
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10600;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:14px;padding:20px;max-width:320px;width:100%;font-family:\'Segoe UI\',sans-serif;box-shadow:0 8px 32px rgba(0,0,0,.3);';
+  const lbl = document.createElement('div');
+  lbl.textContent = 'Elige cualquier día de la semana que quieras (se usa toda esa semana)';
+  lbl.style.cssText = 'font-size:13px;color:#5a6170;margin-bottom:10px;line-height:1.4;';
+  box.appendChild(lbl);
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  if(valorActual){
+    const d = new Date(valorActual);
+    inp.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  inp.style.cssText = 'width:100%;padding:10px;border-radius:8px;border:1.5px solid #dfe1e6;font-size:14px;margin-bottom:14px;box-sizing:border-box;';
+  box.appendChild(inp);
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:1px solid #dfe1e6;background:transparent;color:#5a6170;font-weight:700;cursor:pointer;font-family:\'Segoe UI\',sans-serif;';
+  const okBtn = document.createElement('button');
+  okBtn.textContent = 'Elegir';
+  okBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;font-family:\'Segoe UI\',sans-serif;';
+  btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  inp.focus();
+  function cerrar(){ overlay.remove(); }
+  cancelBtn.onclick = cerrar;
+  overlay.onclick = (e)=>{ if(e.target===overlay) cerrar(); };
+  okBtn.onclick = ()=>{
+    if(!inp.value){ cerrar(); return; }
+    const [y,m,d] = inp.value.split('-').map(Number);
+    const fecha = new Date(y, m-1, d);
+    cerrar();
+    onElegir(fecha);
+  };
+}
 function abrirCalCopia(){
-  _calModoCopia = 'semana';
-  _calLunesSel = _copySemanaDestLunes ? new Date(_copySemanaDestLunes) : _lunesDeSemana(new Date());
-  _calFecha = _copySemanaDestLunes ? new Date(_copySemanaDestLunes) : new Date();
-  renderCal();
-  document.getElementById('cal-overlay').classList.add('open');
+  elegirFechaOtraSemana(_copySemanaDestLunes, (fecha)=>{
+    _copySemanaDestLunes = _lunesDeSemana(fecha);
+    actualizarLblSemana();
+  });
 }
-// Abrir calendario en modo copia de día (destino, día concreto de otra semana)
+// Abrir selector en modo copia de día (destino, día concreto de otra semana)
 function abrirCalCopiaDir(){
-  _calModoCopia = 'dia';
-  console.log('[diag-abrirCalCopiaDir] justo después de fijarlo:', _calModoCopia);
-  _calLunesSel = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : _lunesDeSemana(new Date());
-  _calFecha = _copyDiaSemanaLunes ? new Date(_copyDiaSemanaLunes) : new Date();
-  renderCal();
-  document.getElementById('cal-overlay').classList.add('open');
+  elegirFechaOtraSemana(_copyDiaSemanaLunes, (fecha)=>{
+    _copyDiaSemanaLunes = _lunesDeSemana(fecha);
+    const fechas = calcFechasSemanaSoloLectura(_copyDiaSemanaLunes);
+    const lbl = document.getElementById('copy-dia-semana-lbl');
+    lbl.textContent = 'Semana del ' + fechas['LUNES'] + ' al ' + fechas['DOMINGO'];
+    lbl.style.display = 'block';
+    renderCopyDias();
+  });
 }
-// Abrir calendario en modo ORIGEN — elegir de qué semana pasada/futura viene el día a copiar
+// Abrir selector en modo ORIGEN — elegir de qué semana pasada/futura viene el día a copiar
 function abrirCalCopiaOrigen(){
-  _calModoCopia = 'origen';
-  _calLunesSel = _copyOrigenSemanaLunes ? new Date(_copyOrigenSemanaLunes) : _lunesDeSemana(new Date());
-  _calFecha = _copyOrigenSemanaLunes ? new Date(_copyOrigenSemanaLunes) : new Date();
-  renderCal();
-  document.getElementById('cal-overlay').classList.add('open');
+  elegirFechaOtraSemana(_copyOrigenSemanaLunes, (fecha)=>{
+    _copyOrigenSemanaLunes = _lunesDeSemana(fecha);
+    _copyDiaOrigen = null; // hay que elegir de nuevo un día concreto de la nueva semana
+    actualizarLblOrigenSemana();
+    renderCopyOrigenBtns();
+  });
 }
 function toggleCopyEq(eq,checked){
   if(checked) _copyEqs.add(eq); else _copyEqs.delete(eq);
