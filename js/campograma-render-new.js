@@ -150,6 +150,7 @@ function renderCal(){
       const diff = dw===0 ? -6 : 1-dw;
       const lun = new Date(d2); lun.setDate(d2.getDate()+diff);
       _calLunesSel = lun;
+      console.log('[diag-clicDia] tras clicar día — modo:', _calModoCopia, '| lunesSel:', _calLunesSel);
       renderCal();
     };
     grid.appendChild(el);
@@ -776,4 +777,3 @@ Object.defineProperty(window, '_calFecha', { get:()=>_calFecha, set:(v)=>{_calFe
 
 })();
 }
-
