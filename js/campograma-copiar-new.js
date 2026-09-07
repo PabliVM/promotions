@@ -292,12 +292,14 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
     ['lesionados','otros','promovidos_1er','extra'].forEach(z=>{
       destino[z] = JSON.parse(JSON.stringify(origenData[z]||[]));
     });
-    // Evitar que un jugador quede duplicado dentro del MISMO equipo (en Disponibles Y
-    // en un cuadro inferior a la vez)
-    if(!destino.disponibles) destino.disponibles = [];
-    const copiados = new Set(['lesionados','otros','promovidos_1er','extra'].flatMap(z=>origenData[z]||[]));
-    destino.disponibles = destino.disponibles.filter(n=>!copiados.has(n));
   }
+  // Evitar que un jugador quede duplicado dentro del MISMO equipo (en Disponibles Y en
+  // el campo/cuadro inferior a la vez) — aplica a los 3 modos, no solo "inferiores"
+  // como antes. Si el origen ya traía esa duplicidad, no hay que arrastrarla al copiar.
+  if(!destino.disponibles) destino.disponibles = [];
+  const enOtraZona = new Set();
+  ZONAS.forEach(z=>{ if(z!=='disponibles') (destino[z]||[]).forEach(n=>enOtraZona.add(n)); });
+  destino.disponibles = destino.disponibles.filter(n=>!enOtraZona.has(n));
 
   // Posiciones de campo (si se copió el campo) — se usa la clave robusta (fecha real,
   // no solo nombre de día) tanto para leer el origen como para escribir el destino,
