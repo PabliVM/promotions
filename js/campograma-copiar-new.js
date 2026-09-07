@@ -68,7 +68,7 @@ function renderCopyModoBtns(){
 function renderCopyOrigenBtns(){
   const origenEl = document.getElementById('copy-origen-btns');
   if(!origenEl) return;
-  const fechasRef = _copyOrigenSemanaLunes ? calcFechasSemana(_copyOrigenSemanaLunes) : FECHAS;
+  const fechasRef = _copyOrigenSemanaLunes ? calcFechasSemanaSoloLectura(_copyOrigenSemanaLunes) : FECHAS;
   origenEl.innerHTML='';
   DIAS.forEach(d=>{
     const btn=mk('button','copy-dia-btn'+(d===_copyDiaOrigen?' sel':''));
@@ -88,7 +88,7 @@ function actualizarLblOrigenSemana(){
   if(!_copyOrigenSemanaLunes){
     lbl.style.display = 'none';
   } else {
-    const fechas = calcFechasSemana(_copyOrigenSemanaLunes);
+    const fechas = calcFechasSemanaSoloLectura(_copyOrigenSemanaLunes);
     lbl.textContent = 'Origen: semana del ' + fechas['LUNES'] + ' al ' + fechas['DOMINGO'];
     lbl.style.display = 'block';
   }
@@ -110,7 +110,7 @@ function actualizarLblSemana(){
     lbl.textContent = 'Seleccionar semana destino…';
     btn.classList.remove('has-sel');
   } else {
-    const fechas = calcFechasSemana(_copySemanaDestLunes);
+    const fechas = calcFechasSemanaSoloLectura(_copySemanaDestLunes);
     lbl.textContent = 'Semana del ' + fechas['LUNES'] + ' al ' + fechas['DOMINGO'];
     btn.classList.add('has-sel');
   }
@@ -149,8 +149,8 @@ function renderCopyDias(){
   const cont=document.getElementById('copy-dias-btns');
   cont.innerHTML='';
   _copyDiasDest = new Set(); // reset selección al cambiar semana
-  const fechasRef = _copyDiaSemanaLunes ? calcFechasSemana(_copyDiaSemanaLunes) : FECHAS;
-  const esMismoLunes = !_copyDiaSemanaLunes || calcFechasSemana(_copyDiaSemanaLunes)['LUNES'] === FECHAS['LUNES'];
+  const fechasRef = _copyDiaSemanaLunes ? calcFechasSemanaSoloLectura(_copyDiaSemanaLunes) : FECHAS;
+  const esMismoLunes = !_copyDiaSemanaLunes || calcFechasSemanaSoloLectura(_copyDiaSemanaLunes)['LUNES'] === FECHAS['LUNES'];
   DIAS.forEach(d=>{
     // Excluir el día actual solo si es la misma semana
     if(esMismoLunes && d===dia) return;
@@ -338,7 +338,7 @@ async function ejecutarCopia(){
 
   if(_copyTipo==='semana'){
     if(!_copySemanaDestLunes){ toast('⚠️ Selecciona una semana destino'); return; }
-    const fechasDest = calcFechasSemana(_copySemanaDestLunes);
+    const fechasDest = calcFechasSemanaSoloLectura(_copySemanaDestLunes);
     const lunesDestKey = _copySemanaDestLunes.getFullYear()+'-'+String(_copySemanaDestLunes.getMonth()+1).padStart(2,'0')+'-'+String(_copySemanaDestLunes.getDate()).padStart(2,'0');
     const esMismaSemana = fechasDest['LUNES'] === FECHAS['LUNES'];
     if(esMismaSemana){ toast('⚠️ La semana destino es la misma que la actual'); return; }
@@ -354,7 +354,7 @@ async function ejecutarCopia(){
   } else {
     if(!_copyDiasDest.size){toast('Selecciona al menos un día');return;}
     if(_copyDiaSemanaLunes){
-      const fechasDest = calcFechasSemana(_copyDiaSemanaLunes);
+      const fechasDest = calcFechasSemanaSoloLectura(_copyDiaSemanaLunes);
       const lunesDestKey = _copyDiaSemanaLunes.getFullYear()+'-'+String(_copyDiaSemanaLunes.getMonth()+1).padStart(2,'0')+'-'+String(_copyDiaSemanaLunes.getDate()).padStart(2,'0');
       const esMismaSemana = fechasDest['LUNES'] === FECHAS['LUNES'];
       if(esMismaSemana){
