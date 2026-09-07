@@ -23,6 +23,24 @@ function calcFechasSemana(lunesBase){
   });
   return fechas;
 }
+// Igual que calcFechasSemana(), pero SIN el efecto secundario de cambiar la semana
+// activa (_semanaKeyActual) ni window.FECHAS_COMPLETAS — para cuando solo hace falta
+// "echar un vistazo" a las fechas de OTRA semana (por ejemplo, para pintar los
+// botones de día en el modal de Copiar) sin tocar la sesión que se está editando.
+function calcFechasSemanaSoloLectura(lunesBase){
+  const base = lunesBase ? new Date(lunesBase) : (()=>{
+    const hoy = new Date();
+    const d = hoy.getDay();
+    const diff = d===0 ? -6 : 1-d;
+    const lun = new Date(hoy); lun.setDate(hoy.getDate()+diff); return lun;
+  })();
+  const fechas = {};
+  DIAS.forEach((dia,i)=>{
+    const f = new Date(base); f.setDate(base.getDate()+i);
+    fechas[dia] = f.getDate()+'/'+(f.getMonth()+1);
+  });
+  return fechas;
+}
 function fechaCompletaDeDia(diaNombre, lunesKey){
   if(!lunesKey) return (window.FECHAS_COMPLETAS||{})[diaNombre] || '';
   const idx = DIAS.indexOf(diaNombre);
