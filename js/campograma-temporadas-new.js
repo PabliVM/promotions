@@ -91,6 +91,17 @@ function buildPayload(manualSave=false){
 var _autoSaveTimer=null;
 var _guardadoVersion = 0; // se incrementa en cada cambio local
 window._hayGuardadoPendiente = false; // true desde que hay un cambio local hasta que se confirma en Firebase
+// ¿La semana que se está viendo/editando ahora mismo es de verdad la semana real de
+// HOY? Si no, cualquier guardado debe ir al documento de ESA semana, nunca a
+// "principal" (que representa solo la sesión en vivo de hoy).
+function esSemanaActualDeVerdad(){
+  const hoy = new Date();
+  const dow = hoy.getDay();
+  const diff = dow===0 ? -6 : 1-dow;
+  const lun = new Date(hoy); lun.setDate(hoy.getDate()+diff);
+  const keyHoy = lun.getFullYear()+'-'+String(lun.getMonth()+1).padStart(2,'0')+'-'+String(lun.getDate()).padStart(2,'0');
+  return keyHoy === _semanaKeyActual;
+}
 function autoGuardar(){
   _guardadoVersion++;
   window._hayGuardadoPendiente = true;
@@ -158,6 +169,29 @@ function autoGuardar(){
         }
       }
       const payload=buildPayload(false);
+      // Si NO estamos viendo/editando la semana real de HOY (por ejemplo, navegaste a
+      // otra semana con el calendario para consultarla o retocarla), el guardado va
+      // DIRECTO al documento de ESA semana — nunca a "principal". "principal" debe
+      // representar SIEMPRE solo la semana real de hoy; si se contamina con otra
+      // semana que estabas mirando, el próximo arranque de la app se lía intentando
+      // reconciliarlo y puede acabar sobrescribiendo datos buenos con una versión
+      // vieja (esto causó una pérdida real de una copia ya guardada).
+      if(!esSemanaActualDeVerdad() && typeof window.fbGuardarSemanaArchivada === 'function' && _semanaKeyActual){
+        const snapshot = {
+          data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
+          primerEquipoJugadores, notas: window._notasData||{}, origen, historicoJugador
+        };
+        window.fbGuardarSemanaArchivada(_semanaKeyActual, snapshot).then(res=>{
+          if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
+          if(res && res.ok){
+            ocultarAvisoGuardadoFallido();
+            if(window._semanasSucias) window._semanasSucias.delete(_semanaKeyActual);
+          } else {
+            mostrarAvisoGuardadoFallido();
+          }
+        });
+        return;
+      }
       // localStorage desactivado — solo Firebase
       // Sync Firebase — siempre en sesión 'principal', con reintentos si falla
       // (por ejemplo, un corte breve de conexión) — antes, si fallaba una vez, se
