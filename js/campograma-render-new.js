@@ -208,6 +208,11 @@ async function aplicarSemana(){
     if(!data[d][e]) data[d][e]={};
     for(const z of ZONAS) if(!data[d][e][z]) data[d][e][z]=[];
   }
+  // Cambiar de semana es un cambio de contexto NORMAL (otro día, otra composición de
+  // campo) — no una caída de datos. Sin esto, el freno de emergencia comparaba el
+  // campo de la semana nueva contra el de la semana anterior y saltaba por error cada
+  // vez que la nueva tenía menos gente colocada.
+  if(typeof fijarTotalJugadoresConocido === 'function') fijarTotalJugadoresConocido();
   EQUIPOS.forEach(eq=>{
     (plantillas[eq]||[]).forEach(nombre=>{
       DIAS.forEach(d=>{
