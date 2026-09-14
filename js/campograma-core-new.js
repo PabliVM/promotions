@@ -2287,7 +2287,7 @@ async function arrancarDesdeFirebase(){
       EQUIPOS.forEach(eq=>{
         (plantillas[eq]||[]).forEach(nombre=>{
           DIAS.forEach((d)=>{
-            const enAlgunaZona=ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre)) || (data[d][eq].extra2||[]).includes(nombre);
+            const enAlgunaZona=ZONAS.some(z=>(data[d][eq][z]||[]).includes(nombre));
             if(!enAlgunaZona && !data[d][eq].disponibles.includes(nombre))
               data[d][eq].disponibles.push(nombre);
           });
