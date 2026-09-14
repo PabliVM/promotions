@@ -7,7 +7,11 @@ var RAW = {"LUNES": {"CASTILLA": {"campo": [], "disponibles": [], "promovidos_1e
 
 var DIAS    = ["LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO","DOMINGO"];
 var EQUIPOS = ["CASTILLA","RMC","JUVENIL A","JUVENIL B","JUVENIL C","CADETE A"];
-var ZONAS   = ["campo","banquillo","disponibles","promovidos_1er","lesionados","otros","extra"];
+// "extra2" (columna "Selección"/"SELEC." de Castilla) añadida aquí — antes faltaba, y
+// como TODA la app usa esta lista para comprobar "¿está este jugador en alguna zona
+// ya?", un jugador colocado en Selección no se reconocía como "ocupado" y se volvía a
+// meter en Disponibles en cuanto se recargaba la página, se cambiaba de semana, etc.
+var ZONAS   = ["campo","banquillo","disponibles","promovidos_1er","lesionados","otros","extra","extra2"];
 
 var SNAP_SLOTS = [];
 var FILAS  = [90, 76, 62, 49, 36, 22,  8];
@@ -50,7 +54,9 @@ var LS_SEASONS = 'rm_cantera_seasons';
 var LS_CUR     = 'rm_cantera_current';
 
 function mk(tag,cls=''){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
-var ZONAS_ACTIVAS = ['campo','banquillo','disponibles','lesionados','otros','extra'];
+// Misma corrección aquí: "extra2" es una presencia REAL (como campo/disponibles), no
+// una columna de promoción — pertenece en la lista de zonas "activas".
+var ZONAS_ACTIVAS = ['campo','banquillo','disponibles','lesionados','otros','extra','extra2'];
 var EQ_COLORS={
   'CASTILLA':'c-prestado-CASTILLA',
   'RMC':'c-prestado-RMC',
