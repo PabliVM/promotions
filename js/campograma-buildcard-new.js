@@ -477,7 +477,7 @@ function buildCard(eq){
       addBtn2.onclick=(e)=>{ e.stopPropagation(); colNames[eq][4]='EXTRA'; autoGuardar(); render(); };
       lblWrap.appendChild(addBtn2);
     }
-    if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros'){
+    if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros' || (zona==='extra' && eq==='CASTILLA') || zona==='extra2'){
       const vaciarBtn = mk('button','col-vaciar-btn');
       vaciarBtn.textContent = '✕';
       vaciarBtn.title = 'Vaciar esta columna (hoy) — vuelven a Disponibles de '+eq;
@@ -489,7 +489,10 @@ function buildCard(eq){
           '¿Vaciar "'+(colNames[eq][idx]||zona)+'" de '+eq+' hoy? '+nombres.length+' jugador(es) volverán a Disponibles.',
           ()=>{
             nombres.forEach(nombre=>{
-              if(zona==='promovidos_1er'){
+              // "Promocionados" y "Otro equipo" (Castilla) son ambas columnas de
+              // promoción de verdad — hay que deshacer también el destino/promInfo,
+              // no solo sacarlo de esta columna, si no se queda como huérfano.
+              if(zona==='promovidos_1er' || zona==='extra'){
                 const destinos = getDestinos(dia, eq, nombre);
                 destinos.forEach(destino=>limpiarUnDestino(dia, destino, nombre));
                 if(promInfo[dia]?.[eq]) delete promInfo[dia][eq][nombre];
