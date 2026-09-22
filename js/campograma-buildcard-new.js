@@ -59,11 +59,13 @@ function renderFiltrosSemana(){
     eqsRow.appendChild(btn);
   });
   // Acceso rápido: dejar marcados SOLO Juvenil B y Juvenil C, el resto desmarcados
-  const btnJbJc = mk('button','filtro-eq-btn');
+  const _soloJbJc = _filtroEqsActivos.size===2 && _filtroEqsActivos.has('JUVENIL B') && _filtroEqsActivos.has('JUVENIL C');
+  const btnJbJc = mk('button','filtro-eq-btn'+(_soloJbJc?' activo':''));
   btnJbJc.textContent = 'JB/JC';
   btnJbJc.title = 'Ver solo Juvenil B y Juvenil C';
   btnJbJc.onclick=()=>{
-    _filtroEqsActivos = new Set(['JUVENIL B','JUVENIL C']);
+    const yaEsSoloJbJc = _filtroEqsActivos.size===2 && _filtroEqsActivos.has('JUVENIL B') && _filtroEqsActivos.has('JUVENIL C');
+    _filtroEqsActivos = yaEsSoloJbJc ? new Set(EQUIPOS) : new Set(['JUVENIL B','JUVENIL C']);
     renderFiltrosSemana();
     renderCards();
     if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
@@ -494,24 +496,28 @@ function buildCard(eq){
       vaciarBtn.title = 'Vaciar esta columna (hoy) — vuelven a Disponibles de '+eq;
       vaciarBtn.onclick = (e)=>{
         e.stopPropagation();
-        const nombres = [...(data[dia][eq][zona]||[])];
+        // Usar el día de ESTA tarjeta (_diaModo), no el día global "dia" — en vista
+        // semana hay varias tarjetas (una por día) a la vez, y "dia" para cuando se
+        // pulsa el botón ya no tiene por qué coincidir con el día de esta tarjeta.
+        const diaCol = _diaModo;
+        const nombres = [...(data[diaCol][eq][zona]||[])];
         if(!nombres.length) return;
         showAlert(
-          '¿Vaciar "'+(colNames[eq][idx]||zona)+'" de '+eq+' hoy? '+nombres.length+' jugador(es) volverán a Disponibles.',
+          '¿Vaciar "'+(colNames[eq][idx]||zona)+'" de '+eq+' el '+diaCol+'? '+nombres.length+' jugador(es) volverán a Disponibles.',
           ()=>{
             nombres.forEach(nombre=>{
               // "Promocionados" y "Otro equipo" (Castilla) son ambas columnas de
               // promoción de verdad — hay que deshacer también el destino/promInfo,
               // no solo sacarlo de esta columna, si no se queda como huérfano.
               if(zona==='promovidos_1er' || zona==='extra'){
-                const destinos = getDestinos(dia, eq, nombre);
-                destinos.forEach(destino=>limpiarUnDestino(dia, destino, nombre));
-                if(promInfo[dia]?.[eq]) delete promInfo[dia][eq][nombre];
+                const destinos = getDestinos(diaCol, eq, nombre);
+                destinos.forEach(destino=>limpiarUnDestino(diaCol, destino, nombre));
+                if(promInfo[diaCol]?.[eq]) delete promInfo[diaCol][eq][nombre];
               }
-              const arr = data[dia][eq][zona];
+              const arr = data[diaCol][eq][zona];
               const i = arr.indexOf(nombre);
               if(i>=0) arr.splice(i,1);
-              if(!data[dia][eq].disponibles.includes(nombre)) data[dia][eq].disponibles.push(nombre);
+              if(!data[diaCol][eq].disponibles.includes(nombre)) data[diaCol][eq].disponibles.push(nombre);
             });
             autoGuardar();
             render();
