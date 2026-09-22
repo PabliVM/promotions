@@ -58,6 +58,17 @@ function renderFiltrosSemana(){
     };
     eqsRow.appendChild(btn);
   });
+  // Acceso rápido: dejar marcados SOLO Juvenil B y Juvenil C, el resto desmarcados
+  const btnJbJc = mk('button','filtro-eq-btn');
+  btnJbJc.textContent = 'JB/JC';
+  btnJbJc.title = 'Ver solo Juvenil B y Juvenil C';
+  btnJbJc.onclick=()=>{
+    _filtroEqsActivos = new Set(['JUVENIL B','JUVENIL C']);
+    renderFiltrosSemana();
+    renderCards();
+    if(vistaActual==='semana') requestAnimationFrame(()=>igualarZonasSemana(document.getElementById('grid')));
+  };
+  eqsRow.appendChild(btnJbJc);
 }
 
 function renderCardsSemana(grid){
