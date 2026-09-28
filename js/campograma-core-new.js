@@ -86,19 +86,31 @@ function guardarFotoSemanaActual(){
   window._semanasSucias.add(_semanaKeyActual);
 }
 async function cargarFotoSemana(key){
-  // Siempre se intenta traer la versión REAL de Firebase primero — una copia en
-  // memoria de una sesión/prueba anterior podía quedarse anticuada para siempre (por
-  // ejemplo, tras una copia a otra semana hecha más tarde), y antes se usaba esa copia
-  // vieja sin comprobar nada, tapando los datos buenos guardados de verdad.
+  const _hoy = new Date();
+  const _diff = _hoy.getDay()===0 ? -6 : 1-_hoy.getDay();
+  const _lunHoy = new Date(_hoy); _lunHoy.setDate(_hoy.getDate()+_diff);
+  const _keyHoy = _lunHoy.getFullYear()+'-'+String(_lunHoy.getMonth()+1).padStart(2,'0')+'-'+String(_lunHoy.getDate()).padStart(2,'0');
   let foto = null;
-  if(typeof window.fbCargarSemanaArchivada === 'function'){
+  if(key === _keyHoy){
+    // La semana de HOY vive solo en sesiones/principal, nunca en semanas/{key}
+    // (esa colección puede tener ahí un doc viejo/vacío). Preferir la caché en
+    // memoria (recién capturada al salir de hoy) y, si no existe, principal.
+    foto = _semanasGuardadas[key];
+    if(!foto && typeof window.fbCargarSesion === 'function'){
+      const resP = await window.fbCargarSesion('principal');
+      if(resP && resP.ok && resP.data && resP.data.plantillas){
+        foto = resP.data;
+        _semanasGuardadas[key] = foto;
+      }
+    }
+  } else if(typeof window.fbCargarSemanaArchivada === 'function'){
     const res = await window.fbCargarSemanaArchivada(key);
     if(res && res.ok && res.data){
       foto = res.data;
       _semanasGuardadas[key] = foto; // refrescar la caché con lo real
     }
   }
-  if(!foto) foto = _semanasGuardadas[key]; // si Firebase falla, usar la caché como último recurso
+  if(!foto) foto = _semanasGuardadas[key]; // último recurso
   if(!foto) return false;
   data = foto.data; pos = foto.pos; promInfo = foto.promInfo; multiEq = foto.multiEq;
   modoPartido = foto.modoPartido; modoDescanso = foto.modoDescanso; tipoPartido = foto.tipoPartido;
