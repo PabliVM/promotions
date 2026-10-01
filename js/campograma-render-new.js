@@ -399,9 +399,9 @@ function buildListaView(eq, d){
   ] : (eq==='JUVENIL B' || eq==='JUVENIL C') ? [
     { key:'campo',          label:'LISTADO DE JUGADORES',  color:'#2563eb' },
     { key:'banquillo',      label:'BANQUILLO',     color:'#d97706' },
-    { key:'parcial',        label:'PARCIAL',       color:'#0891b2' },
     { key:'promovidos_1er', label: colNames[eq]?.[0]||'PROMOCIONADOS', color:'#d97706' },
     { key:'lesionados',     label: colNames[eq]?.[1]||'LESIONADOS',    color:'#dc2626' },
+    { key:'parcial',        label:'PARCIAL',       color:'#0891b2' },
     { key:'otros',          label: colNames[eq]?.[2]||'OTROS',     color:'#6b7280' },
     { key:'extra',          label: colNames[eq]?.[3]||'EXTRA',     color:'#7c3aed' },
   ] : [
