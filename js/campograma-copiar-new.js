@@ -292,7 +292,7 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
   } else if(modo === 'campo'){
     destino.campo = JSON.parse(JSON.stringify(origenData.campo||[]));
   } else if(modo === 'inferiores'){
-    ['lesionados','otros','promovidos_1er','extra'].forEach(z=>{
+    ['lesionados','otros','promovidos_1er','extra','parcial'].forEach(z=>{
       destino[z] = JSON.parse(JSON.stringify(origenData[z]||[]));
     });
   }
@@ -331,7 +331,7 @@ function copyUnEquipo(datosOrigenSemana, posOrigenSemana, promInfoOrigenSemana, 
   {
     const zonasCopiadas = modo === 'todo' ? ZONAS
                         : modo === 'campo' ? ['campo']
-                        : ['lesionados','otros','promovidos_1er','extra']; // 'inferiores'
+                        : ['lesionados','otros','promovidos_1er','extra','parcial']; // 'inferiores'
     const jugadoresAjenos = new Set();
     zonasCopiadas.forEach(z=>{ (destino[z]||[]).forEach(n=>jugadoresAjenos.add(n)); });
     jugadoresAjenos.forEach(n=>{
