@@ -402,11 +402,16 @@ function buildCard(eq){
     colDefs.push({zona:'otros',      cls:'col col-otros', cc:'c-gris', idx:2});
     if(colNames[eq][4] !== undefined) colDefs.push({zona:'extra2', cls:'col col-extra2', cc:'c-gris', idx:4});
   } else {
-    colDefs = [
+    colDefs = [];
+    // Columna "PARCIAL" — solo Juvenil B y Juvenil C, antes de Promocionados.
+    if(eq==='JUVENIL B' || eq==='JUVENIL C'){
+      colDefs.push({zona:'parcial', cls:'col col-parcial', cc:'c-azul', idx:-1});
+    }
+    colDefs.push(
       {zona:'promovidos_1er', cls:'col col-prom',  cc:'c-naranja', idx:0},
       {zona:'lesionados',     cls:'col col-les',   cc:'c-rojo',    idx:1},
       {zona:'otros',          cls:'col col-otros', cc:'c-gris',    idx:2},
-    ];
+    );
     // La columna "extra" (4ª) es la misma infraestructura genérica de siempre.
     if(extraZonas[eq]) colDefs.push({zona:'extra', cls:'col col-extra', cc:'c-azul', idx:3});
   }
@@ -419,12 +424,14 @@ function buildCard(eq){
     col.dataset.eq=eq; col.dataset.zona=zona; col.dataset.dia=dia;
     const lblWrap=mk('div','zona-lbl-wrap');
     const lbl=mk('div','zona-lbl-edit');
-    lbl.contentEditable = 'true';
+    lbl.contentEditable = (zona==='parcial') ? 'false' : 'true';
     lbl.spellcheck = false;
     lbl.style.cssText = 'white-space:normal;overflow-wrap:break-word;word-break:break-word;line-height:1.15;outline:none;';
-    lbl.textContent = colNames[eq][idx] || (zona==='extra'?'OTRO EQUIPO':(zona==='extra2'?'EXTRA':zona.toUpperCase()));
-    lbl.title='Pulsa para editar el nombre';
+    lbl.textContent = zona==='parcial' ? 'PARCIAL' : (colNames[eq][idx] || (zona==='extra'?'OTRO EQUIPO':(zona==='extra2'?'EXTRA':zona.toUpperCase())));
+    if(zona==='parcial') lbl.title='';
+    else lbl.title='Pulsa para editar el nombre';
     lbl.addEventListener('blur', ()=>{
+      if(zona==='parcial') return;
       if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
       const val = lbl.textContent.trim().toUpperCase();
       colNames[eq][idx]=val||colNames[eq][idx];
@@ -490,7 +497,7 @@ function buildCard(eq){
       addBtn2.onclick=(e)=>{ e.stopPropagation(); colNames[eq][4]='EXTRA'; autoGuardar(); render(); };
       lblWrap.appendChild(addBtn2);
     }
-    if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros' || (zona==='extra' && eq==='CASTILLA') || zona==='extra2'){
+    if(zona==='promovidos_1er' || zona==='lesionados' || zona==='otros' || (zona==='extra' && eq==='CASTILLA') || zona==='extra2' || zona==='parcial'){
       const vaciarBtn = mk('button','col-vaciar-btn');
       vaciarBtn.textContent = '✕';
       vaciarBtn.title = 'Vaciar esta columna (hoy) — vuelven a Disponibles de '+eq;
@@ -503,7 +510,7 @@ function buildCard(eq){
         const nombres = [...(data[diaCol][eq][zona]||[])];
         if(!nombres.length) return;
         showAlert(
-          '¿Vaciar "'+(colNames[eq][idx]||zona)+'" de '+eq+' el '+diaCol+'? '+nombres.length+' jugador(es) volverán a Disponibles.',
+          '¿Vaciar "'+(zona==='parcial'?'PARCIAL':(colNames[eq][idx]||zona))+'" de '+eq+' el '+diaCol+'? '+nombres.length+' jugador(es) volverán a Disponibles.',
           ()=>{
             nombres.forEach(nombre=>{
               // "Promocionados" y "Otro equipo" (Castilla) son ambas columnas de
