@@ -402,16 +402,15 @@ function buildCard(eq){
     colDefs.push({zona:'otros',      cls:'col col-otros', cc:'c-gris', idx:2});
     if(colNames[eq][4] !== undefined) colDefs.push({zona:'extra2', cls:'col col-extra2', cc:'c-gris', idx:4});
   } else {
-    colDefs = [];
-    // Columna "PARCIAL" — solo Juvenil B y Juvenil C, antes de Promocionados.
+    colDefs = [
+      {zona:'promovidos_1er', cls:'col col-prom',  cc:'c-naranja', idx:0},
+      {zona:'lesionados',     cls:'col col-les',   cc:'c-rojo',    idx:1},
+    ];
+    // Columna "PARCIAL" — solo Juvenil B y Juvenil C, 3ª columna.
     if(eq==='JUVENIL B' || eq==='JUVENIL C'){
       colDefs.push({zona:'parcial', cls:'col col-parcial', cc:'c-azul', idx:-1});
     }
-    colDefs.push(
-      {zona:'promovidos_1er', cls:'col col-prom',  cc:'c-naranja', idx:0},
-      {zona:'lesionados',     cls:'col col-les',   cc:'c-rojo',    idx:1},
-      {zona:'otros',          cls:'col col-otros', cc:'c-gris',    idx:2},
-    );
+    colDefs.push({zona:'otros', cls:'col col-otros', cc:'c-gris', idx:2});
     // La columna "extra" (4ª) es la misma infraestructura genérica de siempre.
     if(extraZonas[eq]) colDefs.push({zona:'extra', cls:'col col-extra', cc:'c-azul', idx:3});
   }
