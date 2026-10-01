@@ -162,7 +162,7 @@ function dispararDobleTap(nombre, eq, zona, diaP){
   } else if(zona === 'disponibles'){
     msg = `Devolver a ${nombre} a disponibles de ${eqPropio}`;
   } else {
-    const zonaLabel = {lesionados:'lesiones', promovidos_1er:'promoción', otros:'otros', extra:'extra'}[zona] || zona;
+    const zonaLabel = {lesionados:'lesiones', promovidos_1er:'promoción', otros:'otros', extra:'extra', parcial:'parcial'}[zona] || zona;
     msg = `Quitar a ${nombre} de ${zonaLabel} → disponibles${eq !== eqPropio ? ' de ' + eqPropio : ''}`;
   }
   const onEliminar = ()=>{
@@ -537,7 +537,7 @@ function endChip(e){
     dia = _diaOrigDrop;
   }
 }
-var ZONA_NAMES={campo:'Campo',banquillo:'Banquillo',disponibles:'Disponibles',promovidos_1er:'Promovido',lesionados:'Lesión',otros:'Otros'};
+var ZONA_NAMES={campo:'Campo',banquillo:'Banquillo',disponibles:'Disponibles',promovidos_1er:'Promovido',lesionados:'Lesión',otros:'Otros',parcial:'Parcial'};
 function move(fromEq,fromZona,toEq,toZona,nombre){
   const arr=data[dia][fromEq][fromZona];
   const i=arr.indexOf(nombre); if(i===-1)return;
