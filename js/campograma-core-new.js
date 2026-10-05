@@ -98,7 +98,9 @@ async function cargarFotoSemana(key){
     foto = _semanasGuardadas[key];
     if(!foto && typeof window.fbCargarSesion === 'function'){
       const resP = await window.fbCargarSesion('principal');
-      if(resP && resP.ok && resP.data && resP.data.plantillas){
+      // Solo vale si principal es de ESTA semana — al cambiar de semana (lunes) principal
+      // aún tiene la semana anterior y no debe usarse como la nueva.
+      if(resP && resP.ok && resP.data && resP.data.plantillas && resP.data.ultimaSemanaKey === key){
         foto = resP.data;
         _semanasGuardadas[key] = foto;
       }
