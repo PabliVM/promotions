@@ -86,6 +86,7 @@ function guardarFotoSemanaActual(){
   window._semanasSucias.add(_semanaKeyActual);
 }
 async function cargarFotoSemana(key){
+  window._falloLecturaSemana = false;
   const _hoy = new Date();
   const _diff = _hoy.getDay()===0 ? -6 : 1-_hoy.getDay();
   const _lunHoy = new Date(_hoy); _lunHoy.setDate(_hoy.getDate()+_diff);
@@ -110,6 +111,8 @@ async function cargarFotoSemana(key){
     if(res && res.ok && res.data){
       foto = res.data;
       _semanasGuardadas[key] = foto; // refrescar la caché con lo real
+    } else if(res && res.reason === 'error'){
+      window._falloLecturaSemana = true; // fallo de lectura/conexión, NO "semana vacía"
     }
   }
   if(!foto) foto = _semanasGuardadas[key]; // último recurso
