@@ -103,6 +103,9 @@ function esSemanaActualDeVerdad(){
   return keyHoy === _semanaKeyActual;
 }
 function autoGuardar(){
+  // Durante un cambio de semana los datos en memoria y la clave de semana no coinciden
+  // todavía: guardar ahora escribiría los datos de una semana en el documento de otra.
+  if(window._cambiandoSemana){ setTimeout(autoGuardar, 400); return; }
   _guardadoVersion++;
   window._hayGuardadoPendiente = true;
   // Cualquier edición actualiza la "foto" de la semana que se está viendo AHORA MISMO
@@ -114,6 +117,7 @@ function autoGuardar(){
   if(typeof guardarFotoSemanaActual === 'function') guardarFotoSemanaActual();
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer=setTimeout(async ()=>{
+    if(window._cambiandoSemana){ autoGuardar(); return; }
     const miVersion = _guardadoVersion; // versión en el momento de EMPEZAR a guardar esto
     try{
       const _saltarFreno = window._saltarFrenoGuardado;
