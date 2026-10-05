@@ -271,7 +271,12 @@ try {
         const sucias = window._semanasSucias || new Set();
         for(const weekKey of claves){
           if(!sucias.has(weekKey)) continue;
-          await window.fbGuardarSemanaArchivada(weekKey, semanasGuardadas[weekKey]);
+          const rArch = await window.fbGuardarSemanaArchivada(weekKey, semanasGuardadas[weekKey]);
+          // Si NO se pudo archivar esa semana, no se continúa ni se marca como hecha:
+          // seguir y sobrescribir "principal" borraría la única copia de esa semana.
+          if(!rArch || !rArch.ok){
+            return { ok:false, reason:'error', message:'No se pudo archivar la semana '+weekKey };
+          }
           sucias.delete(weekKey);
         }
         payloadSinSemanas.clavesSemanasArchivadas = claves;
