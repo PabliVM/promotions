@@ -134,42 +134,85 @@ function _lunesDeSemana(fecha){
 // semana que tienes abierta ni sufrir efectos raros de estado compartido entre
 // archivos. Usa el selector de fecha nativo del navegador.
 function elegirFechaOtraSemana(valorActual, onElegir){
+  // Calendario propio donde SOLO se pueden elegir lunes (el resto de días aparecen
+  // apagados y no son clicables) — así nunca se carga una semana desalineada.
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;z-index:10600;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;';
   const box = document.createElement('div');
   box.style.cssText = 'background:#fff;border-radius:14px;padding:20px;max-width:320px;width:100%;font-family:\'Segoe UI\',sans-serif;box-shadow:0 8px 32px rgba(0,0,0,.3);';
   const lbl = document.createElement('div');
-  lbl.textContent = 'Elige cualquier día de la semana que quieras (se usa toda esa semana)';
-  lbl.style.cssText = 'font-size:13px;color:#5a6170;margin-bottom:10px;line-height:1.4;';
+  lbl.textContent = 'Elige el LUNES de la semana';
+  lbl.style.cssText = 'font-size:13px;color:#5a6170;margin-bottom:10px;line-height:1.4;font-weight:700;';
   box.appendChild(lbl);
-  const inp = document.createElement('input');
-  inp.type = 'date';
-  if(valorActual){
-    const d = new Date(valorActual);
-    inp.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  let ref = valorActual ? new Date(valorActual) : new Date();
+  ref = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  let sel = valorActual ? _lunesDeSemana(valorActual) : null;
+  const nav = document.createElement('div');
+  nav.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
+  const btnNav = (t)=>{ const b=document.createElement('button'); b.textContent=t; b.style.cssText='border:none;background:#f1f5f9;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer;color:#1a1d23;'; return b; };
+  const prev = btnNav('‹'), next = btnNav('›');
+  const mesLbl = document.createElement('div');
+  mesLbl.style.cssText = 'font-size:14px;font-weight:700;color:#1a1d23;text-transform:capitalize;';
+  nav.appendChild(prev); nav.appendChild(mesLbl); nav.appendChild(next);
+  box.appendChild(nav);
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px;';
+  box.appendChild(grid);
+  const okBtn = document.createElement('button');
+  function pintar(){
+    mesLbl.textContent = ref.toLocaleString('es-ES',{month:'long',year:'numeric'});
+    grid.innerHTML = '';
+    ['L','M','X','J','V','S','D'].forEach(t=>{
+      const h = document.createElement('div');
+      h.textContent = t;
+      h.style.cssText = 'text-align:center;font-size:11px;font-weight:700;color:#94a3b8;';
+      grid.appendChild(h);
+    });
+    const vacios = (ref.getDay()+6)%7;
+    for(let i=0;i<vacios;i++) grid.appendChild(document.createElement('div'));
+    const n = new Date(ref.getFullYear(), ref.getMonth()+1, 0).getDate();
+    for(let d=1; d<=n; d++){
+      const f = new Date(ref.getFullYear(), ref.getMonth(), d);
+      const esLunes = f.getDay()===1;
+      const el = document.createElement('div');
+      el.textContent = d;
+      el.style.cssText = 'text-align:center;padding:7px 0;border-radius:8px;font-size:13px;';
+      if(esLunes){
+        const elegido = sel && f.getTime()===sel.getTime();
+        el.style.cursor = 'pointer';
+        el.style.fontWeight = '700';
+        el.style.background = elegido ? '#2563eb' : '#eef2ff';
+        el.style.color = elegido ? '#fff' : '#1e3a8a';
+        el.onclick = ()=>{ sel = f; pintar(); };
+      } else {
+        el.style.color = '#cbd5e1';
+        el.style.cursor = 'default';
+      }
+      grid.appendChild(el);
+    }
+    okBtn.disabled = !sel;
+    okBtn.style.opacity = sel ? '1' : '.5';
   }
-  inp.style.cssText = 'width:100%;padding:10px;border-radius:8px;border:1.5px solid #dfe1e6;font-size:14px;margin-bottom:14px;box-sizing:border-box;';
-  box.appendChild(inp);
+  prev.onclick = ()=>{ ref = new Date(ref.getFullYear(), ref.getMonth()-1, 1); pintar(); };
+  next.onclick = ()=>{ ref = new Date(ref.getFullYear(), ref.getMonth()+1, 1); pintar(); };
   const btnRow = document.createElement('div');
   btnRow.style.cssText = 'display:flex;gap:8px;';
   const cancelBtn = document.createElement('button');
   cancelBtn.textContent = 'Cancelar';
   cancelBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:1px solid #dfe1e6;background:transparent;color:#5a6170;font-weight:700;cursor:pointer;font-family:\'Segoe UI\',sans-serif;';
-  const okBtn = document.createElement('button');
   okBtn.textContent = 'Elegir';
   okBtn.style.cssText = 'flex:1;padding:10px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;font-family:\'Segoe UI\',sans-serif;';
   btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
   box.appendChild(btnRow);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
-  inp.focus();
+  pintar();
   function cerrar(){ overlay.remove(); }
   cancelBtn.onclick = cerrar;
   overlay.onclick = (e)=>{ if(e.target===overlay) cerrar(); };
   okBtn.onclick = ()=>{
-    if(!inp.value){ cerrar(); return; }
-    const [y,m,d] = inp.value.split('-').map(Number);
-    const fecha = new Date(y, m-1, d);
+    if(!sel) return;
+    const fecha = new Date(sel);
     cerrar();
     onElegir(fecha);
   };
