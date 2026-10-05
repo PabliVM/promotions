@@ -190,6 +190,20 @@ async function aplicarSemana(){
     document.getElementById('copy-modal-overlay').classList.add('open');
     return;
   }
+  // Si estás en la semana real de hoy y hay un cambio sin guardar (menos de 1,5 s),
+  // volcarlo YA a principal antes de salir — si no, ese último cambio solo quedaba en
+  // memoria y se perdía al recargar estando en otra semana.
+  if(typeof esSemanaActualDeVerdad === 'function' && esSemanaActualDeVerdad() && window._hayGuardadoPendiente && window._fbReady
+     && !(typeof hayQueFrenarGuardado === 'function' && hayQueFrenarGuardado())){
+    try{
+      clearTimeout(_autoSaveTimer);
+      const rF = await window.fbGuardarSesion(_fbSesionActiva || 'principal', buildPayload(false));
+      if(rF && rF.ok) window._hayGuardadoPendiente = false;
+    }catch(eF){ console.warn('Volcado previo al cambio de semana falló:', eF); }
+  }
+  window._cambiandoSemana = true; // mientras dura el cambio, ningún autoguardado puede escribir
+  setTimeout(()=>{ window._cambiandoSemana = false; }, 15000); // seguro: nunca se queda bloqueado
+  const _keyAnteriorSemana = _semanaKeyActual;
   guardarFotoSemanaActual();
   FECHAS = calcFechasSemana(_calLunesSel);
   toast('📅 Cargando semana…');
@@ -198,6 +212,16 @@ async function aplicarSemana(){
   // pintando/guardando con los datos de la semana ANTERIOR mientras la carga real llega
   // tarde de fondo, dando la sensación de que "todas las semanas son iguales".
   const cargada = await cargarFotoSemana(_semanaKeyActual);
+  if(!cargada && window._falloLecturaSemana){
+    // No se pudo LEER la semana (conexión/Firebase): crear una vacía y guardarla encima
+    // habría borrado la real. Se vuelve a la semana anterior sin tocar nada.
+    const [_yA,_mA,_dA] = _keyAnteriorSemana.split('-').map(Number);
+    FECHAS = calcFechasSemana(new Date(_yA,_mA-1,_dA));
+    window._cambiandoSemana = false;
+    renderDias();
+    toast('⚠️ No se pudo leer esa semana (conexión). No se ha cambiado de semana.');
+    return;
+  }
   if(!cargada) crearSemanaVacia();
   // Blindaje: asegurar que TODOS los días/equipos/zonas existen antes de pintar nada
   // — si la semana cargada (de caché o de Firebase) viniera incompleta por cualquier
@@ -232,6 +256,7 @@ async function aplicarSemana(){
       sessionStorage.setItem('rm_dia', d);
     }
   });
+  window._cambiandoSemana = false;
   autoGuardar();
   renderDias();
   renderCards();
