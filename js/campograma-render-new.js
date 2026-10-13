@@ -197,7 +197,7 @@ async function aplicarSemana(){
      && !(typeof hayQueFrenarGuardado === 'function' && hayQueFrenarGuardado())){
     try{
       clearTimeout(_autoSaveTimer);
-      const rF = await window.fbGuardarSesion(_fbSesionActiva || 'principal', buildPayload(false));
+      const rF = await window.fbGuardarSesion('principal', buildPayload(false));
       if(rF && rF.ok) window._hayGuardadoPendiente = false;
     }catch(eF){ console.warn('Volcado previo al cambio de semana falló:', eF); }
   }
@@ -793,6 +793,12 @@ window.cerrarCal = cerrarCal;
 window.renderCal = renderCal;
 window.resetCal = resetCal;
 window.aplicarSemana = aplicarSemana;
+// Ir a la semana de un lunes concreto usando exactamente el mismo cambio de semana que el
+// calendario (guarda la actual, carga la otra, protege contra fallos de lectura).
+window.irASemanaLunes = async function(fecha){
+  _calLunesSel = new Date(fecha);
+  await aplicarSemana();
+};
 window.renderEqs = renderEqs;
 window.renderCopyBar = renderCopyBar;
 window.toggleVistaListaGlobal = toggleVistaListaGlobal;
