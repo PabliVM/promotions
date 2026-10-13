@@ -948,7 +948,7 @@ async function fbGuardarActual(){
   const payload = buildPayload(false);
   const res = await window.fbGuardarSesion(nombre, payload);
   if(res.ok){
-    _fbSesionActiva = nombre;
+    _fbSesionActiva = 'principal'; // las copias con nombre son archivo; el trabajo en vivo sigue en principal
     toast('✅ Guardado en la nube: '+nombre);
     inp.value = '';
     await limpiarSesionesAntiguas(); // mantener solo los 5 últimos backups
@@ -958,6 +958,16 @@ async function fbGuardarActual(){
   } else {
     toast('❌ Firebase: ' + (res.message || 'error al guardar'));
   }
+}
+// Una copia guardada pertenece a UNA semana concreta (ultimaSemanaKey). Antes de volcarla
+// hay que situarse en esa semana; si no, sus posiciones (con fechas de otra semana) y sus
+// datos acababan encima de la semana en curso, desalineados, y pisaban lo que había.
+async function _irASemanaDeCopia(payload){
+  const k = payload && payload.ultimaSemanaKey;
+  if(!k || k === _semanaKeyActual || typeof window.irASemanaLunes !== 'function') return;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(k);
+  if(!m) return;
+  await window.irASemanaLunes(new Date(+m[1], +m[2]-1, +m[3]));
 }
 async function fbCargar(nombre){
   if(!window._fbReady){ toast('⏳ Firebase no conectado'); return; }
@@ -973,6 +983,7 @@ async function fbCargar(nombre){
     return;
   }
   const payload = res.data || {};
+  await _irASemanaDeCopia(payload);
   if(payload.data)                  data = payload.data;
   if(payload.pos)                   pos = payload.pos;
   if(payload.plantillas)            plantillas = payload.plantillas;
@@ -1019,7 +1030,7 @@ async function fbCargar(nombre){
       (plantillas[eq]||[]).forEach(nombre=>{ origen[nombre]=eq; });
     });
   }
-  _fbSesionActiva = nombre;
+  _fbSesionActiva = 'principal'; // lo cargado pasa a ser el trabajo en vivo (se autoguarda en principal)
   console.log('[fbCargar] Sesión:', nombre);
   EQUIPOS.forEach(eq=>{
     const disp = (data[DIAS[0]]?.[eq]?.disponibles||[]).length;
@@ -1836,11 +1847,12 @@ function cargarFicheroImport(ev){
   const file = ev.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     try{
       const payload = JSON.parse(e.target.result);
       if(!payload.data){ toast('❌ Fichero no válido'); return; }
       if(!confirm('¿Cargar estos datos? Se sobreescribirá todo lo actual.')){return;}
+      await _irASemanaDeCopia(payload);
       if(payload.data)                  data = payload.data;
       if(payload.pos)                   pos = payload.pos;
       if(payload.plantillas)            plantillas = payload.plantillas;
@@ -1861,7 +1873,13 @@ function cargarFicheroImport(ev){
       if(payload.rivales)               window.rivales = payload.rivales;
       if(payload.primerEquipoJugadores) primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.historicoJugador)      historicoJugador = payload.historicoJugador;
-      if(payload.semanasGuardadas)      _semanasGuardadas = payload.semanasGuardadas;
+      if(payload.semanasGuardadas){
+        _semanasGuardadas = payload.semanasGuardadas;
+        // Las semanas que trae el fichero deben quedar guardadas de verdad en Firebase
+        // (si no, solo vivían en memoria y se perdían al cerrar).
+        window._semanasSucias = window._semanasSucias || new Set();
+        Object.keys(_semanasGuardadas).forEach(k=>window._semanasSucias.add(k));
+      }
       if(payload.notas)                 window._notasData = payload.notas;
       if(payload.fechas)                Object.assign(FECHAS, payload.fechas);
       window._saltarFrenoGuardado = true;
