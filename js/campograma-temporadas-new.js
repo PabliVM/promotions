@@ -201,8 +201,11 @@ function autoGuardar(){
       // (por ejemplo, un corte breve de conexión) — antes, si fallaba una vez, se
       // quedaba así sin más y el cambio podía perderse en silencio.
       if(window._fbReady){
-        if(!_fbSesionActiva) _fbSesionActiva = 'principal';
-        intentarGuardarConReintentos(_fbSesionActiva, payload, miVersion, 0);
+        // El autoguardado va SIEMPRE a 'principal' (lo que se abre al arrancar). Antes
+        // seguía a la última sesión guardada/cargada a mano, y esos cambios se perdían
+        // al cerrar la página porque al abrir se carga 'principal'.
+        _fbSesionActiva = 'principal';
+        intentarGuardarConReintentos('principal', payload, miVersion, 0);
       } else {
         if(_guardadoVersion === miVersion) window._hayGuardadoPendiente = false;
       }
@@ -270,9 +273,9 @@ function guardarManual(){
     // localStorage desactivado
     // Si hay sesión Firebase activa, guardar también en la nube
     if(window._fbReady){
-      if(!_fbSesionActiva) _fbSesionActiva = 'principal';
-      window.fbGuardarSesion(_fbSesionActiva, payload).then(res=>{
-        if(res && res.ok) console.log('✓ Guardado en Firebase:', _fbSesionActiva);
+      _fbSesionActiva = 'principal';
+      window.fbGuardarSesion('principal', payload).then(res=>{
+        if(res && res.ok) console.log('✓ Guardado en Firebase: principal');
         else console.warn('Firebase sync error:', res && res.message);
       });
     }
