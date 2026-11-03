@@ -172,7 +172,7 @@ async function aplicarSemana(){
     _copyDiaSemanaLunes = new Date(_calLunesSel);
     _calModoCopia = false;
     document.getElementById('cal-overlay').classList.remove('open');
-    const fechas = calcFechasSemana(_copyDiaSemanaLunes);
+    const fechas = calcFechasSemanaSoloLectura(_copyDiaSemanaLunes);
     const lbl = document.getElementById('copy-dia-semana-lbl');
     lbl.textContent = 'Semana del ' + fechas['LUNES'] + ' al ' + fechas['DOMINGO'];
     lbl.style.display = 'block';
@@ -199,6 +199,22 @@ async function aplicarSemana(){
       clearTimeout(_autoSaveTimer);
       const rF = await window.fbGuardarSesion('principal', buildPayload(false));
       if(rF && rF.ok) window._hayGuardadoPendiente = false;
+    }catch(eF){ console.warn('Volcado previo al cambio de semana falló:', eF); }
+  } else if(typeof esSemanaActualDeVerdad === 'function' && !esSemanaActualDeVerdad() && window._hayGuardadoPendiente
+     && _semanaKeyActual && typeof window.fbGuardarSemanaArchivada === 'function'
+     && !(typeof hayQueFrenarGuardado === 'function' && hayQueFrenarGuardado())){
+    // Igual para una semana pasada/futura: volcar su último cambio a semanas/{key}
+    // antes de salir (si no, quedaba solo en memoria y se perdía al recargar).
+    try{
+      clearTimeout(_autoSaveTimer);
+      const rF = await window.fbGuardarSemanaArchivada(_semanaKeyActual, {
+        data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
+        primerEquipoJugadores, notas: window._notasData||{}, origen, historicoJugador
+      });
+      if(rF && rF.ok){
+        window._hayGuardadoPendiente = false;
+        if(window._semanasSucias) window._semanasSucias.delete(_semanaKeyActual);
+      }
     }catch(eF){ console.warn('Volcado previo al cambio de semana falló:', eF); }
   }
   window._cambiandoSemana = true; // mientras dura el cambio, ningún autoguardado puede escribir

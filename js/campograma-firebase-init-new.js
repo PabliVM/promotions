@@ -124,9 +124,20 @@ try {
     }
     return out;
   }
+  // Fechas reales (YYYY-MM-DD) de cada día de la semana 'lunesKey'
+  function _fechasDeSemana(lunesKey){
+    if(!lunesKey || typeof fechaCompletaDeDia !== 'function') return null;
+    const out = {};
+    DIAS.forEach(dia=>{ out[dia] = fechaCompletaDeDia(dia, lunesKey); });
+    return out;
+  }
   function _aplicarFechaAClaves(payload){
     if(!payload.fechas) return payload;
-    const mapa = _mapaDiaConFecha(payload.fechas);
+    // Con la clave de semana se obtiene el AÑO correcto (antes se usaba el año de hoy
+    // y en semanas entre diciembre y enero los días quedaban con el año equivocado).
+    const fSem = _fechasDeSemana(payload.ultimaSemanaKey);
+    const mapa = fSem ? Object.fromEntries(Object.keys(fSem).map(d=>[d, fSem[d]+'_'+d]))
+                      : _mapaDiaConFecha(payload.fechas);
     let out = _sellarSnapshot(payload, mapa);
     // Semanas archivadas: cada una tiene sus propias fechas reales (distintas de la
     // semana activa) — se calculan a partir de su propia clave (el lunes de esa semana)
@@ -142,7 +153,7 @@ try {
     }
     return out;
   }
-  function _desellarSnapshot(obj, esArchivada){
+  function _desellarSnapshot(obj, esArchivada, fechasRef){
     const out = { ...obj };
     // Fechas reales de la semana ACTIVA ahora mismo (calculadas al arrancar la página,
     // ej. {VIERNES:'2026-07-31', ...}). Si existen, son la ÚNICA fuente de verdad para
@@ -151,7 +162,7 @@ try {
     // posteriores a hoy sin ser la semana real que se está viendo. No se aplica a
     // snapshots de semanas ARCHIVADAS (esArchivada=true): esas tienen sus propias fechas
     // pasadas legítimas, nada que ver con "hoy".
-    const fechasHoy = esArchivada ? {} : (window.FECHAS_COMPLETAS || {});
+    const fechasHoy = esArchivada ? {} : (fechasRef || window.FECHAS_COMPLETAS || {});
     _CAMPOS_POR_DIA.forEach(campo=>{
       if(!out[campo] || typeof out[campo] !== 'object') return;
       const nuevo = {};
@@ -204,7 +215,10 @@ try {
     return out;
   }
   function _quitarFechaDeClaves(raw){
-    let out = _desellarSnapshot(raw);
+    // Desellar con las fechas de la semana a la que PERTENECEN los datos guardados
+    // (ultimaSemanaKey), no con las de hoy: el lunes, principal aún tiene la semana
+    // anterior y con las fechas de hoy se descartaba todo -> se archivaba vacía.
+    let out = _desellarSnapshot(raw, false, _fechasDeSemana(raw.ultimaSemanaKey));
     if(out.semanasGuardadas && typeof out.semanasGuardadas === 'object'){
       const nuevasSemanas = {};
       Object.keys(out.semanasGuardadas).forEach(weekKey=>{

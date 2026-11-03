@@ -45,8 +45,9 @@ function fechaCompletaDeDia(diaNombre, lunesKey){
   if(!lunesKey) return (window.FECHAS_COMPLETAS||{})[diaNombre] || '';
   const idx = DIAS.indexOf(diaNombre);
   if(idx < 0) return '';
-  const base = new Date(lunesKey);
-  const f = new Date(base); f.setDate(base.getDate()+idx);
+  // Parseo LOCAL (new Date('YYYY-MM-DD') es UTC y puede dar el día anterior)
+  const [_y,_m,_d] = String(lunesKey).split('-').map(Number);
+  const f = new Date(_y, _m-1, _d+idx);
   return f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0')+'-'+String(f.getDate()).padStart(2,'0');
 }
 function abrevDiaDesdeFecha(fechaCompleta){
@@ -82,6 +83,8 @@ function guardarFotoSemanaActual(){
     data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
     primerEquipoJugadores, notas: window._notasData || {}, origen, historicoJugador
   }));
+  // Semana que no se pudo leer de Firebase: no archivarla encima (borraría la real)
+  if(window._semanaSinLeer === _semanaKeyActual) return;
   window._semanasSucias = window._semanasSucias || new Set();
   window._semanasSucias.add(_semanaKeyActual);
 }
@@ -104,6 +107,17 @@ async function cargarFotoSemana(key){
       if(resP && resP.ok && resP.data && resP.data.plantillas && resP.data.ultimaSemanaKey === key){
         foto = resP.data;
         _semanasGuardadas[key] = foto;
+      }
+    }
+    // Principal aún es de otra semana (p. ej. lunes): usar lo preparado/copiado de
+    // antemano en semanas/{key}, que antes se ignoraba y se perdía.
+    if(!foto && typeof window.fbCargarSemanaArchivada === 'function'){
+      const resA = await window.fbCargarSemanaArchivada(key);
+      if(resA && resA.ok && resA.data){
+        foto = resA.data;
+        _semanasGuardadas[key] = foto;
+      } else if(resA && resA.reason === 'error'){
+        window._falloLecturaSemana = true;
       }
     }
   } else if(typeof window.fbCargarSemanaArchivada === 'function'){
@@ -2285,22 +2299,52 @@ async function arrancarDesdeFirebase(){
       if(payload.multiEq     && typeof payload.multiEq==='object')     multiEq     = payload.multiEq;
       if(payload.semanasGuardadas && typeof payload.semanasGuardadas==='object') _semanasGuardadas = payload.semanasGuardadas;
       if(payload.historicoJugador && typeof payload.historicoJugador==='object') historicoJugador = payload.historicoJugador;
+      // Por-semana: asignar ANTES de la foto de la semana anterior (si no, la foto se
+      // archivaba sin ellos y, además, pisaban luego los de la semana nueva).
+      if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
+      if(payload.notas       && typeof payload.notas==='object')       window._notasData = payload.notas;
       if(payload.ultimaSemanaKey && payload.ultimaSemanaKey !== _semanaKeyActual){
-        _semanasGuardadas[payload.ultimaSemanaKey] = JSON.parse(JSON.stringify({
+        const _kAnt = payload.ultimaSemanaKey;
+        const _fotoAnt = JSON.parse(JSON.stringify({
           data, pos, promInfo, multiEq, modoPartido, modoDescanso, tipoPartido,
           primerEquipoJugadores, notas: window._notasData || {}, origen, historicoJugador
         }));
-        window._semanasSucias = window._semanasSucias || new Set();
-        window._semanasSucias.add(payload.ultimaSemanaKey);
-        if(!(await cargarFotoSemana(_semanaKeyActual))) crearSemanaVacia();
+        // Solo archivar principal sobre semanas/{anterior} si es MÁS reciente que lo que
+        // ya hay ahí (si se editó esa semana después, desde el calendario, no pisarla).
+        let _archivar = true;
+        if(typeof window.fbCargarSemanaArchivada === 'function'){
+          const rAnt = await window.fbCargarSemanaArchivada(_kAnt);
+          const tsArch = rAnt && rAnt.ok && rAnt.data && rAnt.data._ts && rAnt.data._ts.toMillis ? rAnt.data._ts.toMillis() : null;
+          const tsPrin = payload._ts && payload._ts.toMillis ? payload._ts.toMillis() : null;
+          if(rAnt && rAnt.reason === 'error') _archivar = false; // no se sabe qué hay: no tocar
+          else if(tsArch !== null && tsPrin !== null && tsArch >= tsPrin){
+            _archivar = false;
+            _semanasGuardadas[_kAnt] = rAnt.data;
+          }
+        }
+        if(_archivar){
+          _semanasGuardadas[_kAnt] = _fotoAnt;
+          window._semanasSucias = window._semanasSucias || new Set();
+          window._semanasSucias.add(_kAnt);
+        }
+        let _cargadaHoy = await cargarFotoSemana(_semanaKeyActual);
+        for(let _i=0; !_cargadaHoy && window._falloLecturaSemana && _i<2; _i++){
+          await new Promise(r=>setTimeout(r, 1500));
+          _cargadaHoy = await cargarFotoSemana(_semanaKeyActual);
+        }
+        if(!_cargadaHoy){
+          if(window._falloLecturaSemana){
+            window._semanaSinLeer = _semanaKeyActual;
+            if(typeof toast === 'function') toast('⚠️ No se pudo leer la semana actual (conexión). Recarga la página.');
+          }
+          crearSemanaVacia();
+        }
       }
       if(payload.fechas && typeof payload.fechas === 'object'){
         const distintas = Object.keys(FECHAS).some(d=>payload.fechas[d] && payload.fechas[d] !== FECHAS[d] && payload.ultimaSemanaKey === _semanaKeyActual);
         if(distintas) console.warn('[aviso semana] Las fechas guardadas no coinciden con las de la semana activa aunque la clave de semana sí — revisar.');
       }
-      if(payload.primerEquipoJugadores && typeof payload.primerEquipoJugadores === 'object') primerEquipoJugadores = payload.primerEquipoJugadores;
       if(payload.rivales     && typeof payload.rivales==='object')     window.rivales = payload.rivales;
-      if(payload.notas       && typeof payload.notas==='object')       window._notasData = payload.notas;
       EQUIPOS.forEach(eq=>{
         if(!colNames[eq]) colNames[eq]=['PROMOCIONADOS','LESIONADOS','OTROS'];
         if(colNames[eq][0]==='1ER EQUIPO') colNames[eq][0]='PROMOCIONADOS';
