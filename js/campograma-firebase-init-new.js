@@ -389,9 +389,6 @@ try {
         return { ok:false, reason:'not_found', message:'La sesión no existe en Firebase.' };
       }
       const raw = snap.data();
-      console.log('[diag-raw] claves de raw.data (sin transformar):', raw.data ? Object.keys(raw.data) : 'NO EXISTE raw.data');
-      const claveMartes = raw.data ? Object.keys(raw.data).find(k=>k.includes('MARTES')) : null;
-      console.log('[diag-raw] clave que contiene MARTES:', claveMartes, '→ CASTILLA campo:', claveMartes ? raw.data[claveMartes]?.CASTILLA?.campo : 'n/a');
       return { ok:true, data: _reconstruirDesdePorEq(raw) };
     }catch(e){
       console.error('fbCargarSesion error:', e);
